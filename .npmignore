@@ -1,5 +1,8 @@
-# Local build directory
-build
+#
+build/
+
+# Directories with npm_modules directories.
+/**/node_modules/
 
 # Logs
 logs

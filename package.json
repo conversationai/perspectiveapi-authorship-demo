@@ -1,0 +1,35 @@
+{
+  "name": "@conversationai/status-checker",
+  "description": "Example code for an authorship experience using the perspective API",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/conversationai/perspectiveapi-authorship-demo"
+  },
+  "version": "0.2.1",
+  "license": "Apache-2.0",
+  "scripts": {
+    "setup": "mkdir -p build/config/ && rsync --ignore-existing config/deploy_config.template.json build/config/deploy_config.json && cd ./scripts && typings install && cd ../ && ./act.sh setup yarn && ./act.sh setup typings && rsync --ignore-existing node_modules/@conversationai/perspectiveapi-simple-server/server_config.template.json build/config/dev_server_config.json && rsync --ignore-existing node_modules/@conversationai/perspectiveapi-simple-server/server_config.template.json build/config/prod_server_config.json",
+    "build": "./act.sh setup typings && ./act.sh build prod_webapp",
+    "test": "./act.sh test webapp"
+  },
+  "dependencies": {
+    "js-sha256": "^0.5.0"
+  },
+  "devDependencies": {
+    "@angular/cli": "^1.0.0-rc.1",
+    "@conversationai/perspectiveapi-simple-server": "^0.1.0",
+    "concurrently": "^3.4.0",
+    "jasmine": "^2.5.2",
+    "jasmine-core": "^2.4.1",
+    "mocha": "^3.0.2",
+    "rimraf": "^2.5.2",
+    "shell-quote": "^1.6.1",
+    "supertest": "^3.0.0",
+    "to-string-loader": "^1.1.4",
+    "ts-node": "^2.1.0",
+    "tslint": "^4.5.1",
+    "typedoc": "^0.5.1",
+    "typescript": "^2.2.1",
+    "typings": "^2.1.0"
+  }
+}
