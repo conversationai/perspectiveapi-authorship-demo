@@ -1,12 +1,14 @@
-# conversationai-checker
+# Demo of an authorship experience based on the perspective API
 
-A demo of the ConversationAI authorship assistant models. The app
-is an [Angular2](https://angular.io/) web application backed by an [node express
-server](https://expressjs.com/), including both a development and a production
+A demo authorship experience that provides perspective API feedback as you type.
+
+This is a web app written in [Angular2](https://angular.io/) with a [node express
+server](https://expressjs.com/). This illustrates having both a development and a production
 build environment with deployment tools based on
 [Docker](https://www.docker.com/).
-Everything is written in [TypeScript](https://www.typescriptlang.org/).
-The app uses the Comment Analyzer (Expression Engine) API for scoring text.
+Code is in [TypeScript](https://www.typescriptlang.org/).
+The app uses the [Perspective API](http://www.perspectiveapi.com/) to score text, via a
+the [perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server).
 
 ## Prerequisites
 
