@@ -179,7 +179,7 @@ const GLCOUD_DOCKER_IMAGE_NAME =
       RUN_WATCH_OPTION, () => {
     fsys.chDir(BASE_DIR);
     const dev_env = { 'NODE_ENV': 'development' };
-    run.sync(`node node_modules/@conversationai/checker-server/build/server/run_server.js     build/config/dev_server_config.json`,
+    run.sync(`node node_modules/@conversationai/perspectiveapi-simple-server/build/server/run_server.js     build/config/dev_server_config.json`,
             { ignore_stdin: true, env: Object.assign({}, run_env, dev_env) });
   });
 
@@ -187,7 +187,7 @@ const GLCOUD_DOCKER_IMAGE_NAME =
       {}, () => {
     fsys.chDir(BASE_DIR);
     const prod_env = { 'NODE_ENV': 'production' };
-    run.sync(`node node_modules/@conversationai/checker-server/build/server/run_server.js     build/config/prod_server_config.json`,
+    run.sync(`node node_modules/@conversationai/perspectiveapi-simple-server/build/server/run_server.js     build/config/prod_server_config.json`,
              {env: Object.assign({}, run_env, prod_env)});
   });
 
