@@ -100,7 +100,7 @@ export interface Score {
 // safety, since each interface accepts slightly different request and response
 // types.
 
-export interface PerspectiveApiClient {
+export interface PerspectiveGapiClient {
   commentanalyzer: GapiCommentAnalyzer;
 }
 

@@ -22,7 +22,7 @@ import {
   AnalyzeCommentRequest,
   AnalyzeCommentResponse,
   AttributeScores,
-  PerspectiveApiClient,
+  PerspectiveGapiClient,
   RequestedAttributes,
   SuggestCommentScoreData,
   SuggestCommentScoreRequest,
@@ -37,7 +37,7 @@ const TOXICITY_ATTRIBUTE = 'TOXICITY';
 @Injectable()
 export class PerspectiveApiService {
 
-  private gapiClient: PerspectiveApiClient = null;
+  private gapiClient: PerspectiveGapiClient = null;
 
   constructor(private http: Http) {}
 
@@ -50,7 +50,7 @@ export class PerspectiveApiService {
       }).then(() => {
         console.log('Finished loading gapi client');
         console.log(gapi.client);
-        this.gapiClient = (gapi.client as any) as PerspectiveApiClient;
+        this.gapiClient = (gapi.client as any) as PerspectiveGapiClient;
       }, (error: Error) => {
         console.error('Error loading gapi client:', error);
       })});

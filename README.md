@@ -74,6 +74,7 @@ yarn run start:prod-server
 ```
 
 If you run this locally, you'll need to [login to google cloud and set your project id](https://cloud.google.com/sdk/docs/initializing).
+If you run this locally, you'll need to [login to google cloud and set your project id](https://cloud.google.com/sdk/docs/initializing).
 
 ## Production server using docker file
 
