@@ -33,7 +33,7 @@ yarn install
 
 Run `yarn run serve` for a dev server. Navigate to `http://localhost:4200/`.
 The app will automatically reload if you change any of the source files.
-API requests to the server (``http://localhost:4200/check` and
+API requests to the server (`http://localhost:4200/check` and
 `http://localhost:4200/suggest_score`) will be redirected to an underlying nodejs server,
 based on [perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server),
 which is started at `http://localhost:8080/`.
