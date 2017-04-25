@@ -1,0 +1,20 @@
+<div id="checkerContainer">
+  <!-- TODO(rachelrosen): merge perspective-status and convai-checker
+       and move a large portion of the convai-checker code to the perspective-api service. -->
+  <perspective-status
+    [fontSize]="fontSize"
+    [indicatorWidth]="13"
+    [indicatorHeight]="13"
+    [gradientColors]="gradientColors"
+    [score]="getMaxScore(analyzeCommentResponse)"
+    [hasScore]="analyzeCommentResponse !== null"
+    [canAcceptFeedback]="canAcceptFeedback"
+    [feedbackRequestInProgress]="feedbackRequestInProgress"
+    [configurationInput]="configuration"
+    [initializeErrorMessage]="initializeErrorMessage"
+    [analyzeErrorMessage]="analyzeErrorMessage"
+    (commentFeedbackSubmitted)="onCommentFeedbackReceived($event)"
+    (scoreChangeAnimationCompleted)="handleScoreChangeAnimationCompleted()"
+    (modelInfoLinkClicked)="handleModelInfoLinkClicked()">
+  </perspective-status>
+</div>

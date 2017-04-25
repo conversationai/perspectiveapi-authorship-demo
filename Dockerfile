@@ -9,47 +9,35 @@ RUN apt-get -q update && \
     apt-get install --no-install-recommends -y -q \
       nano less memcached rsync vim
 
-# Install node/npm
+# Install node/npm using LTS version
 #
-# TODO: google-cloud-node is broken for node 7.1:
-#  https://github.com/GoogleCloudPlatform/google-cloud-node/issues/1753
-# RUN install_node 7.1
-#
-RUN install_node 6.9
+RUN install_node 6.10.2
 
 # Install Yarn.
 # Note: because this is running as super-user in docker, we need to specify the
 # --unsafe-perm flag to allow npm not to worry about downgrading its
 # permissions.
 #
-RUN npm install -g --unsafe-perm yarn@0.18.1
+RUN npm install --unsafe-perm -g yarn
 
-# `pm2` runs the production server, retsarting if it crashes, etc.
-# `protractor` is used for testing angular2 components.
+# `angular-cli` is used to build the app.
 # `ts-node` allows typesscipt scripts to executed inline, like node/js.
 # `typescript` is the programming language and compiler for javascript.
 # `typings` provides type definitions for typescript needed to compile code.
-# `webpack` is used to combine/bundle the HTML/CSS/JS, produce source maps, etc.
 RUN yarn global add \
-  pm2 \
-  protractor \
+  angular-cli \
   ts-node \
-  typescript@2.1.4 \
-  typings@1.5.0 \
-  webpack
+  typescript@2.2.2 \
+  typings
 
-ADD package.json app.yaml act.sh yarn.lock LICENSE /app/
-ADD build/config /app/build/config
-ADD config /app/config
-ADD scripts /app/scripts
-ADD webapp /app/webapp
-
-RUN cd /app/ && yarn install
+# Add local files into the docker filespace.
+# Assumes that .dockerfile ignores nodes node_modules
+ADD . /app/
 
 WORKDIR /app/
 
-RUN yarn run setup
-RUN ["./act.sh", "build", "prod_webapp"]
+RUN yarn install
+RUN yarn run build:prod
 
 # Assumes: `EXPOSE 8080` and `ENV PORT 8080`
-CMD ./act.sh start prod_server
+CMD yarn start:prod-server
