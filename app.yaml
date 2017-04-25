@@ -15,12 +15,7 @@
 runtime: custom
 env: flex
 threadsafe: true
-service: dev
 
 skip_files:
-- ^build/server$
-- ^build/scripts$
-- ^build/webapp$
-- ^(.*/)?node_modules$
-- ^webapp/node_modules$
+- ^build/static$
 - ^node_modules$

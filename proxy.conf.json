@@ -1,0 +1,10 @@
+{
+  "/check": {
+    "target": "http://localhost:8080",
+    "secure": false
+  },
+  "/suggest_score": {
+    "target": "http://localhost:8080",
+    "secure": false
+  }
+}

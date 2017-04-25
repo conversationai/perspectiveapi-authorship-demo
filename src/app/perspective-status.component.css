@@ -1,0 +1,181 @@
+.horizontal-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.center-perp-axis {
+  align-items: center;
+}
+
+.dot {
+  border-radius: 50%;
+  border: 0px;
+  background-color: #00bcd4;
+  margin: auto;
+  padding: 0px;
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+  vertical-align: top;
+  margin: 2px;
+}
+
+#animationContainer {
+  z-index: 5;
+  width: 20px;
+  height: 22px;
+  margin-right: 10px;
+  padding-top: 2px;
+}
+
+#scoreInfoContainer {
+  padding-top: 2px;
+}
+
+.widgetText {
+  color: #6E7378;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+}
+
+.widgetText a {
+  color: #6E7378 !important;
+}
+
+.link {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.layerText {
+  flex: 0 1 60%;
+  padding-right: 10px;
+  padding-top: 2px;
+}
+
+#detailedScoreInfo a {
+  width: 40%;
+  color: #6E7378 !important;
+}
+
+.feedbackQuestion {
+  margin-right: 4px;
+}
+
+.seemWrongButton {
+  font-size: 12px;
+  font-family: Roboto, sans-serif;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  align-self: flex-start;
+}
+
+.detailsContainer {
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 1px;
+}
+
+.layersContainer {
+  width: 100%;
+  position: relative;
+}
+
+.layer {
+  position: absolute;
+}
+
+.hiddenLayer {
+  display: none !important;
+}
+
+.interactiveElement {
+  vertical-align: top;
+  text-align: end;
+  margin-left: auto;
+  display: flex;
+  justify-content: flex-end;
+  flex: 1 1 40%;
+  padding-top: 1px;
+}
+
+.interactiveElement .feedbackContainer {
+  padding-top: 2px;
+}
+
+#layer3 .interactiveElement {
+  flex: 0 1 auto;
+  margin-left: 0px;
+  padding-top: 2px;
+}
+
+.noBorderButton {
+  background-color: #ffffff;
+  border: 0px;
+  cursor: pointer;
+  padding-top: 0px;
+  font-family: Roboto, sans-serif;
+}
+
+.feedbackResponseButton {
+  padding-left: 0px;
+}
+
+.purpleButton {
+  color: #6200EA;
+  text-transform: uppercase;
+}
+
+.greyButton {
+  color: #6E7378;
+}
+
+.underlineButton {
+  text-decoration: underline;
+}
+
+.yesNoButton {
+  font-size: 12px;
+  font-family: Roboto, sans-serif;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+}
+
+.yesNoButton.purpleButton {
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.yesNoButtonContainer {
+  justify-content: flex-end;
+}
+
+#widgetContainer {
+  height: 50px;
+}
+
+.error {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  line-height: 16px;
+  color: #F44336;
+}
+
+.infoButtonContainer {
+  margin-left: 10px;
+  width: 26px;
+  height: 26px;
+}
+
+.infoButton {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.material-icons.md-18 {
+  font-size: 18px;
+}
+.material-icons.md-dark { color: #78909C; }
+.material-icons.md-dark.md-inactive { color: rgba(0, 0, 0, 0.26); }

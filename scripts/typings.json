@@ -1,9 +1,0 @@
-{
-  "globalDependencies": {
-    "jasmine": "registry:dt/jasmine#2.2.0+20160621224255"
-  },
-  "dependencies": {
-    "shell-quote": "file:./lib/typings/shell-quote.d.ts"
-  },
-  "resolution": "../build/scripts/typings"
-}

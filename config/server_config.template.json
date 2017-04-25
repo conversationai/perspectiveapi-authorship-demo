@@ -1,0 +1,7 @@
+{
+  "port": "8080",
+  "staticPath": "build/static",
+  "googleCloudApiKey": "enter your API key here",
+  "toxicityAttribute": "TOXICITY",
+  "cloudProjectId": "enter your cloud project id here"
+}
