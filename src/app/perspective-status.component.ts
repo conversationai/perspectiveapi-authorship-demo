@@ -276,6 +276,7 @@ export class PerspectiveStatus implements OnChanges {
 
   setLoading(loading: boolean): void {
     if (this.widget === null) {
+      console.log('Widget is null, returning');
       return;
     }
     this.isLoading = loading;
@@ -301,6 +302,9 @@ export class PerspectiveStatus implements OnChanges {
             console.log('hasScore:', this.hasScore);
             let updateScoreCompletedTimeline = new TimelineMax({
               paused:true,
+              onStart: () => {
+                console.log('Score change animation start');
+              },
               onComplete: () => {
                 this.scoreChangeAnimationCompleted.emit();
               }
@@ -429,8 +433,10 @@ export class PerspectiveStatus implements OnChanges {
     let circleAnimationTimeline = new TimelineMax({
       align: 'start',
       onStart: () => {
+        console.log('Starting transition to circle');
       },
       onComplete: () => {
+        console.log('Transition to circle completed');
       },
     });
     circleAnimationTimeline.add([
@@ -443,8 +449,10 @@ export class PerspectiveStatus implements OnChanges {
   private getTransitionToSquareAnimation(timeSeconds: number) {
     let squareAnimationTimeline = new TimelineMax({
       onStart: () => {
+        console.log('Starting transition to square');
       },
       onComplete: () => {
+        console.log('Transition to square completed');
       },
     });
     let previousShape = this.currentShape;
@@ -458,8 +466,10 @@ export class PerspectiveStatus implements OnChanges {
   private getTransitionToDiamondAnimation(timeSeconds: number) {
     let diamondAnimationTimeline = new TimelineMax({
       onStart: () => {
+        console.log('Starting transition to diamond');
       },
       onComplete: () => {
+        console.log('Transition to diamond completed');
       },
     });
     diamondAnimationTimeline.add([
@@ -483,8 +493,10 @@ export class PerspectiveStatus implements OnChanges {
     return TweenMax.to(this.widget, timeSeconds, {
       rotation: degrees,
       onStart: () => {
+        console.log('Starting rotate back and forth animation');
       },
       onComplete: () => {
+        console.log('Rotate back and forth animation completed');
       },
     });
   }
@@ -495,8 +507,10 @@ export class PerspectiveStatus implements OnChanges {
       scaleY: 1,
       ease: Elastic.easeOut.config(1, 0.3),
       onStart: () => {
+        console.log('Starting get to full scale bounce animation');
       },
       onComplete: () => {
+        console.log('Get to full scale bounce animation completed');
       },
     });
   }
@@ -506,8 +520,10 @@ export class PerspectiveStatus implements OnChanges {
       scaleX: 1,
       scaleY: 1,
       onStart: () => {
+        console.log('Starting get to full scale animation');
       },
       onComplete: () => {
+        console.log('Get to full scale animation completed');
       },
     });
   }
@@ -520,8 +536,10 @@ export class PerspectiveStatus implements OnChanges {
       scaleY: 1,
       ease: Elastic.easeOut.config(1, 0.3),
       onStart: () => {
+        console.log('Starting get to full scale complete rotation animation');
       },
       onComplete: () => {
+        console.log('Get to full scale complete rotation animation completed');
       },
     });
   }
