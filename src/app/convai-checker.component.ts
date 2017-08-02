@@ -214,7 +214,7 @@ export class ConvaiChecker implements OnInit, OnDestroy {
       this.apiKey !== null,
       this.serverUrl
     ).finally(() => {
-        console.log('Feedback request done');
+        console.debug('Feedback request done');
         this.statusWidget.hideFeedbackQuestion();
         this.feedbackRequestInProgress = false;
         // TODO: This detectChanges() hack should not be needed here. For some
@@ -272,7 +272,7 @@ export class ConvaiChecker implements OnInit, OnDestroy {
       this.analyzeApiService.checkText(
         text, this.sessionId, this.apiKey !== null, this.serverUrl)
         .finally(() => {
-          console.log('Request done');
+          console.debug('Request done');
           this.statusWidget.setLoading(this.checkInProgress);
           this.mostRecentRequestSubscription = null;
 
