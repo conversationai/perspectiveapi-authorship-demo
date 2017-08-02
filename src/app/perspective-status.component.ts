@@ -432,10 +432,8 @@ export class PerspectiveStatus implements OnChanges {
     let circleAnimationTimeline = new TimelineMax({
       align: 'start',
       onStart: () => {
-        console.debug('Starting transition to circle');
       },
       onComplete: () => {
-        console.debug('Transition to circle completed');
       },
     });
     circleAnimationTimeline.add([
@@ -448,10 +446,8 @@ export class PerspectiveStatus implements OnChanges {
   private getTransitionToSquareAnimation(timeSeconds: number) {
     let squareAnimationTimeline = new TimelineMax({
       onStart: () => {
-        console.debug('Starting transition to square');
       },
       onComplete: () => {
-        console.debug('Transition to square completed');
       },
     });
     let previousShape = this.currentShape;
@@ -465,10 +461,8 @@ export class PerspectiveStatus implements OnChanges {
   private getTransitionToDiamondAnimation(timeSeconds: number) {
     let diamondAnimationTimeline = new TimelineMax({
       onStart: () => {
-        console.debug('Starting transition to diamond');
       },
       onComplete: () => {
-        console.debug('Transition to diamond completed');
       },
     });
     diamondAnimationTimeline.add([
