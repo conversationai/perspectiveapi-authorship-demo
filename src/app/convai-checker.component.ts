@@ -69,6 +69,7 @@ export class ConvaiChecker implements OnInit, OnDestroy {
   // many requests that will be ignored.
   private pendingRequest: number;
   private lastRequestedText: string;
+  private lastPendingRequestedText: string;
   private inputListener: EventListener;
   public initializeErrorMessage: string;
   public analyzeErrorMessage: string|null = null;
@@ -146,11 +147,14 @@ export class ConvaiChecker implements OnInit, OnDestroy {
 
   private _handlePendingCheckRequest(text: string) {
     // Don't make duplicate requests.
-    if (text === this.lastRequestedText) {
+    if (text === this.lastRequestedText ||
+        text === this.lastPendingRequestedText) {
+      console.debug('Duplicate request text ' + text + '; returning');
       return;
     }
 
     // Clear any pending requests since data has changed.
+    console.debug('Clearing this.pendingRequest');
     clearTimeout(this.pendingRequest);
     this.analyzeErrorMessage = null;
 
@@ -164,6 +168,7 @@ export class ConvaiChecker implements OnInit, OnDestroy {
       return;
     }
 
+    this.lastPendingRequestedText = text;
     this.statusWidget.setLoading(true);
 
     // Use window.setTimeout() instead of just setTimeout() because
@@ -171,6 +176,7 @@ export class ConvaiChecker implements OnInit, OnDestroy {
     // a development environment vs a testing environment (the former sees
     // NodeJS.Timer while the latter sees number). Using window.setTimeout
     // makes it consistently type number.
+    console.debug('Updating this.pendingRequest');
     this.pendingRequest = window.setTimeout(() => {
       this._checkText(text);
     }, REQUEST_LIMIT_MS);
@@ -208,7 +214,7 @@ export class ConvaiChecker implements OnInit, OnDestroy {
       this.apiKey !== null,
       this.serverUrl
     ).finally(() => {
-        console.log('Feedback request done');
+        console.debug('Feedback request done');
         this.statusWidget.hideFeedbackQuestion();
         this.feedbackRequestInProgress = false;
         // TODO: This detectChanges() hack should not be needed here. For some
@@ -266,7 +272,7 @@ export class ConvaiChecker implements OnInit, OnDestroy {
       this.analyzeApiService.checkText(
         text, this.sessionId, this.apiKey !== null, this.serverUrl)
         .finally(() => {
-          console.log('Request done');
+          console.debug('Request done');
           this.statusWidget.setLoading(this.checkInProgress);
           this.mostRecentRequestSubscription = null;
 
