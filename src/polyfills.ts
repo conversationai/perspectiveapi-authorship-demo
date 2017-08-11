@@ -55,7 +55,8 @@ import 'core-js/es7/reflect';
  */
 import 'zone.js/dist/zone';  // Included with Angular CLI.
 
-
+/** Hammerjs is required for Angular material components. */
+import 'hammerjs/hammer';
 
 /***************************************************************************************************
  * APPLICATION IMPORTS

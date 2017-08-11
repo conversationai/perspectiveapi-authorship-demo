@@ -19,9 +19,11 @@ import {
   ElementRef,
   EventEmitter,
   Input,
+  OnChanges,
   OnDestroy,
   OnInit,
   Output,
+  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import { Injectable } from '@angular/core';
@@ -40,14 +42,21 @@ import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/finally';
 
+export interface InputEvent {
+  target: HTMLInputElement;
+}
+
 @Component({
   selector: 'convai-checker',
   templateUrl: './convai-checker.component.html',
   styleUrls: ['./convai-checker.component.css'],
   providers: [PerspectiveApiService],
+  // Allows listening to input events outside of this component.
+  host: {
+    '(document:input)': '_handleInputEvent($event)',
+  },
 })
-@Injectable()
-export class ConvaiChecker implements OnInit, OnDestroy {
+export class ConvaiChecker implements OnInit, OnChanges {
 
   @ViewChild(PerspectiveStatus) statusWidget: PerspectiveStatus;
   @Input() apiKey: string|null = null;
@@ -60,7 +69,6 @@ export class ConvaiChecker implements OnInit, OnDestroy {
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() analyzeCommentResponseChanged: EventEmitter<AnalyzeCommentResponse|null> =
     new EventEmitter<AnalyzeCommentResponse|null>();
-  inputElement: HTMLElement;
   analyzeCommentResponse: AnalyzeCommentResponse|null = null;
   private checkInProgress: boolean;
   private mostRecentRequestSubscription: Subscription;
@@ -96,24 +104,11 @@ export class ConvaiChecker implements OnInit, OnDestroy {
   };
 
   ngOnInit() {
-    // Gets the input element to listen on for the demo.
-    //
-    // TODO: when used in an angular context, I'm not sure that
-    // document.getElementById is the right thing to do. Better to provide a
-    // programatic way to get this for inclusion in angular.
-    this.inputElement = document.getElementById(this.inputId);
-
-    this.inputListener = (event: Event) => {
-      this.onTextChanged((event.target as any).value);
-    };
-
-    if (this.inputElement === undefined || this.inputElement === null) {
-      this.initializeErrorMessage = "Error initializing: No input element specified."
-        + " Set inputId=<inputElementId> to use this component.";
+    if (this.inputId === undefined) {
+      this.initializeErrorMessage = "Error initializing: No input element id"
+        + " specified. Set inputId=<inputElementId> to use this component.";
       return;
     }
-
-    this.inputElement.addEventListener('keyup', this.inputListener);
 
     if (this.apiKey !== null) {
       this.analyzeApiService.initGapiClient(this.apiKey);
@@ -125,10 +120,9 @@ export class ConvaiChecker implements OnInit, OnDestroy {
       window.localStorage.setItem(LOCAL_STORAGE_SESSION_ID_KEY, this.sessionId);
     }
   }
-
-  ngOnDestroy() {
-    if (this.inputElement !== null) {
-      this.inputElement.removeEventListener('keyup', this.inputListener);
+  ngOnChanges(changes: SimpleChanges) : void {
+    if (changes['gradientColors'] !== undefined) {
+      console.log(this.gradientColors);
     }
   }
 
@@ -140,9 +134,15 @@ export class ConvaiChecker implements OnInit, OnDestroy {
     this._handlePendingCheckRequest(text);
   }
 
-  // Event callback for the textarea.
-  onTextChanged(text: string) {
-    this._handlePendingCheckRequest(text);
+  // Listens to input events from elements outside the component, and forwards
+  // the ones from the element with the desired input id into our check request
+  // handlers.
+  // TODO(rachelrosen): Consider using a CSS selector for this instead, for
+  // better specificity.
+  private _handleInputEvent(event: InputEvent) {
+    if (event.target.id === this.inputId) {
+      this._handlePendingCheckRequest(event.target.value);
+    }
   }
 
   private _handlePendingCheckRequest(text: string) {
@@ -152,6 +152,9 @@ export class ConvaiChecker implements OnInit, OnDestroy {
       console.debug('Duplicate request text ' + text + '; returning');
       return;
     }
+
+    console.log('Checker colors:');
+    console.log(this.gradientColors);
 
     // Clear any pending requests since data has changed.
     console.debug('Clearing this.pendingRequest');

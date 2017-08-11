@@ -147,6 +147,16 @@ export class PerspectiveStatus implements OnChanges {
         this.getUpdateShapeAnimation(this.score).play();
       }
     }
+
+    if (changes['gradientColors'] !== undefined) {
+      console.log('Gradient colors changed!');
+      console.log(this.gradientColors);
+      this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
+    }
+
+    if (changes['configurationInput'] !== undefined) {
+      this.configuration = this.getConfigurationFromInputString(this.configurationInput);
+    }
   }
 
   private getConfigurationFromInputString(inputString: string): Configuration {

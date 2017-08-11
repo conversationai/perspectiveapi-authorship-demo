@@ -1,0 +1,33 @@
+<div>
+  <div>
+    <md-select class="setting" placeholder="Feedback style" [(ngModel)]="selectedConfiguration">
+      <md-option *ngFor="let configuration of configurations" [value]="configuration">
+        {{ configuration }}
+      </md-option>
+    </md-select>
+  </div>
+
+  <div class="setting">
+    <md-slide-toggle>Use gapi</md-slide-toggle>
+  </div>
+
+  <div class="setting">
+    Gradient colors:
+    <input [(colorPicker)]="colors[0]" [style.background]="colors[0]" class="colorPicker"/>
+    <input [(colorPicker)]="colors[1]" [style.background]="colors[1]" class="colorPicker"/>
+    <input [(colorPicker)]="colors[2]" [style.background]="colors[2]" class="colorPicker"/>
+    <button md-raised-button (click)="resetToDefaultColors()">Reset to default colors</button>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TODO(rachelrosen): Debug why the gradientColors data binding doesn't
+     propogate below when directly binding directly to the "colors" variable. -->
+<convai-checker
+   [inputId]="'checkerTextarea'"
+   [gradientColors]="[colors[0], colors[1], colors[2]]"
+   [configuration]="selectedConfiguration"
+   serverUrl="">
+  Loading...
+</convai-checker>
