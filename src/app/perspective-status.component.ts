@@ -43,6 +43,7 @@ const ConfigurationInput = {
   EXTERNAL: 'external',
 };
 
+// TODO(rachelrosen): Make feedback text customizable.
 const ScoreThreshold = {
   OKAY: 0,
   BORDERLINE: 0.20,
