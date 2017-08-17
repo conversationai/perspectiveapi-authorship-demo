@@ -31,7 +31,7 @@
         <div>
           <div id="noBorderButtonscoreInfo"
                class="widgetText"
-               *ngIf="hasScore && !analyzeErrorMessage"
+               *ngIf="hasScore && !analyzeErrorMessage && shouldShowFeedback(score)"
                [style.fontSize]="fontSize"
                tabindex=0
                role="status"
@@ -59,7 +59,7 @@
       <div class="interactiveElement">
         <div *ngIf="configuration === configurationEnum.EXTERNAL">
           <div id="infoButtonContainer" class="infoButtonContainer">
-            <button *ngIf="hasScore"
+            <button *ngIf="hasScore && shouldShowFeedback(score)"
               id="infoButton"
               class="infoButton"
               role="button"
@@ -74,7 +74,7 @@
 
         <div *ngIf="configuration === configurationEnum.DEMO_SITE">
           <button id="seemWrongButtonDemoConfig"
-               *ngIf="canAcceptFeedback"
+               *ngIf="canAcceptFeedback && shouldShowFeedback(score)"
                role="button"
                class="seemWrongButton purpleButton noBorderButton"
                [style.fontSize]="fontSize"

@@ -1,100 +1,155 @@
 <div>
+  <!-- Feedback thresholds -->
   <div class="setting">
-    <md-select placeholder="Feedback style" [(ngModel)]="demoSettings.configuration">
+    <div>Feedback Threshold</div>
+    <md-slider
+       class="slider"
+       [invert]="true"
+       [min]="0"
+       [max]="100"
+       [step]="1"
+       [disabled]="customizeScoreThresholds"
+       [(ngModel)]="sliderValue"
+       (change)="onSliderValueChange($event)"></md-slider>
+     <div [ngClass]="{'disabled': customizeScoreThresholds}">
+       Show feedback when a comment has a toxicity score of {{sliderScoreThresholds[0]}}-100%.
+     </div>
+
+    <div class="customizeSwitch">
+      <md-slide-toggle [(ngModel)]="customizeScoreThresholds">Customize</md-slide-toggle>
+    </div>
+  </div>
+  <div class="setting customizableSetting" *ngIf="customizeScoreThresholds">
+    <md-input-container [floatPlaceholder]="'always'">
+      <input mdInput [(ngModel)]="scoreThresholds[0]"
+             (input)="scoreThresholds = scoreThresholds.slice()"
+             type="number"
+             placeholder="Min threshold for displaying feedback"/>
+    </md-input-container>
+    <md-input-container [floatPlaceholder]="'always'">
+      <input mdInput [(ngModel)]="scoreThresholds[1]"
+             (input)="scoreThresholds = scoreThresholds.slice()"
+             type="number"
+             placeholder="Threshold for medium toxicity"/>
+    </md-input-container>
+    <md-input-container [floatPlaceholder]="'always'">
+      <input mdInput [(ngModel)]="scoreThresholds[2]"
+             (input)="scoreThresholds = scoreThresholds.slice()"
+             type="number"
+             placeholder="Threshold for high toxicity"/>
+    </md-input-container>
+  </div>
+
+  <!-- Configuration for user suggestions. -->
+  <div class="setting">
+    <md-select placeholder="Correction style"
+               floatPlaceholder="always"
+               [(ngModel)]="configuration">
       <md-option *ngFor="let configuration of configurations" [value]="configuration">
         {{ configuration }}
       </md-option>
     </md-select>
   </div>
 
+  <!-- Feedback message -->
   <div class="setting">
-    Gradient demoSettings.gradientColors:
+    <md-select placeholder="Feedback message"
+               floatPlaceholder="always"
+               [disabled]="useCustomFeedbackText"
+               [(ngModel)]="selectedFeedbackTextScheme">
+      <md-option *ngFor="let feedbackTextScheme of feedbackTextSchemes"
+                 [value]="feedbackTextScheme">
+        {{feedbackTextScheme.name}}
+      </md-option>
+    </md-select>
+    <div class="customizeSwitch">
+      <md-slide-toggle [(ngModel)]="useCustomFeedbackText">Customize</md-slide-toggle>
+    </div>
+  </div>
+
+  <div class="setting customizableSetting" *ngIf="useCustomFeedbackText">
+    <div>
+      <md-input-container class="feedbackText" [floatPlaceholder]="'always'">
+        <input mdInput [(ngModel)]="customFeedbackTextScheme[0]"
+               (input)="customFeedbackTextScheme = customFeedbackTextScheme.slice();"
+               placeholder="Feedback text for a low toxicity"/>
+      </md-input-container>
+    </div>
+
+    <div>
+      <md-input-container class="feedbackText" [floatPlaceholder]="'always'">
+        <input mdInput [(ngModel)]="customFeedbackTextScheme[1]"
+               (input)="customFeedbackTextScheme = customFeedbackTextScheme.slice();"
+               placeholder="Feedback text for a medium toxicity"/>
+      </md-input-container>
+    </div>
+
+    <div>
+      <md-input-container class="feedbackText" [floatPlaceholder]="'always'">
+        <input mdInput [(ngModel)]="customFeedbackTextScheme[2]"
+               (input)="customFeedbackTextScheme = customFeedbackTextScheme.slice();"
+               placeholder="Feedback text for a high toxicity"/>
+      </md-input-container>
+    </div>
+  </div>
+
+  <!-- Color theme -->
+  <div class="setting">
+    <md-select placeholder="Color theme"
+               floatPlaceholder="always"
+               [(ngModel)]="selectedColorScheme"
+               [disabled]="useCustomColorScheme">
+      <md-option *ngFor="let colorScheme of colorSchemes" [value]="colorScheme">
+        {{colorScheme.name}}
+      </md-option>
+    </md-select>
+    <div class="customizeSwitch">
+      <md-slide-toggle [(ngModel)]="useCustomColorScheme">Customize</md-slide-toggle>
+    </div>
+  </div>
+
+  <div class="setting customizableSetting" *ngIf="useCustomColorScheme">
     <input readonly
-           [(colorPicker)]="demoSettings.gradientColors[0]"
-           (colorPickerChange)="demoSettings.gradientColors = demoSettings.gradientColors.slice()"
-           [style.background]="demoSettings.gradientColors[0]"
+           [(colorPicker)]="customColorScheme[0]"
+           (colorPickerChange)="customColorScheme = customColorScheme.slice()"
+           [style.background]="customColorScheme[0]"
            class="colorPicker"/>
     <input readonly
-           [(colorPicker)]="demoSettings.gradientColors[1]"
-           (colorPickerChange)="demoSettings.gradientColors = demoSettings.gradientColors.slice()"
-           [style.background]="demoSettings.gradientColors[1]"
+           [(colorPicker)]="customColorScheme[1]"
+           (colorPickerChange)="customColorScheme = customColorScheme.slice()"
+           [style.background]="customColorScheme[1]"
            class="colorPicker"/>
     <input readonly
-           [(colorPicker)]="demoSettings.gradientColors[2]"
-           (colorPickerChange)="demoSettings.gradientColors = demoSettings.gradientColors.slice()"
-           [style.background]="demoSettings.gradientColors[2]"
+           [(colorPicker)]="customColorScheme[2]"
+           (colorPickerChange)="customColorScheme = customColorScheme.slice()"
+           [style.background]="customColorScheme[2]"
            class="colorPicker"/>
     <button md-raised-button (click)="resetToDefaultColors()">Reset to default colors</button>
   </div>
 
-  <div>
-    <div class="setting">
-      <md-input-container class="feedbackText" [floatPlaceholder]="'always'">
-        <input mdInput [(ngModel)]="demoSettings.feedbackText[0]"
-               (input)="demoSettings.feedbackText = demoSettings.feedbackText.slice();"
-               placeholder="Feedback text for a low toxicity"/>
-      </md-input-container>
-      <md-input-container [floatPlaceholder]="'always'">
-        <input mdInput [(ngModel)]="demoSettings.scoreThresholds[0]"
-               (input)="demoSettings.scoreThresholds = demoSettings.scoreThresholds.slice()"
-               type="number"
-               placeholder="Min threshold for displaying feedback"/>
-      </md-input-container>
-    </div>
 
-    <div class="setting">
-      <md-input-container class="feedbackText" [floatPlaceholder]="'always'">
-        <input mdInput [(ngModel)]="demoSettings.feedbackText[1]"
-               (input)="demoSettings.feedbackText = demoSettings.feedbackText.slice();"
-               placeholder="Feedback text for a medium toxicity"/>
-      </md-input-container>
-      <md-input-container [floatPlaceholder]="'always'">
-        <input mdInput [(ngModel)]="demoSettings.scoreThresholds[1]"
-               (input)="demoSettings.scoreThresholds = demoSettings.scoreThresholds.slice()"
-               type="number"
-               placeholder="Threshold for medium toxicity"/>
-      </md-input-container>
-    </div>
-
-    <div class="setting">
-      <md-input-container class="feedbackText" [floatPlaceholder]="'always'">
-        <input mdInput [(ngModel)]="demoSettings.feedbackText[2]"
-               (input)="demoSettings.feedbackText = demoSettings.feedbackText.slice();"
-               placeholder="Feedback text for a high toxicity"/>
-      </md-input-container>
-      <md-input-container [floatPlaceholder]="'always'">
-        <input mdInput [(ngModel)]="demoSettings.scoreThresholds[2]"
-               (input)="demoSettings.scoreThresholds = demoSettings.scoreThresholds.slice()"
-               type="number"
-               placeholder="Threshold for high toxicity"/>
-      </md-input-container>
-    </div>
-
+  <!-- Other settings -->
+  <div class="setting">
+    <md-slide-toggle [(ngModel)]="showPercentage">Show percentage</md-slide-toggle>
   </div>
 
   <div class="setting">
-    <md-slide-toggle [(ngModel)]="demoSettings.showPercentage">Show percentage</md-slide-toggle>
+    <md-slide-toggle [(ngModel)]="showMoreInfoLink">Show more info link</md-slide-toggle>
   </div>
 
   <div class="setting">
-    <md-slide-toggle [(ngModel)]="demoSettings.showMoreInfoLink">Show more info link</md-slide-toggle>
-  </div>
-
-  <div class="setting">
-    <md-slide-toggle [(ngModel)]="demoSettings.useGapi" (change)="updateApiKey($event)">Use gapi</md-slide-toggle>
+    <md-slide-toggle [(ngModel)]="useGapi" (change)="updateApiKey($event)">Use gapi</md-slide-toggle>
     <md-input-container>
-      <input mdInput [disabled]="!demoSettings.useGapi" [(ngModel)]="demoSettings.apiKey" placeholder="API key"/>
+      <input mdInput [disabled]="!useGapi" [(ngModel)]="apiKey" placeholder="API key"/>
     </md-input-container>
   </div>
 </div>
 
 <div class="divider"></div>
 
-<!-- TODO(rachelrosen): Debug why the gradientColors data binding doesn't
-     propogate below when directly binding directly to the "demoSettings.gradientColors" variable. -->
 <convai-checker
    [inputId]="'checkerTextarea'"
-   [demoSettings]="demoSettings"
+   [demoSettings]="getDemoSettings()"
    serverUrl="">
   Loading...
 </convai-checker>

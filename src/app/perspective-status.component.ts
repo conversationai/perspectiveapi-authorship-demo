@@ -211,6 +211,10 @@ export class PerspectiveStatus implements OnChanges {
         + ' .interactiveElement');
   }
 
+  shouldShowFeedback(score: number) {
+    return score >= this.scoreThresholds[0];
+  }
+
   getFeedbackTextForScore(score: number): string {
     if (score >= this.scoreThresholds[2]) {
       return this.feedbackText[2];

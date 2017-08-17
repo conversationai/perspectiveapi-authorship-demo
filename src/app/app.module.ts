@@ -9,6 +9,7 @@ import {
   MdInputModule,
   MdSelectModule,
   MdSlideToggleModule,
+  MdSliderModule,
 } from '@angular/material';
 import {ColorPickerModule} from 'ngx-color-picker';
 
@@ -34,6 +35,7 @@ import { CustomizableDemoForm } from './customizable-demo-form.component';
     MdInputModule,
     MdSelectModule,
     MdSlideToggleModule,
+    MdSliderModule,
   ],
   providers: [PerspectiveApiService],
   bootstrap: [CustomizableDemoForm]

@@ -15,7 +15,38 @@
   margin-bottom: 20px;
 }
 
+.slider {
+  width: 500px;
+}
+
+.sliderCaption {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.customizeSwitch {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+md-select {
+  margin-top: 20px;
+  width: 500px;
+}
+
 .setting {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.customizableSetting {
+  background-color: #FAFAFA;
+  padding: 20px;
+  margin-left: 20px;
+  margin-bottom: 30px;
+}
+
+.disabled {
+  color: #BDBDBD;
 }

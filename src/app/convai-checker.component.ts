@@ -131,15 +131,11 @@ export class ConvaiChecker implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) : void {
-    if (changes['gradientColors'] !== undefined) {
-      //this.statusWidget.resetLayers();
-    }
     if (changes['demoSettings']) {
       if (this.demoSettings && this.apiKey !== this.demoSettings.apiKey) {
+        console.log('Api key changes detected in demoSettings', changes);
         this.apiKey = this.demoSettings.apiKey;
-        if (this.apiKey) {
-          this.analyzeApiService.initGapiClient(this.apiKey);
-        }
+        this.analyzeApiService.initGapiClient(this.apiKey);
       }
     }
   }
@@ -229,7 +225,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
       text,
       this.sessionId,
       feedback.commentMarkedAsToxic,
-      this.demoSettings.useGapi && this.apiKey !== '' /* makeDirectApiCall */,
+      this.demoSettings.useGapi /* makeDirectApiCall */,
       this.serverUrl
     ).finally(() => {
         console.debug('Feedback request done');
@@ -290,7 +286,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
       this.analyzeApiService.checkText(
           text,
           this.sessionId,
-          this.demoSettings.useGapi && this.apiKey !== '' /* makeDirectApiCall */,
+          this.demoSettings.useGapi /* makeDirectApiCall */,
           this.serverUrl)
         .finally(() => {
           console.debug('Request done');
