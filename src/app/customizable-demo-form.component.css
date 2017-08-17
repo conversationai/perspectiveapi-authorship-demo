@@ -1,5 +1,13 @@
 .colorPicker {
-  display: block;
+  display: inline-block;
+  width: 40px;
+  /* border: 1px solid; */
+  cursor: pointer;
+}
+
+.feedbackText {
+  width: 400px;
+  margin-right: 10px;
 }
 
 .divider {

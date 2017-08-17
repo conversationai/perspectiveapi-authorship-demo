@@ -38,18 +38,19 @@ enum Configuration {
 };
 
 // The keys in ConfigurationInput should match items in the Configuration enum.
-const ConfigurationInput = {
+export const ConfigurationInput = {
   DEMO_SITE: 'default',
   EXTERNAL: 'external',
 };
 
-// TODO(rachelrosen): Make feedback text customizable.
-const ScoreThreshold = {
+export const ScoreThreshold = {
   OKAY: 0,
   BORDERLINE: 0.20,
   UNCIVIL: 0.76,
   MAX: 1,
 };
+
+export const DEFAULT_FEEDBACK_TEXT = 'likely to be perceived as "toxic."';
 
 const FADE_START_LABEL = "fadeStart";
 const SHAPE_MORPH_TIME_SECONDS = 1;
@@ -82,6 +83,18 @@ export class PerspectiveStatus implements OnChanges {
   @Input() feedbackRequestSubmitted: boolean = false;
   @Input() feedbackRequestError: boolean = false;
   @Input() initializeErrorMessage: string;
+  @Input() feedbackText: [string, string, string] = [
+     DEFAULT_FEEDBACK_TEXT,
+     DEFAULT_FEEDBACK_TEXT,
+     DEFAULT_FEEDBACK_TEXT
+  ];
+  @Input() scoreThresholds: [number, number, number] = [
+    ScoreThreshold.OKAY,
+    ScoreThreshold.BORDERLINE,
+    ScoreThreshold.UNCIVIL
+  ];
+  @Input() showPercentage: boolean = true;
+  @Input() showMoreInfoLink: boolean = true;
   @Input() analyzeErrorMessage: string|null = null;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
@@ -150,13 +163,23 @@ export class PerspectiveStatus implements OnChanges {
     }
 
     if (changes['gradientColors'] !== undefined) {
-      console.log('Gradient colors changed!');
-      console.log(this.gradientColors);
+      console.log('Change in gradientColors');
       this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
+      this.getUpdateColorAnimation(0.1).play();
     }
 
     if (changes['configurationInput'] !== undefined) {
       this.configuration = this.getConfigurationFromInputString(this.configurationInput);
+    }
+
+    if (changes['feedbackText']) {
+      console.log('Change in feedbackText');
+    }
+
+    if (changes['scoreThresholds'] !== undefined) {
+      console.log('Change in scoreThresholds');
+      // TODO: Get this working, and make sure this doesn't interrupt existing animation.
+      this.getUpdateShapeAnimation(this.score).play();
     }
   }
 
@@ -178,11 +201,16 @@ export class PerspectiveStatus implements OnChanges {
         + ' .interactiveElement');
   }
 
-  shouldShowMessageForScore(score: number): boolean {
-    if (this.configuration === Configuration.DEMO_SITE) {
-      return true;
+  getFeedbackTextForScore(score: number): string {
+    if (score >= this.scoreThresholds[2]) {
+      return this.feedbackText[2];
+    } else if (score >= this.scoreThresholds[1]) {
+      return this.feedbackText[1];
+    } else if (score >= this.scoreThresholds[0]) {
+      return this.feedbackText[0];
+    } else {
+      return '';
     }
-    return score >= ScoreThreshold.BORDERLINE;
   }
 
   feedbackContainerClicked() {
@@ -233,10 +261,10 @@ export class PerspectiveStatus implements OnChanges {
     updateShapeAnimationTimeline.add(
       this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
 
-    if (score > ScoreThreshold.UNCIVIL) {
+    if (score > this.scoreThresholds[2]) {
       updateShapeAnimationTimeline.add(
         this.getTransitionToDiamondAnimation(.8 * SHAPE_MORPH_TIME_SECONDS));
-    } else if (score > ScoreThreshold.BORDERLINE) {
+    } else if (score > this.scoreThresholds[1]) {
       updateShapeAnimationTimeline.add(
         this.getTransitionToSquareAnimation(SHAPE_MORPH_TIME_SECONDS));
     } else {
@@ -385,6 +413,12 @@ export class PerspectiveStatus implements OnChanges {
     } else {
       return 'High toxicity icon.';
     }
+  }
+
+  private getUpdateColorAnimation(timeSeconds: number) {
+    return TweenMax.to(this.widget, timeSeconds, {
+      backgroundColor: this.interpolateColors(this.score),
+    });
   }
 
   private getShowDetailsAnimation() {

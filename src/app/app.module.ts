@@ -6,6 +6,7 @@ import { HttpModule } from '@angular/http';
 import {
   MdButtonModule,
   MdCheckboxModule,
+  MdInputModule,
   MdSelectModule,
   MdSlideToggleModule,
 } from '@angular/material';
@@ -30,6 +31,7 @@ import { CustomizableDemoForm } from './customizable-demo-form.component';
     HttpModule,
     MdButtonModule,
     MdCheckboxModule,
+    MdInputModule,
     MdSelectModule,
     MdSlideToggleModule,
   ],

@@ -46,6 +46,17 @@ export interface InputEvent {
   target: HTMLInputElement;
 }
 
+export interface DemoSettings {
+  configuration: string;
+  gradientColors: string[];
+  apiKey: string;
+  useGapi: boolean;
+  showPercentage: boolean;
+  showMoreInfoLink: boolean;
+  feedbackText: [string, string, string];
+  scoreThresholds: [number, number, number];
+}
+
 @Component({
   selector: 'convai-checker',
   templateUrl: './convai-checker.component.html',
@@ -57,14 +68,11 @@ export interface InputEvent {
   },
 })
 export class ConvaiChecker implements OnInit, OnChanges {
-
   @ViewChild(PerspectiveStatus) statusWidget: PerspectiveStatus;
-  @Input() apiKey: string|null = null;
   @Input() inputId: string;
   @Input() serverUrl: string;
-  @Input() gradientColors: string[] = ["#25C1F9", "#7C4DFF", "#D400F9"];
   @Input() fontSize: number = 12;
-  @Input() configuration: string;
+  @Input() demoSettings: DemoSettings;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() analyzeCommentResponseChanged: EventEmitter<AnalyzeCommentResponse|null> =
@@ -84,6 +92,9 @@ export class ConvaiChecker implements OnInit, OnChanges {
   public canAcceptFeedback: boolean = false;
   public feedbackRequestInProgress: boolean = false;
   private sessionId: string|null = null;
+  private gradientColors: string[] = ["#25C1F9", "#7C4DFF", "#D400F9"];
+  private apiKey: string = '';
+  private configuration: string;
 
   constructor(
       private elementRef: ElementRef,
@@ -94,9 +105,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
     // covers the case where this component is used as a root level
     // component outside an angular component tree and we cannot get
     // these values from data bindings.
-    this.apiKey = this.elementRef.nativeElement.getAttribute('apiKey');
     this.inputId = this.elementRef.nativeElement.getAttribute('inputId');
-    this.configuration = this.elementRef.nativeElement.getAttribute('configuration');
 
     // Default to '' to use same server as whatever's serving the webapp.
     this.serverUrl =
@@ -110,7 +119,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
       return;
     }
 
-    if (this.apiKey !== null) {
+    if (this.apiKey) {
       this.analyzeApiService.initGapiClient(this.apiKey);
     }
 
@@ -120,9 +129,18 @@ export class ConvaiChecker implements OnInit, OnChanges {
       window.localStorage.setItem(LOCAL_STORAGE_SESSION_ID_KEY, this.sessionId);
     }
   }
+
   ngOnChanges(changes: SimpleChanges) : void {
     if (changes['gradientColors'] !== undefined) {
-      console.log(this.gradientColors);
+      //this.statusWidget.resetLayers();
+    }
+    if (changes['demoSettings']) {
+      if (this.demoSettings && this.apiKey !== this.demoSettings.apiKey) {
+        this.apiKey = this.demoSettings.apiKey;
+        if (this.apiKey) {
+          this.analyzeApiService.initGapiClient(this.apiKey);
+        }
+      }
     }
   }
 
@@ -152,9 +170,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
       console.debug('Duplicate request text ' + text + '; returning');
       return;
     }
-
-    console.log('Checker colors:');
-    console.log(this.gradientColors);
 
     // Clear any pending requests since data has changed.
     console.debug('Clearing this.pendingRequest');
@@ -214,7 +229,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
       text,
       this.sessionId,
       feedback.commentMarkedAsToxic,
-      this.apiKey !== null,
+      this.demoSettings.useGapi && this.apiKey !== '' /* makeDirectApiCall */,
       this.serverUrl
     ).finally(() => {
         console.debug('Feedback request done');
@@ -273,7 +288,10 @@ export class ConvaiChecker implements OnInit, OnChanges {
 
     this.mostRecentRequestSubscription =
       this.analyzeApiService.checkText(
-        text, this.sessionId, this.apiKey !== null, this.serverUrl)
+          text,
+          this.sessionId,
+          this.demoSettings.useGapi && this.apiKey !== '' /* makeDirectApiCall */,
+          this.serverUrl)
         .finally(() => {
           console.debug('Request done');
           this.statusWidget.setLoading(this.checkInProgress);

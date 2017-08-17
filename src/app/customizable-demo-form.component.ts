@@ -11,39 +11,50 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import {
-  ChangeDetectorRef,
   Component,
-  ElementRef,
-  EventEmitter,
-  Input,
-  OnDestroy,
-  OnInit,
-  Output,
-  ViewChild,
 } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
-
-// Import RxJs required methods
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/catch';
-import 'rxjs/add/operator/finally';
+import {MdSlideToggleChange} from '@angular/material';
+import {DemoSettings} from './convai-checker.component';
+import {
+  ConfigurationInput,
+  ScoreThreshold,
+  DEFAULT_FEEDBACK_TEXT
+} from './perspective-status.component';
 
 @Component({
   selector: 'customizable-demo-form',
   templateUrl: './customizable-demo-form.component.html',
   styleUrls: ['./customizable-demo-form.component.css'],
 })
-export class CustomizableDemoForm implements OnInit {
-  configurations = ['default', 'external'];
+export class CustomizableDemoForm {
+  configurations = [ConfigurationInput.DEMO_SITE, ConfigurationInput.EXTERNAL];
   defaultColors = ["#25C1F9", "#7C4DFF", "#D400F9"];
-  selectedConfiguration: string = 'default';
-  @Input() colors = this.defaultColors.slice();
-
-  constructor(private changeDetectorRef: ChangeDetectorRef) {}
-
-  ngOnInit() {}
+  demoSettings: DemoSettings = {
+    scoreThresholds: [
+      ScoreThreshold.OKAY,
+      ScoreThreshold.BORDERLINE,
+      ScoreThreshold.UNCIVIL
+    ],
+    useGapi: false,
+    apiKey: '',
+    feedbackText:  [
+      DEFAULT_FEEDBACK_TEXT,
+      DEFAULT_FEEDBACK_TEXT,
+      DEFAULT_FEEDBACK_TEXT
+    ],
+    showMoreInfoLink: true,
+    showPercentage: true,
+    gradientColors: this.defaultColors.slice(),
+    configuration: ConfigurationInput.DEMO_SITE,
+  }
 
   resetToDefaultColors() {
-    this.colors = this.defaultColors.slice();
+    this.demoSettings.gradientColors = this.defaultColors.slice();
+  }
+
+  updateApiKey(event: MdSlideToggleChange) {
+    if (!event.checked) {
+      this.demoSettings.apiKey = '';
+    }
   }
 }
