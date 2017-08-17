@@ -124,6 +124,10 @@ export class PerspectiveStatus implements OnChanges {
   private interpolateColors: Function;
   public layersAnimating: boolean = false;
   private layerHeightPixels: number;
+  // Animation being used to update the display settings of the demo. This
+  // should not be used for a loading animation.
+  private updateDemoSettingsAnimation: any;
+  private isPlayingUpdateShapeAnimation: boolean;
 
   constructor(private changeDetectorRef: ChangeDetectorRef,
               private elementRef: ElementRef) {
@@ -158,6 +162,8 @@ export class PerspectiveStatus implements OnChanges {
     if (changes['score'] !== undefined) {
       if (!this.isPlayingLoadingAnimation) {
         console.debug('Updating shape from ngOnChanges: ' + this.score);
+        let currentRotation = (this.widget as any)._gsTransform.rotation;
+        console.log('getUpdateShape from score change; Current rotation:', currentRotation);
         this.getUpdateShapeAnimation(this.score).play();
       }
     }
@@ -178,8 +184,12 @@ export class PerspectiveStatus implements OnChanges {
 
     if (changes['scoreThresholds'] !== undefined) {
       console.log('Change in scoreThresholds');
-      // TODO: Get this working, and make sure this doesn't interrupt existing animation.
-      this.getUpdateShapeAnimation(this.score).play();
+      if (this.updateDemoSettingsAnimation) {
+        this.updateDemoSettingsAnimation.kill();
+      }
+
+      this.updateDemoSettingsAnimation = this.getUpdateShapeAnimation(this.score);
+      this.updateDemoSettingsAnimation.play();
     }
   }
 
@@ -254,8 +264,22 @@ export class PerspectiveStatus implements OnChanges {
     this.commentFeedbackSubmitted.emit({commentMarkedAsToxic: commentIsToxic});
   }
 
+  getResetRotationAnimation(): TweenMax {
+    return TweenMax.to(this.widget, 0.1, {
+      rotation: this.currentShape === Shape.DIAMOND ? 45 : 0,
+    });
+
+  }
+
   getUpdateShapeAnimation(score: number): TimelineMax {
-    let updateShapeAnimationTimeline = new TimelineMax({});
+    let updateShapeAnimationTimeline = new TimelineMax({
+      onStart: () => {
+        this.isPlayingUpdateShapeAnimation = true;
+      },
+      onComplete: () => {
+        this.isPlayingUpdateShapeAnimation = false;
+      },
+    });
 
     // Shrink before updating to a new shape.
     updateShapeAnimationTimeline.add(
@@ -265,6 +289,21 @@ export class PerspectiveStatus implements OnChanges {
       updateShapeAnimationTimeline.add(
         this.getTransitionToDiamondAnimation(.8 * SHAPE_MORPH_TIME_SECONDS));
     } else if (score > this.scoreThresholds[1]) {
+      // Square is a special case, since we rotate based on the current degrees
+      // and not to a specific rotation. As a result this can get messed up if
+      // we're in the middle of an existing rotation, so reset the rotation
+      // accordingly before animating to prevent this bug.
+      // Note that this only works if the previous animation gets killed first.
+      // TODO(rachelrosen): Figure out a more general way to prevent this bug
+      // for all cases, not just when customizing the demo. It seems to happen
+      // occasionally in the wild as well.
+      if (this.isPlayingUpdateShapeAnimation) {
+        console.log('Starting updateShapeAnimation to square while in the'
+                    + ' middle of an existing updateShapeAnimation or before'
+                    + ' the previous animation was able to finish; resetting'
+                    + ' rotation state');
+        updateShapeAnimationTimeline.add(this.getResetRotationAnimation());
+      }
       updateShapeAnimationTimeline.add(
         this.getTransitionToSquareAnimation(SHAPE_MORPH_TIME_SECONDS));
     } else {
@@ -491,6 +530,8 @@ export class PerspectiveStatus implements OnChanges {
   private getTransitionToSquareAnimation(timeSeconds: number) {
     let squareAnimationTimeline = new TimelineMax({
       onStart: () => {
+        let currentRotation = (this.widget as any)._gsTransform.rotation;
+        console.log('getTransitionToSquare; Current rotation:', currentRotation);
       },
       onComplete: () => {
       },
@@ -567,6 +608,9 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getToFullScaleCompleteRotationAnimation(timeSeconds: number, fromShape: Shape) {
+    let currentRotation = (this.widget as any)._gsTransform.rotation;
+    console.log('Current rotation:', currentRotation);
+    console.log('From shape:', this.getNameFromShape(fromShape));
     let rotationDegrees = fromShape === Shape.DIAMOND ? 315 : 360;
     return TweenMax.to(this.widget, timeSeconds, {
       rotation: "+=" + rotationDegrees + "_ccw",
