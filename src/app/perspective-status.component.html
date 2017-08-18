@@ -36,7 +36,7 @@
                tabindex=0
                role="status"
                [attr.aria-hidden]="!showScore || isPlayingLoadingAnimation || isPlayingShowOrHideDetailsAnimation">
-            <span *ngIf="showPercentage">{{(score.toFixed(2) * 100).toFixed(0)}}% </span><span>{{getFeedbackTextForScore(score)}} </span><span
+            <span *ngIf="showPercentage" id="percentage">{{(score.toFixed(2) * 100).toFixed(0)}}% </span><span id="feedbackText" [innerHTML]="getFeedbackTextForScore(score)"></span><span
                *ngIf="showMoreInfoLink"
                class="link"
                role="link"
@@ -108,13 +108,14 @@
         <div *ngIf="configuration === configurationEnum.DEMO_SITE">
           <div class="widgetText"
             tabindex=0>
-            <span>Is this comment </span><span
-              class="link"
-              role="link"
-              tabindex=0
-              (keyup.enter)="notifyModelInfoLinkClicked()"
-              (keyup.space)="notifyModelInfoLinkClicked()"
-              (click)="notifyModelInfoLinkClicked()">toxic</span><span>?</span>
+            <span>Is this comment
+              <span class="link"
+                    role="link"
+                    tabindex=0
+                    (keyup.enter)="notifyModelInfoLinkClicked()"
+                    (keyup.space)="notifyModelInfoLinkClicked()"
+                    (click)="notifyModelInfoLinkClicked()">toxic</span>?
+            </span>
           </div>
         </div> <!-- End configuration DEMO_SITE -->
 

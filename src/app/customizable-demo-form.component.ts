@@ -20,6 +20,16 @@ import {
   ScoreThreshold,
   DEFAULT_FEEDBACK_TEXT
 } from './perspective-status.component';
+import emoji from 'node-emoji';
+import twemoji from 'twemoji';
+
+const RAISED_EYEBROW_EMOJI = "🤨 ";
+
+const EMOJIES: [string, string, string] = [
+  twemoji.parse(emoji.emojify(':blush: :smile: :smiley:')),
+  twemoji.parse(emoji.emojify(RAISED_EYEBROW_EMOJI + ' :neutral_face: :thinking_face:')),
+  twemoji.parse(emoji.emojify(':cry: :scream: :angry:')),
+];
 
 const ColorSchemes = {
   DEFAULT: 'default',
@@ -28,7 +38,7 @@ const ColorSchemes = {
 
 const TextFeedbackSchemes = {
   DEFAULT_FEEDBACK_TEXT: DEFAULT_FEEDBACK_TEXT,
-  PLEASE_REVIEW_FEEDBACK_TEXT: 'Please review before posting',
+  PLEASE_REVIEW_FEEDBACK_TEXT: 'Please review before posting.',
   EMOJI: 'Emoji',
 };
 
@@ -99,7 +109,7 @@ export class CustomizableDemoForm {
     },
     {
       name: TextFeedbackSchemes.EMOJI,
-      feedbackTextSet: this.emojiFeedbackTextSet
+      feedbackTextSet: EMOJIES
     }
   ];
   selectedFeedbackTextScheme: FeedbackTextScheme = this.feedbackTextSchemes[0];
@@ -115,6 +125,11 @@ export class CustomizableDemoForm {
   configurations = [ConfigurationInput.DEMO_SITE, ConfigurationInput.EXTERNAL];
   configuration: string = 'default';
 
+  constructor() {
+    console.log('EMOJIES');
+    console.log(EMOJIES);
+  }
+
   resetToDefaultColors() {
     this.customColorScheme = this.defaultColors.slice();
   }
@@ -128,10 +143,9 @@ export class CustomizableDemoForm {
 
   /** The slider is inverted for UI reasons; subtract each value from the max. */
   onSliderValueChange(change: MdSliderChange) {
-    this.sliderScoreThresholds[0] = change.source.max - change.value;
-    this.sliderScoreThresholds[1] = change.source.max - change.value;
-    this.sliderScoreThresholds[2] = Math.floor(
-      (change.source.max + this.sliderScoreThresholds[1]) / 2);
+    this.sliderScoreThresholds[0] = (change.source.max - change.value) / 100;
+    this.sliderScoreThresholds[1] = (change.source.max - change.value) / 100;
+    this.sliderScoreThresholds[2] = (1 + this.sliderScoreThresholds[1]) / 2;
   }
 
   /**

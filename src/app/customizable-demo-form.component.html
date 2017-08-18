@@ -12,7 +12,7 @@
        [(ngModel)]="sliderValue"
        (change)="onSliderValueChange($event)"></md-slider>
      <div [ngClass]="{'disabled': customizeScoreThresholds}">
-       Show feedback when a comment has a toxicity score of {{sliderScoreThresholds[0]}}-100%.
+       Show feedback when a comment has a toxicity score of {{100 - sliderValue}}-100%.
      </div>
 
     <div class="customizeSwitch">

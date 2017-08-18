@@ -21,6 +21,18 @@ body {
   font-family: Roboto, sans-serif;
 }
 
+/**
+ * Used for injected HTML img tags from the twemoji library. This style has to
+ * be global because view encapsulation prevents this from working when defined
+ * in component-specific CSS files.
+ *
+ * TODO(rachelrosen): Consider other options.
+ */
+.emoji {
+  width: 16px;
+  height: 16px;
+}
+
 .demoContainer {
   margin-left:auto;
   margin-right:auto;
