@@ -26,6 +26,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import * as d3 from 'd3-interpolate';
+import twemoji from 'twemoji';
 
 enum Shape {
   CIRCLE,
@@ -171,21 +172,21 @@ export class PerspectiveStatus implements OnChanges {
     }
 
     if (changes['gradientColors'] !== undefined) {
-      console.log('Change in gradientColors');
+      console.debug('Change in gradientColors');
       this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
       this.getUpdateColorAnimation(0.1).play();
     }
 
     if (changes['configurationInput'] !== undefined) {
       this.configuration = this.getConfigurationFromInputString(this.configurationInput);
-    }
-
-    if (changes['feedbackText']) {
-      console.log('Change in feedbackText');
+      this.resetLayers();
     }
 
     if (changes['scoreThresholds'] !== undefined) {
-      console.log('Change in scoreThresholds');
+      console.debug('Change in scoreThresholds');
+      // Kill any prior animations so that the resetting any animation state
+      // will not get overridden by the old animation before the new one can
+      // begin; this can lead to bugs.
       if (this.updateDemoSettingsAnimation) {
         this.updateDemoSettingsAnimation.kill();
       }
@@ -215,6 +216,12 @@ export class PerspectiveStatus implements OnChanges {
 
   shouldShowFeedback(score: number) {
     return score >= this.scoreThresholds[0];
+  }
+
+  // Wrapper for twemoji.parse() to use in data binding. Parses text, replacing
+  // any emojis with <img> tags. All other text remains the same.
+  parseEmojis(text: string) {
+    return twemoji.parse(text);
   }
 
   getFeedbackTextForScore(score: number): string {

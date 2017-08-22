@@ -21,36 +21,60 @@ import {
   DEFAULT_FEEDBACK_TEXT
 } from './perspective-status.component';
 import emoji from 'node-emoji';
-import twemoji from 'twemoji';
 
 const RAISED_EYEBROW_EMOJI = "🤨 ";
 
-const EMOJIES: [string, string, string] = [
-  twemoji.parse(emoji.emojify(':blush: :smile: :smiley:')),
-  twemoji.parse(emoji.emojify(RAISED_EYEBROW_EMOJI + ' :neutral_face: :thinking_face:')),
-  twemoji.parse(emoji.emojify(':cry: :scream: :angry:')),
-];
+/** Describes a configuration for demo colors. */
+interface ColorScheme {
+  name: string,
+  colors: string[],
+};
 
+/** Names of color scheme options for the checker. */
 const ColorSchemes = {
   DEFAULT: 'default',
   TRAFFIC_LIGHT: 'traffic lights',
 };
 
+/** Arrays of colors that can be used as colors in a ColorScheme. */
+const DEFAULT_COLORS = ["#25C1F9", "#7C4DFF", "#D400F9"];
+const TRAFFIC_LIGHT_COLORS = ["#4CAF50", "#FDD835", "#D50000"];
+
+/** Describes a configuration for feedback text to use in the demo. */
+interface FeedbackTextScheme {
+  name: string,
+  feedbackTextSet: [string, string, string],
+};
+
+/** Names of feedback text options for the checker. */
 const TextFeedbackSchemes = {
   DEFAULT_FEEDBACK_TEXT: DEFAULT_FEEDBACK_TEXT,
   PLEASE_REVIEW_FEEDBACK_TEXT: 'Please review before posting.',
   EMOJI: 'Emoji',
 };
 
-interface ColorScheme {
-  name: string,
-  colors: string[],
-};
+/**
+ * Arrays of feedback text strings that can be used as a feedbackTextSet in a
+ * FeedbackTextScheme.
+ */
+const DEFAULT_FEEDBACK_TEST_SET: [string, string, string] = [
+  DEFAULT_FEEDBACK_TEXT,
+  DEFAULT_FEEDBACK_TEXT,
+  DEFAULT_FEEDBACK_TEXT
+];
 
-interface FeedbackTextScheme {
-  name: string,
-  feedbackTextSet: [string, string, string],
-};
+const PLEASE_REVIEW_FEEDBACK_TEST_SET: [string, string, string] = [
+  TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT,
+  TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT,
+  TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT
+];
+
+const EMOJIES: [string, string, string] = [
+  emoji.emojify(':blush: :smile: :smiley:'),
+  emoji.emojify(RAISED_EYEBROW_EMOJI + ' :neutral_face: :thinking_face:'),
+  emoji.emojify(':cry: :scream: :angry:'),
+];
+
 
 @Component({
   selector: 'customizable-demo-form',
@@ -58,80 +82,79 @@ interface FeedbackTextScheme {
   styleUrls: ['./customizable-demo-form.component.css'],
 })
 export class CustomizableDemoForm {
-  // Color scheme
-  defaultColors = ["#25C1F9", "#7C4DFF", "#D400F9"];
-  trafficLightColors = ["#4CAF50", "#FDD835", "#D50000"];
-
+  /** Color scheme options. */
   colorSchemes: ColorScheme[] = [
-    {name: ColorSchemes.DEFAULT, colors: this.defaultColors},
-    {name: ColorSchemes.TRAFFIC_LIGHT, colors: this.trafficLightColors},
+    {name: ColorSchemes.DEFAULT, colors: DEFAULT_COLORS},
+    {name: ColorSchemes.TRAFFIC_LIGHT, colors: TRAFFIC_LIGHT_COLORS},
   ];
+  // Color scheme selected from the dropdown menu.
   selectedColorScheme: ColorScheme = this.colorSchemes[0];
   useCustomColorScheme = false;
-  customColorScheme = this.defaultColors.slice();
+  // Color scheme selected with the color pickers.
+  customColorScheme = DEFAULT_COLORS.slice();
 
-  // Score thresholds
-  customizeScoreThresholds = false;
-  sliderValue: number = 100 - (ScoreThreshold.BORDERLINE * 100);
-  scoreThresholds: [number, number, number] = [
-    ScoreThreshold.OKAY,
-    ScoreThreshold.BORDERLINE,
-    ScoreThreshold.UNCIVIL
-  ];
+  /** Score threshold options. */
+  // Value of the slider; note that the slider is inverted for stylistic
+  // reasons, so when using this value take 100 - sliderValue.
+  sliderValue: number = (1 - ScoreThreshold.BORDERLINE) * 100;
+  // Score thresholds determined from the slider value.
   sliderScoreThresholds: [number, number, number] = [
     ScoreThreshold.BORDERLINE,
     ScoreThreshold.BORDERLINE,
     ScoreThreshold.UNCIVIL
   ];
+  // Custom score thresholds.
+  scoreThresholds: [number, number, number] = [
+    ScoreThreshold.OKAY,
+    ScoreThreshold.BORDERLINE,
+    ScoreThreshold.UNCIVIL
+  ];
+  customizeScoreThresholds = false;
 
-  // Feedback text.
-  defaultFeedbackTextSet: [string, string, string] = [
-    DEFAULT_FEEDBACK_TEXT,
-    DEFAULT_FEEDBACK_TEXT,
-    DEFAULT_FEEDBACK_TEXT
-  ];
-  pleaseReviewFeedbackTextSet: [string, string, string] = [
-    TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT,
-    TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT,
-    TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT
-  ];
-  emojiFeedbackTextSet: [string, string, string] = [
-    "😊", "😐", "😱"
-  ];
+  /** Feedback text options. */
   feedbackTextSchemes: FeedbackTextScheme[] = [
     {
       name: TextFeedbackSchemes.DEFAULT_FEEDBACK_TEXT,
-      feedbackTextSet: this.defaultFeedbackTextSet
+      feedbackTextSet: DEFAULT_FEEDBACK_TEST_SET
     },
     {
       name: TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT,
-      feedbackTextSet: this.pleaseReviewFeedbackTextSet,
+      feedbackTextSet: PLEASE_REVIEW_FEEDBACK_TEST_SET,
     },
     {
       name: TextFeedbackSchemes.EMOJI,
       feedbackTextSet: EMOJIES
     }
   ];
+  // FeedbackTextScheme selected from the dropdown menu.
   selectedFeedbackTextScheme: FeedbackTextScheme = this.feedbackTextSchemes[0];
-  customFeedbackTextScheme: [string, string, string] = this.defaultFeedbackTextSet;
+  // Custom FeedbackTextScheme specified by user input.
+  customFeedbackTextScheme: [string, string, string] = DEFAULT_FEEDBACK_TEST_SET;
   useCustomFeedbackText = false;
 
-  // Other settings.
-  useGapi: boolean = false;
-  apiKey: string = '';
-  showPercentage = true;
-  showMoreInfoLink = true;
+  /** Configuration (correction UI) options. */
 
+  // Configuration options for the checker that determine the style of the UI
+  // for submitting corrections for bad scores.
   configurations = [ConfigurationInput.DEMO_SITE, ConfigurationInput.EXTERNAL];
+  // Configuration selected from the dropdown menu.
   configuration: string = 'default';
 
-  constructor() {
-    console.log('EMOJIES');
-    console.log(EMOJIES);
-  }
+  /** Other settings. */
 
+  // Whether to use gapi to make direct API calls instead of going through the
+  // server. Requires an API key.
+  useGapi: boolean = false;
+  // API key to use when making gapi calls.
+  apiKey: string = '';
+  // Whether to show the percentage next to the feedback text.
+  showPercentage = true;
+  // Whether to show a "more info" link next to the feedback text.
+  showMoreInfoLink = true;
+
+  /** Resets the custom color scheme UI to use the default color scheme. */
   resetToDefaultColors() {
-    this.customColorScheme = this.defaultColors.slice();
+    this.customColorScheme = DEFAULT_COLORS.slice();
   }
 
   /** Clears the API key field when the "Use gapi" option is toggled off. */
@@ -141,7 +164,18 @@ export class CustomizableDemoForm {
     }
   }
 
-  /** The slider is inverted for UI reasons; subtract each value from the max. */
+  /**
+   * Updates the score thresholds from the slider value.
+   * When using the slider, the first two thresholds should be the same, as the
+   * minimum score to show feedback is also the threshold for medium toxicity
+   * (by default that there is no desired feedback text for low toxicity). The
+   * threshold for high toxicity is the average of the threshold for medium
+   * toxicity and the max toxicity score.
+   *
+   * Note that the slider is inverted for UI reasons, which is why each value
+   * is subtracted from the max slider value. Values are also divided by 100 to
+   * fall between 0 and 1.
+   */
   onSliderValueChange(change: MdSliderChange) {
     this.sliderScoreThresholds[0] = (change.source.max - change.value) / 100;
     this.sliderScoreThresholds[1] = (change.source.max - change.value) / 100;

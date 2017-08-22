@@ -132,7 +132,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges) : void {
     if (changes['demoSettings']) {
       if (this.demoSettings && this.apiKey !== this.demoSettings.apiKey) {
-        console.log('Api key changes detected in demoSettings', changes);
+        console.debug('Api key changes detected in demoSettings');
         this.apiKey = this.demoSettings.apiKey;
         this.analyzeApiService.initGapiClient(this.apiKey);
       }

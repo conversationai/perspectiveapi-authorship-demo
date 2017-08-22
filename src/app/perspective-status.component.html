@@ -36,7 +36,7 @@
                tabindex=0
                role="status"
                [attr.aria-hidden]="!showScore || isPlayingLoadingAnimation || isPlayingShowOrHideDetailsAnimation">
-            <span *ngIf="showPercentage" id="percentage">{{(score.toFixed(2) * 100).toFixed(0)}}% </span><span id="feedbackText" [innerHTML]="getFeedbackTextForScore(score)"></span><span
+            <span *ngIf="showPercentage" id="percentage">{{(score.toFixed(2) * 100).toFixed(0)}}% </span><span id="feedbackText" [innerHTML]="parseEmojis(getFeedbackTextForScore(score))"></span><span
                *ngIf="showMoreInfoLink"
                class="link"
                role="link"

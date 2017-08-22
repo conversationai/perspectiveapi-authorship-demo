@@ -46,6 +46,7 @@
 
 #feedbackText {
   margin-right: 4px;
+  display: flex;
 }
 
 .widgetText a {
