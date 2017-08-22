@@ -901,7 +901,7 @@ describe('Convai checker test', () => {
     setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
   }));
 
-  it('Should handle manual check', async(() => {
+  xit('Should handle manual check', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerTestComponentExternalConfig);
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
