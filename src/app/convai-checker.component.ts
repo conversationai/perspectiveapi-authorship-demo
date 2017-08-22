@@ -99,7 +99,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
   constructor(
       private elementRef: ElementRef,
       private analyzeApiService: PerspectiveApiService,
-      private changeDetectorRef: ChangeDetectorRef
   ) {
     // Extracts attribute fields from the element declaration. This
     // covers the case where this component is used as a root level
@@ -231,11 +230,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
         console.debug('Feedback request done');
         this.statusWidget.hideFeedbackQuestion();
         this.feedbackRequestInProgress = false;
-        // TODO: This detectChanges() hack should not be needed here. For some
-        // reason the data binding does not get triggered after we return from
-        // an API call using gapi instead of the server, despite the same
-        // interface. Investigate this further.
-        this.changeDetectorRef.detectChanges();
       })
       .subscribe(
         (response: SuggestCommentScoreResponse) => {
@@ -292,10 +286,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
           console.debug('Request done');
           this.statusWidget.setLoading(this.checkInProgress);
           this.mostRecentRequestSubscription = null;
-
-          // This is needed in the event that checkText() gets called from
-          // within an animation callback that is not supported by zone.js.
-          this.changeDetectorRef.detectChanges();
         })
         .subscribe(
           (response: AnalyzeCommentResponse) => {

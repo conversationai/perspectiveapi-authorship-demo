@@ -20,6 +20,7 @@ import {
   EventEmitter,
   Injectable,
   Input,
+  NgZone,
   OnChanges,
   Output,
   SimpleChanges,
@@ -129,8 +130,9 @@ export class PerspectiveStatus implements OnChanges {
   private updateDemoSettingsAnimation: any;
   private isPlayingUpdateShapeAnimation: boolean;
 
-  constructor(private changeDetectorRef: ChangeDetectorRef,
-              private elementRef: ElementRef) {
+  // Inject ngZone so that we can call ngZone.run() to re-enter the angular
+  // zone inside gsap animation callbacks.
+  constructor(private ngZone: NgZone, private elementRef: ElementRef) {
   }
 
   ngOnInit() {
@@ -367,42 +369,47 @@ export class PerspectiveStatus implements OnChanges {
         paused:true,
         ease: Power3.easeInOut,
         onStart: () => {
-          console.debug('Starting timeline');
-          this.isPlayingLoadingAnimation = true;
-          this.changeDetectorRef.detectChanges();
+          this.ngZone.run(() => {
+            console.debug('Starting timeline');
+            this.isPlayingLoadingAnimation = true;
+          });
         },
         onComplete: () => {
-          console.debug('Completing timeline');
-          this.changeDetectorRef.detectChanges();
-          console.debug('Updating shape from animation complete');
-          if (this.isLoading) {
-            console.debug('Restarting loading');
-            loadingTimeline.seek(FADE_START_LABEL);
-          } else {
-            console.debug('Loading complete');
-            console.debug('hasScore:', this.hasScore);
-            let updateScoreCompletedTimeline = new TimelineMax({
-              paused:true,
-              onStart: () => {
-                console.debug('Score change animation start');
-              },
-              onComplete: () => {
-                this.scoreChangeAnimationCompleted.emit();
-              }
-            });
-            let scoreCompletedAnimations: Animation[] = [];
-            scoreCompletedAnimations.push(this.getUpdateShapeAnimation(this.score));
-            if (this.showScore) {
+          this.ngZone.run(() => {
+            console.debug('Completing timeline');
+            console.debug('Updating shape from animation complete');
+            if (this.isLoading) {
+              console.debug('Restarting loading');
+              loadingTimeline.seek(FADE_START_LABEL);
+            } else {
+              console.debug('Loading complete');
+              console.debug('hasScore:', this.hasScore);
+              let updateScoreCompletedTimeline = new TimelineMax({
+                paused:true,
+                onStart: () => {
+                  console.debug('Score change animation start');
+                },
+                onComplete: () => {
+                  this.ngZone.run(() => {
+                    this.scoreChangeAnimationCompleted.emit();
+                  });
+                }
+              });
+              let scoreCompletedAnimations: Animation[] = [];
               scoreCompletedAnimations.push(
-                this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, false, 0));
-            }
-            updateScoreCompletedTimeline.add(scoreCompletedAnimations);
-            updateScoreCompletedTimeline.play();
+                this.getUpdateShapeAnimation(this.score));
+              if (this.showScore) {
+                scoreCompletedAnimations.push(
+                  this.getFadeDetailsAnimation(
+                    FADE_DETAILS_TIME_SECONDS, false, 0));
+              }
+              updateScoreCompletedTimeline.add(scoreCompletedAnimations);
+              updateScoreCompletedTimeline.play();
 
-            this.isPlayingLoadingAnimation = false;
-            this.changeDetectorRef.detectChanges();
-            loadingTimeline.clear();
-          }
+              this.isPlayingLoadingAnimation = false;
+              loadingTimeline.clear();
+            }
+          });
         },
       });
       let startAnimationsTimeline = new TimelineMax({
@@ -468,14 +475,16 @@ export class PerspectiveStatus implements OnChanges {
     let timeline = new TimelineMax({
       paused:true,
       onStart: () => {
-        this.isPlayingShowOrHideDetailsAnimation = true;
-        this.changeDetectorRef.detectChanges();
-        this.widget.blur();
+        this.ngZone.run(() => {
+          this.isPlayingShowOrHideDetailsAnimation = true;
+          this.widget.blur();
+        });
       },
       onComplete: () => {
-        this.showScore = true;
-        this.isPlayingShowOrHideDetailsAnimation = false;
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          this.showScore = true;
+          this.isPlayingShowOrHideDetailsAnimation = false;
+        });
       },
     });
     let staggerAmount = 0;
@@ -493,14 +502,16 @@ export class PerspectiveStatus implements OnChanges {
     let timeline = new TimelineMax({
       paused:true,
       onStart: () => {
-        this.isPlayingShowOrHideDetailsAnimation = true;
-        this.changeDetectorRef.detectChanges();
-        this.widget.blur();
+        this.ngZone.run(() => {
+          this.isPlayingShowOrHideDetailsAnimation = true;
+          this.widget.blur();
+        });
       },
       onComplete: () => {
-        this.showScore = false;
-        this.isPlayingShowOrHideDetailsAnimation = false;
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          this.showScore = false;
+          this.isPlayingShowOrHideDetailsAnimation = false;
+        });
       },
     });
     timeline.add([
@@ -635,18 +646,20 @@ export class PerspectiveStatus implements OnChanges {
 
     let timeline = new TimelineMax({
       onStart: () => {
-        console.debug('Transitioning from layer ' + this.currentLayerIndex
-                      + ' to layer ' + endLayerIndex);
-        this.layersAnimating = true;
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          console.debug('Transitioning from layer ' + this.currentLayerIndex
+                        + ' to layer ' + endLayerIndex);
+          this.layersAnimating = true;
+        });
       },
       onComplete: () => {
-        this.layersAnimating = false;
-        this.currentLayerIndex = endLayerIndex;
-        console.debug('Finished transitioning to layer ' + this.currentLayerIndex);
-        this.showingMoreInfo = this.currentLayerIndex === 1;
-        this.updateLayerElementContainers();
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          this.layersAnimating = false;
+          this.currentLayerIndex = endLayerIndex;
+          console.debug('Finished transitioning to layer ' + this.currentLayerIndex);
+          this.showingMoreInfo = this.currentLayerIndex === 1;
+          this.updateLayerElementContainers();
+        });
       },
     });
 
@@ -753,15 +766,17 @@ export class PerspectiveStatus implements OnChanges {
                                   layerIndex: number) {
     let timeline = new TimelineMax({
       onStart: () => {
-        console.debug('Calling getFadeDetails animation, fadeOut=' + hide
-                      + ' and current layer index = ' + this.currentLayerIndex);
-        this.isPlayingShowOrHideDetailsAnimation = true;
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          console.debug('Calling getFadeDetails animation, fadeOut=' + hide
+                        + ' and current layer index = ' + this.currentLayerIndex);
+          this.isPlayingShowOrHideDetailsAnimation = true;
+        });
       },
       onComplete: () => {
-        console.debug('Fade details animation complete');
-        this.isPlayingShowOrHideDetailsAnimation = false;
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          console.debug('Fade details animation complete');
+          this.isPlayingShowOrHideDetailsAnimation = false;
+        });
       },
     });
     let interactiveLayerControlsContainer =
