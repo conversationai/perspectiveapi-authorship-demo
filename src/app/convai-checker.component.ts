@@ -57,6 +57,21 @@ export interface DemoSettings {
   scoreThresholds: [number, number, number];
 }
 
+const DEFAULT_DEMO_SETTINGS = {
+  configuration: 'demo',
+  gradientColors: ["#25C1F9", "#7C4DFF", "#D400F9"],
+  apiKey: '',
+  useGapi: false,
+  showPercentage: true,
+  showMoreInfoLink: true,
+  feedbackText: [
+    'Unlikely to be perceived as toxic',
+    'Unsure if this will be perceived as toxic',
+    'Likely to be perceived as toxic'
+  ] as [string, string, string],
+  scoreThresholds: [0, 0.4, 0.7] as [number, number, number]
+};
+
 @Component({
   selector: 'convai-checker',
   templateUrl: './convai-checker.component.html',
@@ -72,7 +87,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   @Input() inputId: string;
   @Input() serverUrl: string;
   @Input() fontSize: number = 12;
-  @Input() demoSettings: DemoSettings;
+  @Input() demoSettings: DemoSettings = DEFAULT_DEMO_SETTINGS;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() analyzeCommentResponseChanged: EventEmitter<AnalyzeCommentResponse|null> =
