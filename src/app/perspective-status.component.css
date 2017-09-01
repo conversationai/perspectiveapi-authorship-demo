@@ -37,6 +37,16 @@
   font-size: 12px;
   line-height: 16px;
   letter-spacing: 0.05em;
+  display: flex;
+}
+
+#percentage {
+  margin-right: 4px;
+}
+
+#feedbackText {
+  margin-right: 4px;
+  display: flex;
 }
 
 .widgetText a {

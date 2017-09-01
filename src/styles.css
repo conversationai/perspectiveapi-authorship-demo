@@ -14,9 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
+
 body {
   background: #CCC;
   font-family: Roboto, sans-serif;
+}
+
+/**
+ * Used for injected HTML img tags from the twemoji library. This style has to
+ * be global because view encapsulation prevents this from working when defined
+ * in component-specific CSS files.
+ *
+ * TODO(rachelrosen): Consider other options.
+ */
+.emoji {
+  width: 16px;
+  height: 16px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .demoContainer {

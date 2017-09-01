@@ -26,6 +26,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import * as d3 from 'd3-interpolate';
+import twemoji from 'twemoji';
 
 enum Shape {
   CIRCLE,
@@ -39,17 +40,19 @@ enum Configuration {
 };
 
 // The keys in ConfigurationInput should match items in the Configuration enum.
-const ConfigurationInput = {
+export const ConfigurationInput = {
   DEMO_SITE: 'default',
   EXTERNAL: 'external',
 };
 
-const ScoreThreshold = {
+export const ScoreThreshold = {
   OKAY: 0,
   BORDERLINE: 0.20,
   UNCIVIL: 0.76,
   MAX: 1,
 };
+
+export const DEFAULT_FEEDBACK_TEXT = 'likely to be perceived as "toxic."';
 
 const FADE_START_LABEL = "fadeStart";
 const SHAPE_MORPH_TIME_SECONDS = 1;
@@ -82,6 +85,18 @@ export class PerspectiveStatus implements OnChanges {
   @Input() feedbackRequestSubmitted: boolean = false;
   @Input() feedbackRequestError: boolean = false;
   @Input() initializeErrorMessage: string;
+  @Input() feedbackText: [string, string, string] = [
+     DEFAULT_FEEDBACK_TEXT,
+     DEFAULT_FEEDBACK_TEXT,
+     DEFAULT_FEEDBACK_TEXT
+  ];
+  @Input() scoreThresholds: [number, number, number] = [
+    ScoreThreshold.OKAY,
+    ScoreThreshold.BORDERLINE,
+    ScoreThreshold.UNCIVIL
+  ];
+  @Input() showPercentage: boolean = true;
+  @Input() showMoreInfoLink: boolean = true;
   @Input() analyzeErrorMessage: string|null = null;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
@@ -111,6 +126,10 @@ export class PerspectiveStatus implements OnChanges {
   private interpolateColors: Function;
   public layersAnimating: boolean = false;
   private layerHeightPixels: number;
+  // Animation being used to update the display settings of the demo. This
+  // should not be used for a loading animation.
+  private updateDemoSettingsAnimation: any;
+  private isPlayingUpdateShapeAnimation: boolean;
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
@@ -146,8 +165,34 @@ export class PerspectiveStatus implements OnChanges {
     if (changes['score'] !== undefined) {
       if (!this.isPlayingLoadingAnimation) {
         console.debug('Updating shape from ngOnChanges: ' + this.score);
+        let currentRotation = (this.widget as any)._gsTransform.rotation;
+        console.log('getUpdateShape from score change; Current rotation:', currentRotation);
         this.getUpdateShapeAnimation(this.score).play();
       }
+    }
+
+    if (changes['gradientColors'] !== undefined) {
+      console.debug('Change in gradientColors');
+      this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
+      this.getUpdateColorAnimation(0.1).play();
+    }
+
+    if (changes['configurationInput'] !== undefined) {
+      this.configuration = this.getConfigurationFromInputString(this.configurationInput);
+      this.resetLayers();
+    }
+
+    if (changes['scoreThresholds'] !== undefined) {
+      console.debug('Change in scoreThresholds');
+      // Kill any prior animations so that the resetting any animation state
+      // will not get overridden by the old animation before the new one can
+      // begin; this can lead to bugs.
+      if (this.updateDemoSettingsAnimation) {
+        this.updateDemoSettingsAnimation.kill();
+      }
+
+      this.updateDemoSettingsAnimation = this.getUpdateShapeAnimation(this.score);
+      this.updateDemoSettingsAnimation.play();
     }
   }
 
@@ -169,11 +214,26 @@ export class PerspectiveStatus implements OnChanges {
         + ' .interactiveElement');
   }
 
-  shouldShowMessageForScore(score: number): boolean {
-    if (this.configuration === Configuration.DEMO_SITE) {
-      return true;
+  shouldShowFeedback(score: number) {
+    return score >= this.scoreThresholds[0];
+  }
+
+  // Wrapper for twemoji.parse() to use in data binding. Parses text, replacing
+  // any emojis with <img> tags. All other text remains the same.
+  parseEmojis(text: string) {
+    return twemoji.parse(text);
+  }
+
+  getFeedbackTextForScore(score: number): string {
+    if (score >= this.scoreThresholds[2]) {
+      return this.feedbackText[2];
+    } else if (score >= this.scoreThresholds[1]) {
+      return this.feedbackText[1];
+    } else if (score >= this.scoreThresholds[0]) {
+      return this.feedbackText[0];
+    } else {
+      return '';
     }
-    return score >= ScoreThreshold.BORDERLINE;
   }
 
   feedbackContainerClicked() {
@@ -217,17 +277,46 @@ export class PerspectiveStatus implements OnChanges {
     this.commentFeedbackSubmitted.emit({commentMarkedAsToxic: commentIsToxic});
   }
 
+  getResetRotationAnimation(): TweenMax {
+    return TweenMax.to(this.widget, 0.1, {
+      rotation: this.currentShape === Shape.DIAMOND ? 45 : 0,
+    });
+
+  }
+
   getUpdateShapeAnimation(score: number): TimelineMax {
-    let updateShapeAnimationTimeline = new TimelineMax({});
+    let updateShapeAnimationTimeline = new TimelineMax({
+      onStart: () => {
+        this.isPlayingUpdateShapeAnimation = true;
+      },
+      onComplete: () => {
+        this.isPlayingUpdateShapeAnimation = false;
+      },
+    });
 
     // Shrink before updating to a new shape.
     updateShapeAnimationTimeline.add(
       this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
 
-    if (score > ScoreThreshold.UNCIVIL) {
+    if (score > this.scoreThresholds[2]) {
       updateShapeAnimationTimeline.add(
         this.getTransitionToDiamondAnimation(.8 * SHAPE_MORPH_TIME_SECONDS));
-    } else if (score > ScoreThreshold.BORDERLINE) {
+    } else if (score > this.scoreThresholds[1]) {
+      // Square is a special case, since we rotate based on the current degrees
+      // and not to a specific rotation. As a result this can get messed up if
+      // we're in the middle of an existing rotation, so reset the rotation
+      // accordingly before animating to prevent this bug.
+      // Note that this only works if the previous animation gets killed first.
+      // TODO(rachelrosen): Figure out a more general way to prevent this bug
+      // for all cases, not just when customizing the demo. It seems to happen
+      // occasionally in the wild as well.
+      if (this.isPlayingUpdateShapeAnimation) {
+        console.log('Starting updateShapeAnimation to square while in the'
+                    + ' middle of an existing updateShapeAnimation or before'
+                    + ' the previous animation was able to finish; resetting'
+                    + ' rotation state');
+        updateShapeAnimationTimeline.add(this.getResetRotationAnimation());
+      }
       updateShapeAnimationTimeline.add(
         this.getTransitionToSquareAnimation(SHAPE_MORPH_TIME_SECONDS));
     } else {
@@ -383,6 +472,12 @@ export class PerspectiveStatus implements OnChanges {
     }
   }
 
+  private getUpdateColorAnimation(timeSeconds: number) {
+    return TweenMax.to(this.widget, timeSeconds, {
+      backgroundColor: this.interpolateColors(this.score),
+    });
+  }
+
   private getShowDetailsAnimation() {
     let timeline = new TimelineMax({
       paused:true,
@@ -457,6 +552,8 @@ export class PerspectiveStatus implements OnChanges {
   private getTransitionToSquareAnimation(timeSeconds: number) {
     let squareAnimationTimeline = new TimelineMax({
       onStart: () => {
+        let currentRotation = (this.widget as any)._gsTransform.rotation;
+        console.log('getTransitionToSquare; Current rotation:', currentRotation);
       },
       onComplete: () => {
       },
@@ -533,6 +630,9 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getToFullScaleCompleteRotationAnimation(timeSeconds: number, fromShape: Shape) {
+    let currentRotation = (this.widget as any)._gsTransform.rotation;
+    console.log('Current rotation:', currentRotation);
+    console.log('From shape:', this.getNameFromShape(fromShape));
     let rotationDegrees = fromShape === Shape.DIAMOND ? 315 : 360;
     return TweenMax.to(this.widget, timeSeconds, {
       rotation: "+=" + rotationDegrees + "_ccw",
