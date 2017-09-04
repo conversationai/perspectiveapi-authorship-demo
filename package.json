@@ -10,7 +10,7 @@
     "setup": "mkdir -p build/config/ && rsync --ignore-existing config/server_config.template.json build/config/server_config.json",
     "build": "npm run build:prod",
     "build:dev": "npm run setup && ng build",
-    "build:prod": "npm run setup && ng build --prod",
+    "build:prod": "npm run setup && ng build --env=prod",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
@@ -38,10 +38,10 @@
     "node-emoji": "^1.8.1",
     "rxjs": "^5.1.0",
     "twemoji": "^2.5.0",
-    "zone.js": "0.8.5"
+    "zone.js": "^0.8.5"
   },
   "devDependencies": {
-    "@angular/cli": "1.0.0",
+    "@angular/cli": "^1.0.0",
     "@angular/compiler-cli": "^4.0.0",
     "@types/d3-interpolate": "^1.1.5",
     "@types/gapi": "^0.0.31",
