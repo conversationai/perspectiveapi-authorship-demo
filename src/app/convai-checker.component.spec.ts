@@ -39,7 +39,6 @@ import { ConvaiChecker, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-che
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import 'gsap';
-import twemoji from 'twemoji';
 
 @Component({
   selector: 'my-comp',
