@@ -643,7 +643,7 @@ describe('Convai checker test', () => {
       fixture.debugElement.query(By.css('#checker'));
 
     // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea, checker);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   });
 
   it('Should update UI for sending score feedback, demo config ', (done: Function) => {
@@ -724,7 +724,7 @@ describe('Convai checker test', () => {
       fixture.debugElement.query(By.css('#checker'));
 
     // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea, checker);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   });
 
   it('Should not make suggest score request after text has been cleared, external config',
