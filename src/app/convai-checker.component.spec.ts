@@ -247,7 +247,7 @@ let getMockCheckerResponse = function(token: string): AnalyzeCommentResponse {
 }
 
 let setTextAndFireInputEvent = function(text: string,
-    textArea: HTMLTextAreaElement, checkerDebugElement: any): void {
+    textArea: HTMLTextAreaElement, checkerDebugElement: DebugElement): void {
   textArea.value = text;
   textArea.dispatchEvent(new Event('input', {
     'bubbles': true,
