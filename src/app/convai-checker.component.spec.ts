@@ -15,6 +15,7 @@ limitations under the License.
 */
 import {
   Component,
+  DebugElement,
   OnInit,
   ViewChild
 } from '@angular/core';
@@ -33,18 +34,21 @@ import {
   ResponseOptions,
   XHRBackend
 } from '@angular/http';
+import { By } from '@angular/platform-browser';
 import { PerspectiveStatus, CommentFeedback } from './perspective-status.component';
-import { ConvaiChecker } from './convai-checker.component';
+import { ConvaiChecker, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import 'gsap';
+import twemoji from 'twemoji';
 
 @Component({
   selector: 'my-comp',
   template: `
         <convai-checker
+           id="checker"
            [inputId]="checkerInputId"
-           [configuration]="configuration"
+           [demoSettings]="demoSettings"
            [serverUrl]="serverUrl">
           Loading...
         </convai-checker>
@@ -57,8 +61,9 @@ class ConvaiCheckerTestComponentExternalConfig implements OnInit {
   textArea: HTMLTextAreaElement;
   checkerInputId: string = 'checkerTextarea';
   serverUrl: string = 'test-url';
-  configuration: string = 'external'
+  demoSettings = getCopyOfDefaultDemoSettings();
   constructor() {
+    this.demoSettings.configuration = 'external';
   }
 
   ngOnInit() {
@@ -70,8 +75,9 @@ class ConvaiCheckerTestComponentExternalConfig implements OnInit {
   selector: 'my-comp',
   template: `
         <convai-checker
+           id="checker"
            [inputId]="checkerInputId"
-           [configuration]="default"
+           [demoSettings]="demoSettings"
            [serverUrl]="serverUrl">
           Loading...
         </convai-checker>
@@ -84,7 +90,9 @@ class ConvaiCheckerTestComponentDemoConfig implements OnInit {
   textArea: HTMLTextAreaElement;
   checkerInputId: string = 'checkerTextarea';
   serverUrl: string = 'test-url';
+  demoSettings = getCopyOfDefaultDemoSettings();
   constructor() {
+    this.demoSettings.configuration = 'default';
   }
 
   ngOnInit() {
@@ -96,6 +104,7 @@ class ConvaiCheckerTestComponentDemoConfig implements OnInit {
   selector: 'checker-no-input-id-specified',
   template: `
         <convai-checker
+           id="checker"
            [serverUrl]="serverUrl">
           Loading...
         </convai-checker>
@@ -113,6 +122,7 @@ class ConvaiCheckerNoInputTestComponent {
   selector: 'checker-no-configuration-specified',
   template: `
         <convai-checker
+           id="checker"
            [inputId]="checkerInputId"
            [serverUrl]="serverUrl">
           Loading...
@@ -134,9 +144,10 @@ class ConvaiCheckerNoConfigurationTestComponent {
   selector: 'checker-invalid-configuration-specified',
   template: `
         <convai-checker
+           id="checker"
            [inputId]="checkerInputId"
            [serverUrl]="serverUrl"
-           [configuration]="varNameOfInvalidConfiguration">
+           [demoSettings]="demoSettings">
           Loading...
         </convai-checker>
         <textarea id="checkerTextarea"
@@ -148,8 +159,9 @@ class ConvaiCheckerInvalidConfigurationTestComponent {
   textArea: HTMLTextAreaElement;
   checkerInputId: string = 'checkerTextarea';
   serverUrl: string = 'test-url';
-  varNameOfInvalidConfiguration = 'foo';
+  demoSettings = getCopyOfDefaultDemoSettings();
   constructor() {
+    this.demoSettings.configuration = 'foo';
   }
 }
 
@@ -157,6 +169,7 @@ class ConvaiCheckerInvalidConfigurationTestComponent {
   selector: 'checker-invalid-input-id-specified',
   template: `
         <convai-checker
+           id="checker"
            [inputId]="thereIsNoTextAreaWithThisId"
            [serverUrl]="serverUrl">
           Loading...
@@ -175,8 +188,9 @@ class ConvaiCheckerInvalidInputTestComponent {
   selector: 'my-comp-attribute-input',
   template: `
         <convai-checker
+           id="checker"
            inputId="checkerTextarea"
-           configuration="external"
+           [demoSettings]="demoSettings"
            serverUrl="test-url">
           Loading...
         </convai-checker>
@@ -187,7 +201,9 @@ class ConvaiCheckerInvalidInputTestComponent {
 })
 class ConvaiCheckerWithAttributeInputTestComponent {
   @ViewChild(ConvaiChecker) checker: ConvaiChecker;
+  demoSettings = getCopyOfDefaultDemoSettings();
   constructor() {
+    this.demoSettings.configuration = 'external';
   }
 }
 
@@ -230,12 +246,13 @@ let getMockCheckerResponse = function(token: string): AnalyzeCommentResponse {
   }
 }
 
-let setTextAndFireKeyUpEvent = function(
-    text: string, textArea: HTMLTextAreaElement): void {
+let setTextAndFireInputEvent = function(text: string,
+    textArea: HTMLTextAreaElement, checkerElement: any): void {
   textArea.value = text;
-  let event = document.createEvent('HTMLEvents');
-  event.initEvent('keyup', false, true);
-  textArea.dispatchEvent(event);
+  textArea.dispatchEvent(new Event('input', {
+    'bubbles': true,
+    'cancelable': false
+  }));
 }
 
 // TODO(rachelrosen): Add variations of this for accessibility testing (enter
@@ -245,6 +262,23 @@ let sendClickEvent = function(item: HTMLElement): void {
   let event = document.createEvent('HTMLEvents');
   event.initEvent('click', false, true);
   item.dispatchEvent(event);
+}
+
+function getCopyOfDefaultDemoSettings(): DemoSettings {
+  return {
+    configuration: DEFAULT_DEMO_SETTINGS.configuration,
+    gradientColors: DEFAULT_DEMO_SETTINGS.gradientColors,
+    apiKey: DEFAULT_DEMO_SETTINGS.apiKey,
+    useGapi: DEFAULT_DEMO_SETTINGS.useGapi,
+    showPercentage: DEFAULT_DEMO_SETTINGS.showPercentage,
+    showMoreInfoLink: DEFAULT_DEMO_SETTINGS.showMoreInfoLink,
+    feedbackText: DEFAULT_DEMO_SETTINGS.feedbackText.slice() as [string, string, string],
+    scoreThresholds: DEFAULT_DEMO_SETTINGS.scoreThresholds.slice() as [number, number, number]
+  };
+}
+
+function getNormalizedInnerText(element: HTMLElement) {
+  return element.innerText.replace(/\s+/g, ' ');
 }
 
 describe('Convai checker test', () => {
@@ -298,8 +332,7 @@ describe('Convai checker test', () => {
 
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
-    expect(checker.inputElement).toEqual(document.getElementById('checkerTextarea'));
-    expect(checker.configuration).toEqual('external');
+    expect(checker.demoSettings.configuration).toEqual('external');
   });
 
   it('should recognize inputs from angular input bindings', () => {
@@ -310,8 +343,7 @@ describe('Convai checker test', () => {
 
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
-    expect(checker.inputElement).toEqual(document.getElementById('checkerTextarea'));
-    expect(checker.configuration).toEqual('external');
+    expect(checker.demoSettings.configuration).toEqual('external');
   });
 
   it('should default to demo configuration when no configuration is specified', () => {
@@ -322,7 +354,6 @@ describe('Convai checker test', () => {
 
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
-    expect(checker.inputElement).toEqual(document.getElementById('checkerTextarea'));
     expect(checker.statusWidget.configuration).toEqual(
       checker.statusWidget.configurationEnum.DEMO_SITE);
 
@@ -336,7 +367,6 @@ describe('Convai checker test', () => {
 
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
-    expect(checker.inputElement).toEqual(document.getElementById('checkerTextarea'));
     expect(checker.statusWidget.configuration).toEqual(
       checker.statusWidget.configurationEnum.DEMO_SITE);
 
@@ -395,8 +425,13 @@ describe('Convai checker test', () => {
        });
     });
 
-    // Send a keyup event to trigger the service call.
-    setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryText, textArea, fixture.debugElement);
   }));
 
   it('Should handle analyze comment error, external config', async(() => {
@@ -425,8 +460,13 @@ describe('Convai checker test', () => {
        });
     });
 
-    // Send a keyup event to trigger the service call.
-    setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryText, textArea, checkerElement);
   }));
 
   it('Should handle analyze comment error, demo config', async(() => {
@@ -455,8 +495,13 @@ describe('Convai checker test', () => {
        });
     });
 
-    // Send a keyup event to trigger the service call.
-    setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryText, textArea, checkerElement);
   }));
 
   it('Should not make duplicate analyze comment requests', async(() => {
@@ -464,9 +509,14 @@ describe('Convai checker test', () => {
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
     let queryText = 'Your mother was a hamster';
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
 
     let mockResponse: AnalyzeCommentResponse =
       getMockCheckerResponse(checker.getToken(queryText));
+
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
 
     let requestCounter = 0;
 
@@ -499,14 +549,14 @@ describe('Convai checker test', () => {
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
 
-         // Send another keyup event. This should not trigger another analyze
+         // Send another input event. This should not trigger another analyze
          // call since the text is the same.
-         setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
+         setTextAndFireInputEvent(queryText, textArea, checkerElement);
        });
     });
 
-    // Send a keyup event to trigger the service call.
-    setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryText, textArea, checkerElement);
   }));
 
   it('Should update UI for sending score feedback, external config', (done: Function) => {
@@ -586,8 +636,14 @@ describe('Convai checker test', () => {
        });
     });
 
-    // Sends a keyup event to trigger the check call.
-    setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryText, textArea, checker);
   });
 
   it('Should update UI for sending score feedback, demo config ', (done: Function) => {
@@ -662,8 +718,13 @@ describe('Convai checker test', () => {
        });
     });
 
-    // Sends a keyup event to trigger the check call.
-    setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryText, textArea, checker);
   });
 
   it('Should not make suggest score request after text has been cleared, external config',
@@ -676,7 +737,10 @@ describe('Convai checker test', () => {
     let suggestScoreUrl = 'test-url/suggest_score';
     let lastRequestUrl = '';
     let queryText = 'Your mother was a hamster';
-    let textArea = fixture.componentInstance.textArea;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
 
     // Sets up mock responses for the check and suggest score calls.
     let mockResponses: { [key: string]: Object } = {};
@@ -724,7 +788,8 @@ describe('Convai checker test', () => {
                expect(fixture.nativeElement.textContent).toContain('Seem wrong?');
 
                // Clear the text box.
-               setTextAndFireKeyUpEvent('', textArea);
+               setTextAndFireInputEvent('', textArea, checkerElement);
+
              });
            } else if (textArea.value === '') {
              // 3) Try to leave feedback for the empty string.
@@ -751,7 +816,7 @@ describe('Convai checker test', () => {
      });
 
     // 1) Fire an event to trigger a check request.
-    setTextAndFireKeyUpEvent(queryText, textArea);
+    setTextAndFireInputEvent(queryText, textArea, checkerElement);
   }));
 
   it('Should not make suggest score request after text has been cleared, demo config',
@@ -764,7 +829,10 @@ describe('Convai checker test', () => {
     let suggestScoreUrl = 'test-url/suggest_score';
     let lastRequestUrl = '';
     let queryText = 'Your mother was a hamster';
-    let textArea = fixture.componentInstance.textArea;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
 
     // Sets up mock responses for the check and suggest score calls.
     let mockResponses: { [key: string]: Object } = {};
@@ -808,7 +876,7 @@ describe('Convai checker test', () => {
 
                // 2) After the first check completes, send an event that the
                // textbox has been cleared.
-               setTextAndFireKeyUpEvent('', textArea);
+               setTextAndFireInputEvent('', textArea, checkerElement);
              });
            } else if (textArea.value === '') {
              fixture.detectChanges();
@@ -828,7 +896,7 @@ describe('Convai checker test', () => {
      });
 
     // 1) Fire an event to trigger a check request.
-    setTextAndFireKeyUpEvent(queryText, textArea);
+    setTextAndFireInputEvent(queryText, textArea, checkerElement);
   }));
 
   it('Handles feedback error', ((done: Function) => {
@@ -897,8 +965,13 @@ describe('Convai checker test', () => {
        });
      });
 
-    // Sends a keyup event to trigger the check call.
-    setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryText, textArea, checkerElement);
   }));
 
   xit('Should handle manual check', async(() => {
@@ -985,7 +1058,7 @@ describe('Convai checker test', () => {
 
        fixture.whenStable().then(() => {
          fixture.detectChanges();
-         let layer1TextElements = ['% likely to be perceived as "toxic"'];
+         let layer1TextElements = ['perceived as toxic'];
          let layer1VisibleElementIds = ['infoButton'];
          let layer1HiddenElementIds = ['cancelButton'];
          let layer2TextElements = [
@@ -999,7 +1072,7 @@ describe('Convai checker test', () => {
          if (lastRequestUrl === checkUrl) {
            // Step 2: Check layer 1 UI.
            for (let text of layer1TextElements) {
-             expect(fixture.nativeElement.textContent).toContain(text);
+             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
            }
            for (let elementId of layer1VisibleElementIds) {
              expect(getIsElementWithIdVisible(elementId)).toBe(true);
@@ -1016,7 +1089,7 @@ describe('Convai checker test', () => {
              // Step 4: Check layer 2 UI.
              fixture.detectChanges();
              for (let text of layer2TextElements) {
-               expect(fixture.nativeElement.textContent).toContain(text);
+               expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
              }
 
              for (let elementId of layer2VisibleElementIds) {
@@ -1034,7 +1107,7 @@ describe('Convai checker test', () => {
              fixture.whenStable().then(() => {
                fixture.detectChanges();
                for (let text of layer1TextElements) {
-                 expect(fixture.nativeElement.textContent).toContain(text);
+                 expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
                }
                for (let elementId of layer1VisibleElementIds) {
                  expect(getIsElementWithIdVisible(elementId)).toBe(true);
@@ -1069,7 +1142,7 @@ describe('Convai checker test', () => {
            layer2TextElements.splice(layer2TextElements.indexOf('Seem wrong?'), 1);
            layer2TextElements.push('Thanks for the feedback!');
            for (let text of layer2TextElements) {
-             expect(fixture.nativeElement.textContent).toContain(text);
+             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
            }
            for (let elementId of layer2VisibleElementIds) {
              expect(getIsElementWithIdVisible(elementId)).toBe(true);
@@ -1086,7 +1159,7 @@ describe('Convai checker test', () => {
            fixture.whenStable().then(() => {
              fixture.detectChanges();
              for (let text of layer1TextElements) {
-               expect(fixture.nativeElement.textContent).toContain(text);
+               expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
              }
              for (let elementId of layer1VisibleElementIds) {
                expect(getIsElementWithIdVisible(elementId)).toBe(true);
@@ -1101,8 +1174,13 @@ describe('Convai checker test', () => {
        });
      });
 
-    // Step 1: Send a keyup event to trigger the check call.
-    setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
+
+    // Step 1: Send an input event to trigger the check call.
+    setTextAndFireInputEvent(queryText, textArea, checkerElement);
   });
 
   it('Should handle UI layer changes, demo config', (done: Function) => {
@@ -1149,15 +1227,15 @@ describe('Convai checker test', () => {
        fixture.whenStable().then(() => {
          fixture.detectChanges();
          let layer1TextElements = [
-           '% likely to be perceived as "toxic"',
-           'Seem wrong?'
+           'perceived as toxic',
+           'SEEM WRONG?'
          ];
          let layer1VisibleElementIds = ['layer1', 'seemWrongButtonDemoConfig'];
          let layer1HiddenElementIds = ['layer2', 'layer3'];
          let layer2TextElements = [
            'Is this comment toxic?',
-           'Yes',
-           'No',
+           'YES',
+           'NO',
          ];
          let layer2VisibleElementIds = ['layer2', 'yesButtonDemoConfig', 'noButtonDemoConfig'];
          let layer2HiddenElementIds = ['layer1', 'layer3'];
@@ -1170,7 +1248,7 @@ describe('Convai checker test', () => {
          if (lastRequestUrl === checkUrl) {
            // Step 2: Check layer 1 UI.
            for (let text of layer1TextElements) {
-             expect(fixture.nativeElement.textContent).toContain(text);
+             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
            }
            for (let elementId of layer1VisibleElementIds) {
              expect(getIsElementWithIdVisible(elementId)).toBe(true);
@@ -1187,7 +1265,7 @@ describe('Convai checker test', () => {
              // Step 4: Check layer 2 UI.
              fixture.detectChanges();
              for (let text of layer2TextElements) {
-               expect(fixture.nativeElement.textContent).toContain(text);
+               expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
              }
              for (let elementId of layer2VisibleElementIds) {
                expect(getIsElementWithIdVisible(elementId)).toBe(true);
@@ -1205,7 +1283,7 @@ describe('Convai checker test', () => {
          if (lastRequestUrl === suggestScoreUrl) {
            // Step 6: Check layer 3 UI.
            for (let text of layer3TextElements) {
-             expect(fixture.nativeElement.textContent).toContain(text);
+             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
            }
            for (let elementId of layer3VisibleElementIds) {
              expect(getIsElementWithIdVisible(elementId)).toBe(true);
@@ -1221,7 +1299,7 @@ describe('Convai checker test', () => {
            fixture.whenStable().then(() => {
              fixture.detectChanges();
              for (let text of layer1TextElements) {
-               expect(fixture.nativeElement.textContent).toContain(text);
+               expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
              }
              for (let elementId of layer1VisibleElementIds) {
                expect(getIsElementWithIdVisible(elementId)).toBe(true);
@@ -1236,7 +1314,13 @@ describe('Convai checker test', () => {
          }
        });
     });
-    // Step 1: Send a keyup event to trigger the check call.
-    setTextAndFireKeyUpEvent(queryText, fixture.componentInstance.textArea);
+
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+    let checkerElement =
+      fixture.debugElement.query(By.css('#checker'));
+
+    // Step 1: Send an input event to trigger the check call.
+    setTextAndFireInputEvent(queryText, textArea, checkerElement);
   });
 });
