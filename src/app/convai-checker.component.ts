@@ -167,7 +167,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   // handlers.
   // TODO(rachelrosen): Consider using a CSS selector for this instead, for
   // better specificity.
-  _handleInputEvent(event: InputEvent) {
+  private _handleInputEvent(event: InputEvent) {
     if (event.target.id === this.inputId) {
       this._handlePendingCheckRequest(event.target.value);
     }

@@ -247,7 +247,7 @@ let getMockCheckerResponse = function(token: string): AnalyzeCommentResponse {
 }
 
 let setTextAndFireInputEvent = function(text: string,
-    textArea: HTMLTextAreaElement, checkerElement: any): void {
+    textArea: HTMLTextAreaElement, checkerDebugElement: any): void {
   textArea.value = text;
   textArea.dispatchEvent(new Event('input', {
     'bubbles': true,
@@ -427,11 +427,11 @@ describe('Convai checker test', () => {
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea, fixture.debugElement);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   }));
 
   it('Should handle analyze comment error, external config', async(() => {
@@ -462,11 +462,11 @@ describe('Convai checker test', () => {
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea, checkerElement);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   }));
 
   it('Should handle analyze comment error, demo config', async(() => {
@@ -497,11 +497,11 @@ describe('Convai checker test', () => {
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea, checkerElement);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   }));
 
   it('Should not make duplicate analyze comment requests', async(() => {
@@ -509,7 +509,7 @@ describe('Convai checker test', () => {
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
     let queryText = 'Your mother was a hamster';
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     let mockResponse: AnalyzeCommentResponse =
@@ -551,12 +551,12 @@ describe('Convai checker test', () => {
 
          // Send another input event. This should not trigger another analyze
          // call since the text is the same.
-         setTextAndFireInputEvent(queryText, textArea, checkerElement);
+         setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
        });
     });
 
     // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea, checkerElement);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   }));
 
   it('Should update UI for sending score feedback, external config', (done: Function) => {
@@ -639,7 +639,7 @@ describe('Convai checker test', () => {
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
 
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     // Send an input event to trigger the service call.
@@ -720,7 +720,7 @@ describe('Convai checker test', () => {
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     // Send an input event to trigger the service call.
@@ -739,7 +739,7 @@ describe('Convai checker test', () => {
     let queryText = 'Your mother was a hamster';
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     // Sets up mock responses for the check and suggest score calls.
@@ -788,7 +788,7 @@ describe('Convai checker test', () => {
                expect(fixture.nativeElement.textContent).toContain('Seem wrong?');
 
                // Clear the text box.
-               setTextAndFireInputEvent('', textArea, checkerElement);
+               setTextAndFireInputEvent('', textArea, checkerDebugElement);
 
              });
            } else if (textArea.value === '') {
@@ -816,7 +816,7 @@ describe('Convai checker test', () => {
      });
 
     // 1) Fire an event to trigger a check request.
-    setTextAndFireInputEvent(queryText, textArea, checkerElement);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   }));
 
   it('Should not make suggest score request after text has been cleared, demo config',
@@ -831,7 +831,7 @@ describe('Convai checker test', () => {
     let queryText = 'Your mother was a hamster';
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     // Sets up mock responses for the check and suggest score calls.
@@ -876,7 +876,7 @@ describe('Convai checker test', () => {
 
                // 2) After the first check completes, send an event that the
                // textbox has been cleared.
-               setTextAndFireInputEvent('', textArea, checkerElement);
+               setTextAndFireInputEvent('', textArea, checkerDebugElement);
              });
            } else if (textArea.value === '') {
              fixture.detectChanges();
@@ -896,7 +896,7 @@ describe('Convai checker test', () => {
      });
 
     // 1) Fire an event to trigger a check request.
-    setTextAndFireInputEvent(queryText, textArea, checkerElement);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   }));
 
   it('Handles feedback error', ((done: Function) => {
@@ -967,11 +967,11 @@ describe('Convai checker test', () => {
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea, checkerElement);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   }));
 
   xit('Should handle manual check', async(() => {
@@ -1176,11 +1176,11 @@ describe('Convai checker test', () => {
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     // Step 1: Send an input event to trigger the check call.
-    setTextAndFireInputEvent(queryText, textArea, checkerElement);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   });
 
   it('Should handle UI layer changes, demo config', (done: Function) => {
@@ -1317,10 +1317,10 @@ describe('Convai checker test', () => {
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
-    let checkerElement =
+    let checkerDebugElement =
       fixture.debugElement.query(By.css('#checker'));
 
     // Step 1: Send an input event to trigger the check call.
-    setTextAndFireInputEvent(queryText, textArea, checkerElement);
+    setTextAndFireInputEvent(queryText, textArea, checkerDebugElement);
   });
 });
