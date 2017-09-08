@@ -3,6 +3,7 @@ node_js:
   - "lts/*"
 before_install:
   - npm install -g yarn typings typescript ts-node mocha protractor angular-cli karma-cli
+  - npm run setup
 install:
   - yarn install
 script:
