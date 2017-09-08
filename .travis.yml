@@ -1,18 +1,14 @@
-dist: trusty
 language: node_js
 node_js:
   - "lts/*"
-addons:
-  chrome: stable
 cache:
   yarn: true
   directories:
     - "node_modules"
 before_install:
   - export CHROME_BIN=/usr/bin/google-chrome
-  - export DISPLAY=:99.0 
+  - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-  - google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222 http://localhost &
   - npm install -g yarn typings typescript ts-node mocha protractor angular-cli karma-cli
   - npm run setup
 install:
