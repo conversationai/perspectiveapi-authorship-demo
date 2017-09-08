@@ -19,9 +19,11 @@ import {
   ElementRef,
   EventEmitter,
   Input,
+  OnChanges,
   OnDestroy,
   OnInit,
   Output,
+  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import { Injectable } from '@angular/core';
@@ -40,27 +42,56 @@ import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/finally';
 
+export interface InputEvent {
+  target: HTMLInputElement;
+}
+
+export interface DemoSettings {
+  configuration: string;
+  gradientColors: string[];
+  apiKey: string;
+  useGapi: boolean;
+  showPercentage: boolean;
+  showMoreInfoLink: boolean;
+  feedbackText: [string, string, string];
+  scoreThresholds: [number, number, number];
+}
+
+const DEFAULT_DEMO_SETTINGS = {
+  configuration: 'demo',
+  gradientColors: ["#25C1F9", "#7C4DFF", "#D400F9"],
+  apiKey: '',
+  useGapi: false,
+  showPercentage: true,
+  showMoreInfoLink: true,
+  feedbackText: [
+    'Unlikely to be perceived as toxic',
+    'Unsure if this will be perceived as toxic',
+    'Likely to be perceived as toxic'
+  ] as [string, string, string],
+  scoreThresholds: [0, 0.4, 0.7] as [number, number, number]
+};
+
 @Component({
   selector: 'convai-checker',
   templateUrl: './convai-checker.component.html',
   styleUrls: ['./convai-checker.component.css'],
   providers: [PerspectiveApiService],
+  // Allows listening to input events outside of this component.
+  host: {
+    '(document:input)': '_handleInputEvent($event)',
+  },
 })
-@Injectable()
-export class ConvaiChecker implements OnInit, OnDestroy {
-
+export class ConvaiChecker implements OnInit, OnChanges {
   @ViewChild(PerspectiveStatus) statusWidget: PerspectiveStatus;
-  @Input() apiKey: string|null = null;
   @Input() inputId: string;
   @Input() serverUrl: string;
-  @Input() gradientColors: string[] = ["#25C1F9", "#7C4DFF", "#D400F9"];
   @Input() fontSize: number = 12;
-  @Input() configuration: string;
+  @Input() demoSettings: DemoSettings = DEFAULT_DEMO_SETTINGS;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() analyzeCommentResponseChanged: EventEmitter<AnalyzeCommentResponse|null> =
     new EventEmitter<AnalyzeCommentResponse|null>();
-  inputElement: HTMLElement;
   analyzeCommentResponse: AnalyzeCommentResponse|null = null;
   private checkInProgress: boolean;
   private mostRecentRequestSubscription: Subscription;
@@ -76,19 +107,19 @@ export class ConvaiChecker implements OnInit, OnDestroy {
   public canAcceptFeedback: boolean = false;
   public feedbackRequestInProgress: boolean = false;
   private sessionId: string|null = null;
+  private gradientColors: string[] = ["#25C1F9", "#7C4DFF", "#D400F9"];
+  private apiKey: string = '';
+  private configuration: string;
 
   constructor(
       private elementRef: ElementRef,
       private analyzeApiService: PerspectiveApiService,
-      private changeDetectorRef: ChangeDetectorRef
   ) {
     // Extracts attribute fields from the element declaration. This
     // covers the case where this component is used as a root level
     // component outside an angular component tree and we cannot get
     // these values from data bindings.
-    this.apiKey = this.elementRef.nativeElement.getAttribute('apiKey');
     this.inputId = this.elementRef.nativeElement.getAttribute('inputId');
-    this.configuration = this.elementRef.nativeElement.getAttribute('configuration');
 
     // Default to '' to use same server as whatever's serving the webapp.
     this.serverUrl =
@@ -96,26 +127,13 @@ export class ConvaiChecker implements OnInit, OnDestroy {
   };
 
   ngOnInit() {
-    // Gets the input element to listen on for the demo.
-    //
-    // TODO: when used in an angular context, I'm not sure that
-    // document.getElementById is the right thing to do. Better to provide a
-    // programatic way to get this for inclusion in angular.
-    this.inputElement = document.getElementById(this.inputId);
-
-    this.inputListener = (event: Event) => {
-      this.onTextChanged((event.target as any).value);
-    };
-
-    if (this.inputElement === undefined || this.inputElement === null) {
-      this.initializeErrorMessage = "Error initializing: No input element specified."
-        + " Set inputId=<inputElementId> to use this component.";
+    if (this.inputId === undefined) {
+      this.initializeErrorMessage = "Error initializing: No input element id"
+        + " specified. Set inputId=<inputElementId> to use this component.";
       return;
     }
 
-    this.inputElement.addEventListener('keyup', this.inputListener);
-
-    if (this.apiKey !== null) {
+    if (this.apiKey) {
       this.analyzeApiService.initGapiClient(this.apiKey);
     }
 
@@ -126,9 +144,13 @@ export class ConvaiChecker implements OnInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
-    if (this.inputElement !== null) {
-      this.inputElement.removeEventListener('keyup', this.inputListener);
+  ngOnChanges(changes: SimpleChanges) : void {
+    if (changes['demoSettings']) {
+      if (this.demoSettings && this.apiKey !== this.demoSettings.apiKey) {
+        console.debug('Api key changes detected in demoSettings');
+        this.apiKey = this.demoSettings.apiKey;
+        this.analyzeApiService.initGapiClient(this.apiKey);
+      }
     }
   }
 
@@ -140,9 +162,15 @@ export class ConvaiChecker implements OnInit, OnDestroy {
     this._handlePendingCheckRequest(text);
   }
 
-  // Event callback for the textarea.
-  onTextChanged(text: string) {
-    this._handlePendingCheckRequest(text);
+  // Listens to input events from elements outside the component, and forwards
+  // the ones from the element with the desired input id into our check request
+  // handlers.
+  // TODO(rachelrosen): Consider using a CSS selector for this instead, for
+  // better specificity.
+  private _handleInputEvent(event: InputEvent) {
+    if (event.target.id === this.inputId) {
+      this._handlePendingCheckRequest(event.target.value);
+    }
   }
 
   private _handlePendingCheckRequest(text: string) {
@@ -211,17 +239,12 @@ export class ConvaiChecker implements OnInit, OnDestroy {
       text,
       this.sessionId,
       feedback.commentMarkedAsToxic,
-      this.apiKey !== null,
+      this.demoSettings.useGapi /* makeDirectApiCall */,
       this.serverUrl
     ).finally(() => {
         console.debug('Feedback request done');
         this.statusWidget.hideFeedbackQuestion();
         this.feedbackRequestInProgress = false;
-        // TODO: This detectChanges() hack should not be needed here. For some
-        // reason the data binding does not get triggered after we return from
-        // an API call using gapi instead of the server, despite the same
-        // interface. Investigate this further.
-        this.changeDetectorRef.detectChanges();
       })
       .subscribe(
         (response: SuggestCommentScoreResponse) => {
@@ -270,15 +293,14 @@ export class ConvaiChecker implements OnInit, OnDestroy {
 
     this.mostRecentRequestSubscription =
       this.analyzeApiService.checkText(
-        text, this.sessionId, this.apiKey !== null, this.serverUrl)
+          text,
+          this.sessionId,
+          this.demoSettings.useGapi /* makeDirectApiCall */,
+          this.serverUrl)
         .finally(() => {
           console.debug('Request done');
           this.statusWidget.setLoading(this.checkInProgress);
           this.mostRecentRequestSubscription = null;
-
-          // This is needed in the event that checkText() gets called from
-          // within an animation callback that is not supported by zone.js.
-          this.changeDetectorRef.detectChanges();
         })
         .subscribe(
           (response: AnalyzeCommentResponse) => {

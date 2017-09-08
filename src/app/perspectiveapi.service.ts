@@ -42,6 +42,9 @@ export class PerspectiveApiService {
   constructor(private http: Http) {}
 
   initGapiClient(apiKey: string) {
+    if (!apiKey) {
+      this.gapiClient = null;
+    }
     gapi.load('client', () => {
       console.log('Starting to load gapi client');
       (gapi.client as any).init({

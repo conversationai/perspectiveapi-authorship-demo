@@ -20,11 +20,13 @@ import {
   EventEmitter,
   Injectable,
   Input,
+  NgZone,
   OnChanges,
   Output,
   SimpleChanges,
 } from '@angular/core';
 import * as d3 from 'd3-interpolate';
+import twemoji from 'twemoji';
 
 enum Shape {
   CIRCLE,
@@ -38,17 +40,19 @@ enum Configuration {
 };
 
 // The keys in ConfigurationInput should match items in the Configuration enum.
-const ConfigurationInput = {
+export const ConfigurationInput = {
   DEMO_SITE: 'default',
   EXTERNAL: 'external',
 };
 
-const ScoreThreshold = {
+export const ScoreThreshold = {
   OKAY: 0,
   BORDERLINE: 0.20,
   UNCIVIL: 0.76,
   MAX: 1,
 };
+
+export const DEFAULT_FEEDBACK_TEXT = 'likely to be perceived as "toxic."';
 
 const FADE_START_LABEL = "fadeStart";
 const SHAPE_MORPH_TIME_SECONDS = 1;
@@ -81,6 +85,18 @@ export class PerspectiveStatus implements OnChanges {
   @Input() feedbackRequestSubmitted: boolean = false;
   @Input() feedbackRequestError: boolean = false;
   @Input() initializeErrorMessage: string;
+  @Input() feedbackText: [string, string, string] = [
+     DEFAULT_FEEDBACK_TEXT,
+     DEFAULT_FEEDBACK_TEXT,
+     DEFAULT_FEEDBACK_TEXT
+  ];
+  @Input() scoreThresholds: [number, number, number] = [
+    ScoreThreshold.OKAY,
+    ScoreThreshold.BORDERLINE,
+    ScoreThreshold.UNCIVIL
+  ];
+  @Input() showPercentage: boolean = true;
+  @Input() showMoreInfoLink: boolean = true;
   @Input() analyzeErrorMessage: string|null = null;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
@@ -110,9 +126,14 @@ export class PerspectiveStatus implements OnChanges {
   private interpolateColors: Function;
   public layersAnimating: boolean = false;
   private layerHeightPixels: number;
+  // Animation being used to update the display settings of the demo. This
+  // should not be used for a loading animation.
+  private updateDemoSettingsAnimation: any;
+  private isPlayingUpdateShapeAnimation: boolean;
 
-  constructor(private changeDetectorRef: ChangeDetectorRef,
-              private elementRef: ElementRef) {
+  // Inject ngZone so that we can call ngZone.run() to re-enter the angular
+  // zone inside gsap animation callbacks.
+  constructor(private ngZone: NgZone, private elementRef: ElementRef) {
   }
 
   ngOnInit() {
@@ -144,8 +165,34 @@ export class PerspectiveStatus implements OnChanges {
     if (changes['score'] !== undefined) {
       if (!this.isPlayingLoadingAnimation) {
         console.debug('Updating shape from ngOnChanges: ' + this.score);
+        let currentRotation = (this.widget as any)._gsTransform.rotation;
+        console.log('getUpdateShape from score change; Current rotation:', currentRotation);
         this.getUpdateShapeAnimation(this.score).play();
       }
+    }
+
+    if (changes['gradientColors'] !== undefined) {
+      console.debug('Change in gradientColors');
+      this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
+      this.getUpdateColorAnimation(0.1).play();
+    }
+
+    if (changes['configurationInput'] !== undefined) {
+      this.configuration = this.getConfigurationFromInputString(this.configurationInput);
+      this.resetLayers();
+    }
+
+    if (changes['scoreThresholds'] !== undefined) {
+      console.debug('Change in scoreThresholds');
+      // Kill any prior animations so that the resetting any animation state
+      // will not get overridden by the old animation before the new one can
+      // begin; this can lead to bugs.
+      if (this.updateDemoSettingsAnimation) {
+        this.updateDemoSettingsAnimation.kill();
+      }
+
+      this.updateDemoSettingsAnimation = this.getUpdateShapeAnimation(this.score);
+      this.updateDemoSettingsAnimation.play();
     }
   }
 
@@ -167,11 +214,26 @@ export class PerspectiveStatus implements OnChanges {
         + ' .interactiveElement');
   }
 
-  shouldShowMessageForScore(score: number): boolean {
-    if (this.configuration === Configuration.DEMO_SITE) {
-      return true;
+  shouldShowFeedback(score: number) {
+    return score >= this.scoreThresholds[0];
+  }
+
+  // Wrapper for twemoji.parse() to use in data binding. Parses text, replacing
+  // any emojis with <img> tags. All other text remains the same.
+  parseEmojis(text: string) {
+    return twemoji.parse(text);
+  }
+
+  getFeedbackTextForScore(score: number): string {
+    if (score >= this.scoreThresholds[2]) {
+      return this.feedbackText[2];
+    } else if (score >= this.scoreThresholds[1]) {
+      return this.feedbackText[1];
+    } else if (score >= this.scoreThresholds[0]) {
+      return this.feedbackText[0];
+    } else {
+      return '';
     }
-    return score >= ScoreThreshold.BORDERLINE;
   }
 
   feedbackContainerClicked() {
@@ -215,17 +277,46 @@ export class PerspectiveStatus implements OnChanges {
     this.commentFeedbackSubmitted.emit({commentMarkedAsToxic: commentIsToxic});
   }
 
+  getResetRotationAnimation(): TweenMax {
+    return TweenMax.to(this.widget, 0.1, {
+      rotation: this.currentShape === Shape.DIAMOND ? 45 : 0,
+    });
+
+  }
+
   getUpdateShapeAnimation(score: number): TimelineMax {
-    let updateShapeAnimationTimeline = new TimelineMax({});
+    let updateShapeAnimationTimeline = new TimelineMax({
+      onStart: () => {
+        this.isPlayingUpdateShapeAnimation = true;
+      },
+      onComplete: () => {
+        this.isPlayingUpdateShapeAnimation = false;
+      },
+    });
 
     // Shrink before updating to a new shape.
     updateShapeAnimationTimeline.add(
       this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
 
-    if (score > ScoreThreshold.UNCIVIL) {
+    if (score > this.scoreThresholds[2]) {
       updateShapeAnimationTimeline.add(
         this.getTransitionToDiamondAnimation(.8 * SHAPE_MORPH_TIME_SECONDS));
-    } else if (score > ScoreThreshold.BORDERLINE) {
+    } else if (score > this.scoreThresholds[1]) {
+      // Square is a special case, since we rotate based on the current degrees
+      // and not to a specific rotation. As a result this can get messed up if
+      // we're in the middle of an existing rotation, so reset the rotation
+      // accordingly before animating to prevent this bug.
+      // Note that this only works if the previous animation gets killed first.
+      // TODO(rachelrosen): Figure out a more general way to prevent this bug
+      // for all cases, not just when customizing the demo. It seems to happen
+      // occasionally in the wild as well.
+      if (this.isPlayingUpdateShapeAnimation) {
+        console.log('Starting updateShapeAnimation to square while in the'
+                    + ' middle of an existing updateShapeAnimation or before'
+                    + ' the previous animation was able to finish; resetting'
+                    + ' rotation state');
+        updateShapeAnimationTimeline.add(this.getResetRotationAnimation());
+      }
       updateShapeAnimationTimeline.add(
         this.getTransitionToSquareAnimation(SHAPE_MORPH_TIME_SECONDS));
     } else {
@@ -285,42 +376,47 @@ export class PerspectiveStatus implements OnChanges {
         paused:true,
         ease: Power3.easeInOut,
         onStart: () => {
-          console.debug('Starting timeline');
-          this.isPlayingLoadingAnimation = true;
-          this.changeDetectorRef.detectChanges();
+          this.ngZone.run(() => {
+            console.debug('Starting timeline');
+            this.isPlayingLoadingAnimation = true;
+          });
         },
         onComplete: () => {
-          console.debug('Completing timeline');
-          this.changeDetectorRef.detectChanges();
-          console.debug('Updating shape from animation complete');
-          if (this.isLoading) {
-            console.debug('Restarting loading');
-            loadingTimeline.seek(FADE_START_LABEL);
-          } else {
-            console.debug('Loading complete');
-            console.debug('hasScore:', this.hasScore);
-            let updateScoreCompletedTimeline = new TimelineMax({
-              paused:true,
-              onStart: () => {
-                console.debug('Score change animation start');
-              },
-              onComplete: () => {
-                this.scoreChangeAnimationCompleted.emit();
-              }
-            });
-            let scoreCompletedAnimations: Animation[] = [];
-            scoreCompletedAnimations.push(this.getUpdateShapeAnimation(this.score));
-            if (this.showScore) {
+          this.ngZone.run(() => {
+            console.debug('Completing timeline');
+            console.debug('Updating shape from animation complete');
+            if (this.isLoading) {
+              console.debug('Restarting loading');
+              loadingTimeline.seek(FADE_START_LABEL);
+            } else {
+              console.debug('Loading complete');
+              console.debug('hasScore:', this.hasScore);
+              let updateScoreCompletedTimeline = new TimelineMax({
+                paused:true,
+                onStart: () => {
+                  console.debug('Score change animation start');
+                },
+                onComplete: () => {
+                  this.ngZone.run(() => {
+                    this.scoreChangeAnimationCompleted.emit();
+                  });
+                }
+              });
+              let scoreCompletedAnimations: Animation[] = [];
               scoreCompletedAnimations.push(
-                this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, false, 0));
-            }
-            updateScoreCompletedTimeline.add(scoreCompletedAnimations);
-            updateScoreCompletedTimeline.play();
+                this.getUpdateShapeAnimation(this.score));
+              if (this.showScore) {
+                scoreCompletedAnimations.push(
+                  this.getFadeDetailsAnimation(
+                    FADE_DETAILS_TIME_SECONDS, false, 0));
+              }
+              updateScoreCompletedTimeline.add(scoreCompletedAnimations);
+              updateScoreCompletedTimeline.play();
 
-            this.isPlayingLoadingAnimation = false;
-            this.changeDetectorRef.detectChanges();
-            loadingTimeline.clear();
-          }
+              this.isPlayingLoadingAnimation = false;
+              loadingTimeline.clear();
+            }
+          });
         },
       });
       let startAnimationsTimeline = new TimelineMax({
@@ -376,18 +472,26 @@ export class PerspectiveStatus implements OnChanges {
     }
   }
 
+  private getUpdateColorAnimation(timeSeconds: number) {
+    return TweenMax.to(this.widget, timeSeconds, {
+      backgroundColor: this.interpolateColors(this.score),
+    });
+  }
+
   private getShowDetailsAnimation() {
     let timeline = new TimelineMax({
       paused:true,
       onStart: () => {
-        this.isPlayingShowOrHideDetailsAnimation = true;
-        this.changeDetectorRef.detectChanges();
-        this.widget.blur();
+        this.ngZone.run(() => {
+          this.isPlayingShowOrHideDetailsAnimation = true;
+          this.widget.blur();
+        });
       },
       onComplete: () => {
-        this.showScore = true;
-        this.isPlayingShowOrHideDetailsAnimation = false;
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          this.showScore = true;
+          this.isPlayingShowOrHideDetailsAnimation = false;
+        });
       },
     });
     let staggerAmount = 0;
@@ -405,14 +509,16 @@ export class PerspectiveStatus implements OnChanges {
     let timeline = new TimelineMax({
       paused:true,
       onStart: () => {
-        this.isPlayingShowOrHideDetailsAnimation = true;
-        this.changeDetectorRef.detectChanges();
-        this.widget.blur();
+        this.ngZone.run(() => {
+          this.isPlayingShowOrHideDetailsAnimation = true;
+          this.widget.blur();
+        });
       },
       onComplete: () => {
-        this.showScore = false;
-        this.isPlayingShowOrHideDetailsAnimation = false;
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          this.showScore = false;
+          this.isPlayingShowOrHideDetailsAnimation = false;
+        });
       },
     });
     timeline.add([
@@ -446,6 +552,8 @@ export class PerspectiveStatus implements OnChanges {
   private getTransitionToSquareAnimation(timeSeconds: number) {
     let squareAnimationTimeline = new TimelineMax({
       onStart: () => {
+        let currentRotation = (this.widget as any)._gsTransform.rotation;
+        console.log('getTransitionToSquare; Current rotation:', currentRotation);
       },
       onComplete: () => {
       },
@@ -522,6 +630,9 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getToFullScaleCompleteRotationAnimation(timeSeconds: number, fromShape: Shape) {
+    let currentRotation = (this.widget as any)._gsTransform.rotation;
+    console.log('Current rotation:', currentRotation);
+    console.log('From shape:', this.getNameFromShape(fromShape));
     let rotationDegrees = fromShape === Shape.DIAMOND ? 315 : 360;
     return TweenMax.to(this.widget, timeSeconds, {
       rotation: "+=" + rotationDegrees + "_ccw",
@@ -542,18 +653,20 @@ export class PerspectiveStatus implements OnChanges {
 
     let timeline = new TimelineMax({
       onStart: () => {
-        console.debug('Transitioning from layer ' + this.currentLayerIndex
-                      + ' to layer ' + endLayerIndex);
-        this.layersAnimating = true;
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          console.debug('Transitioning from layer ' + this.currentLayerIndex
+                        + ' to layer ' + endLayerIndex);
+          this.layersAnimating = true;
+        });
       },
       onComplete: () => {
-        this.layersAnimating = false;
-        this.currentLayerIndex = endLayerIndex;
-        console.debug('Finished transitioning to layer ' + this.currentLayerIndex);
-        this.showingMoreInfo = this.currentLayerIndex === 1;
-        this.updateLayerElementContainers();
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          this.layersAnimating = false;
+          this.currentLayerIndex = endLayerIndex;
+          console.debug('Finished transitioning to layer ' + this.currentLayerIndex);
+          this.showingMoreInfo = this.currentLayerIndex === 1;
+          this.updateLayerElementContainers();
+        });
       },
     });
 
@@ -660,15 +773,17 @@ export class PerspectiveStatus implements OnChanges {
                                   layerIndex: number) {
     let timeline = new TimelineMax({
       onStart: () => {
-        console.debug('Calling getFadeDetails animation, fadeOut=' + hide
-                      + ' and current layer index = ' + this.currentLayerIndex);
-        this.isPlayingShowOrHideDetailsAnimation = true;
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          console.debug('Calling getFadeDetails animation, fadeOut=' + hide
+                        + ' and current layer index = ' + this.currentLayerIndex);
+          this.isPlayingShowOrHideDetailsAnimation = true;
+        });
       },
       onComplete: () => {
-        console.debug('Fade details animation complete');
-        this.isPlayingShowOrHideDetailsAnimation = false;
-        this.changeDetectorRef.detectChanges();
+        this.ngZone.run(() => {
+          console.debug('Fade details animation complete');
+          this.isPlayingShowOrHideDetailsAnimation = false;
+        });
       },
     });
     let interactiveLayerControlsContainer =
