@@ -1,6 +1,10 @@
 language: node_js
 node_js:
   - "lts/*"
+cache:
+  yarn: true
+  directories:
+    - "node_modules"
 before_install:
   - npm install -g yarn typings typescript ts-node mocha protractor angular-cli karma-cli
   - npm run setup
