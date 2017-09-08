@@ -57,7 +57,7 @@ export interface DemoSettings {
   scoreThresholds: [number, number, number];
 }
 
-const DEFAULT_DEMO_SETTINGS = {
+export const DEFAULT_DEMO_SETTINGS = {
   configuration: 'demo',
   gradientColors: ["#25C1F9", "#7C4DFF", "#D400F9"],
   apiKey: '',
@@ -127,7 +127,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   };
 
   ngOnInit() {
-    if (this.inputId === undefined) {
+    if (!this.inputId) {
       this.initializeErrorMessage = "Error initializing: No input element id"
         + " specified. Set inputId=<inputElementId> to use this component.";
       return;
