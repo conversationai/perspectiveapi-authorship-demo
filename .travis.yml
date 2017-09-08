@@ -1,8 +1,9 @@
 language: node_js
+node_js:
+  - "lts/*"
 before_install:
   - npm install -g yarn typings typescript ts-node mocha protractor angular-cli karma-cli
 install:
   - yarn install
 script:
-  - yarn run lint
   - yarn run test --watch false
