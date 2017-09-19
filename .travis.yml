@@ -1,0 +1,17 @@
+language: node_js
+node_js:
+  - "lts/*"
+cache:
+  yarn: true
+  directories:
+    - "node_modules"
+before_install:
+  - export CHROME_BIN=/usr/bin/google-chrome
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+  - npm install -g yarn typings typescript ts-node mocha protractor angular-cli karma-cli
+  - npm run setup
+install:
+  - yarn install
+script:
+  - yarn run test --watch false
