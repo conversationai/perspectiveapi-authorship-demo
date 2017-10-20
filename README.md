@@ -1,3 +1,5 @@
+![Travis CI](https://travis-ci.org/conversationai/perspectiveapi-authorship-demo.svg?branch=master)
+
 # An authorship experience demo of the perspective API
 
 This repository contains example code for an authorship experience that provides feedback as you type using the [Perspective API](http://www.perspectiveapi.com/). It is a web app written in
