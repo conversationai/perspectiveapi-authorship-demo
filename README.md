@@ -1,4 +1,4 @@
-![Travis CI](https://travis-ci.org/conversationai/perspectiveapi-authorship-demo.svg?branch=master)
+[![Travis CI](https://travis-ci.org/conversationai/perspectiveapi-authorship-demo.svg?branch=master)](https://travis-ci.org/conversationai/perspectiveapi-authorship-demo)
 
 # An authorship experience demo of the perspective API
 
