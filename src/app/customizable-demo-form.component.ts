@@ -152,7 +152,7 @@ export class CustomizableDemoForm {
   // Whether to show a "more info" link next to the feedback text.
   showMoreInfoLink = true;
   // The text to use to prompt users to submit feedback.
-  feedbackPromptText = 'Seem wrong?';
+  userFeedbackPromptText = 'Seem wrong?';
   // Whether to hide the loading icon after loading completes.
   hideLoadingIconAfterLoad = false;
   // Whether to hide the loading icon when the score is below the minimum
@@ -194,7 +194,7 @@ export class CustomizableDemoForm {
    * variable because Angular will only call change detection if the entire
    * object has changed, and will not listen to sub-properties by default.
    */
-  getDemoSettings() {
+  getDemoSettings(): DemoSettings {
     return {
       configuration: this.configuration,
       gradientColors: this.useCustomColorScheme ?
@@ -210,11 +210,11 @@ export class CustomizableDemoForm {
       hideLoadingIconAfterLoad: this.hideLoadingIconAfterLoad,
       hideLoadingIconForScoresBelowMinThreshold:
         this.hideLoadingIconForScoresBelowMinThreshold,
-      feedbackPromptText: this.feedbackPromptText
+      userFeedbackPromptText: this.userFeedbackPromptText
     };
   }
 
-  getPrintableDemoSettings() {
+  getPrintableDemoSettings(): string {
     return JSON.stringify(this.getDemoSettings());
   }
 }

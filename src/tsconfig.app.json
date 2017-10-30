@@ -10,5 +10,9 @@
   "exclude": [
     "test.ts",
     "**/*.spec.ts"
-  ]
+  ],
+  "angularCompilerOptions": {
+    "debug": false,
+    "genDir": "../out-tsc/app"
+  }
 }
