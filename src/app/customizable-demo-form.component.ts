@@ -194,7 +194,7 @@ export class CustomizableDemoForm {
    * variable because Angular will only call change detection if the entire
    * object has changed, and will not listen to sub-properties by default.
    */
-  getDemoSettings() {
+  getDemoSettings(): DemoSettings {
     return {
       configuration: this.configuration,
       gradientColors: this.useCustomColorScheme ?
@@ -212,5 +212,9 @@ export class CustomizableDemoForm {
         this.hideLoadingIconForScoresBelowMinThreshold,
       userFeedbackPromptText: this.userFeedbackPromptText
     };
+  }
+
+  getPrintableDemoSettings(): string {
+    return JSON.stringify(this.getDemoSettings());
   }
 }

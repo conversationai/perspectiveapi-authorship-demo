@@ -161,6 +161,13 @@
 
 <div class="divider"></div>
 
+<div>
+  Your demo settings:
+  <textarea readOnly>{{getPrintableDemoSettings()}}</textarea>
+</div>
+
+<div class="divider"></div>
+
 <convai-checker
    [inputId]="'checkerTextarea'"
    [demoSettings]="getDemoSettings()"
