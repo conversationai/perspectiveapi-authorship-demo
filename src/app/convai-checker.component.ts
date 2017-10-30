@@ -89,7 +89,7 @@ export interface DemoSettings {
   hideLoadingIconForScoresBelowMinThreshold: boolean;
 
   // The string to use to prompt users to submit feedback.
-  feedbackPromptText: string;
+  userFeedbackPromptText: string;
 }
 
 export const DEFAULT_DEMO_SETTINGS = {
@@ -107,7 +107,7 @@ export const DEFAULT_DEMO_SETTINGS = {
   scoreThresholds: [0, 0.4, 0.7] as [number, number, number],
   hideLoadingIconAfterLoad: false,
   hideLoadingIconForScoresBelowMinThreshold: false,
-  feedbackPromptText: 'Seem wrong?'
+  userFeedbackPromptText: 'Seem wrong?'
 };
 
 @Component({

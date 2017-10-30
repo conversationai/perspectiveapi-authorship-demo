@@ -275,7 +275,7 @@ function getCopyOfDefaultDemoSettings(): DemoSettings {
     hideLoadingIconAfterLoad: DEFAULT_DEMO_SETTINGS.hideLoadingIconAfterLoad,
     hideLoadingIconForScoresBelowMinThreshold:
       DEFAULT_DEMO_SETTINGS.hideLoadingIconForScoresBelowMinThreshold,
-    feedbackPromptText: DEFAULT_DEMO_SETTINGS.feedbackPromptText
+    userFeedbackPromptText: DEFAULT_DEMO_SETTINGS.userFeedbackPromptText
   };
 }
 
