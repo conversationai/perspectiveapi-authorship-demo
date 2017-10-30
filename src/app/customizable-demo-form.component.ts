@@ -213,4 +213,8 @@ export class CustomizableDemoForm {
       feedbackPromptText: this.feedbackPromptText
     };
   }
+
+  getPrintableDemoSettings() {
+    return JSON.stringify(this.getDemoSettings());
+  }
 }
