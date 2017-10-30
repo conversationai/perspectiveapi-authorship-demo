@@ -207,8 +207,9 @@ export class CustomizableDemoForm {
         this.scoreThresholds : this.sliderScoreThresholds,
       useGapi: this.useGapi,
       apiKey: this.apiKey,
-      hideLoadingIconAfterLoad: false,
-      hideLoadingIconForScoresBelowMinThreshold: false,
+      hideLoadingIconAfterLoad: this.hideLoadingIconAfterLoad,
+      hideLoadingIconForScoresBelowMinThreshold:
+        this.hideLoadingIconForScoresBelowMinThreshold,
       feedbackPromptText: this.feedbackPromptText
     };
   }
