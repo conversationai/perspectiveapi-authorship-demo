@@ -151,6 +151,13 @@ export class CustomizableDemoForm {
   showPercentage = true;
   // Whether to show a "more info" link next to the feedback text.
   showMoreInfoLink = true;
+  // The text to use to prompt users to submit feedback.
+  feedbackPromptText = 'Seem wrong?';
+  // Whether to hide the loading icon after loading completes.
+  hideLoadingIconAfterLoad = false;
+  // Whether to hide the loading icon when the score is below the minimum
+  // threshold to show feedback.
+  hideLoadingIconForScoresBelowMinThreshold = false;
 
   /** Resets the custom color scheme UI to use the default color scheme. */
   resetToDefaultColors() {
@@ -200,6 +207,9 @@ export class CustomizableDemoForm {
         this.scoreThresholds : this.sliderScoreThresholds,
       useGapi: this.useGapi,
       apiKey: this.apiKey,
+      hideLoadingIconAfterLoad: false,
+      hideLoadingIconForScoresBelowMinThreshold: false,
+      feedbackPromptText: this.feedbackPromptText
     };
   }
 }
