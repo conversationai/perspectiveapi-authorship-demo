@@ -99,6 +99,8 @@ export class PerspectiveStatus implements OnChanges {
   @Input() showMoreInfoLink: boolean = true;
   @Input() analyzeErrorMessage: string|null = null;
   @Input() userFeedbackPromptText: string;
+  @Input() hideLoadingIconAfterLoad: boolean;
+  @Input() hideLoadingIconForScoresBelowMinThreshold: boolean;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() commentFeedbackSubmitted: EventEmitter<CommentFeedback> =
@@ -117,6 +119,7 @@ export class PerspectiveStatus implements OnChanges {
   isLoading: boolean = false;
   public isPlayingLoadingAnimation: boolean = false;
   public isPlayingShowOrHideDetailsAnimation: boolean = false;
+  public shouldHideStatusWidget: boolean = false;
   public showScore: boolean = true;
   private currentShape: Shape = Shape.CIRCLE;
   private showingMoreInfo: boolean = false;
@@ -195,6 +198,24 @@ export class PerspectiveStatus implements OnChanges {
       this.updateDemoSettingsAnimation = this.getUpdateShapeAnimation(this.score);
       this.updateDemoSettingsAnimation.play();
     }
+  }
+
+  private updateStatusWidgetVisibility() {
+    let shouldHide = false;
+
+    if (this.hideLoadingIconAfterLoad) {
+      shouldHide = shouldHide ||
+        (!this.isPlayingLoadingAnimation && !this.isPlayingShowOrHideDetailsAnimation);
+    }
+    if (this.hideLoadingIconForScoresBelowMinThreshold) {
+      shouldHide = shouldHide || this.score < this.scoreThresholds[0];
+    }
+
+    if (this.shouldHideStatusWidget != shouldHide) {
+      console.log('Updating status widget visibility to '
+                  + (shouldHide ? 'hidden' : 'visible'));
+    }
+    this.shouldHideStatusWidget = shouldHide;
   }
 
   private getConfigurationFromInputString(inputString: string): Configuration {
@@ -380,6 +401,7 @@ export class PerspectiveStatus implements OnChanges {
           this.ngZone.run(() => {
             console.debug('Starting timeline');
             this.isPlayingLoadingAnimation = true;
+            this.updateStatusWidgetVisibility();
           });
         },
         onComplete: () => {
@@ -399,6 +421,7 @@ export class PerspectiveStatus implements OnChanges {
                 },
                 onComplete: () => {
                   this.ngZone.run(() => {
+                    this.updateStatusWidgetVisibility();
                     this.scoreChangeAnimationCompleted.emit();
                   });
                 }

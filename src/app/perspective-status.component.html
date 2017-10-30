@@ -11,6 +11,7 @@
          class="dot"
          [style.width]="indicatorWidth"
          [style.height]="indicatorHeight"
+         [hidden]="shouldHideStatusWidget"
          role="button"
          [attr.aria-label]=
             "getAnimationA11yLabel(showScore, isPlayingLoadingAnimation, isPlayingShowOrHideDetailsAnimation)"

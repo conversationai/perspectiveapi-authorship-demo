@@ -18,6 +18,8 @@
     [initializeErrorMessage]="initializeErrorMessage"
     [analyzeErrorMessage]="analyzeErrorMessage"
     [userFeedbackPromptText]="demoSettings.userFeedbackPromptText"
+    [hideLoadingIconAfterLoad]="demoSettings.hideLoadingIconAfterLoad"
+    [hideLoadingIconForScoresBelowMinThreshold]="demoSettings.hideLoadingIconForScoresBelowMinThreshold"
     (commentFeedbackSubmitted)="onCommentFeedbackReceived($event)"
     (scoreChangeAnimationCompleted)="handleScoreChangeAnimationCompleted()"
     (modelInfoLinkClicked)="handleModelInfoLinkClicked()">
