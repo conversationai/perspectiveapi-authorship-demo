@@ -98,6 +98,7 @@ export class PerspectiveStatus implements OnChanges {
   @Input() showPercentage: boolean = true;
   @Input() showMoreInfoLink: boolean = true;
   @Input() analyzeErrorMessage: string|null = null;
+  @Input() userFeedbackPromptText: string;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() commentFeedbackSubmitted: EventEmitter<CommentFeedback> =

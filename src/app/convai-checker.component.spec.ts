@@ -271,7 +271,11 @@ function getCopyOfDefaultDemoSettings(): DemoSettings {
     showPercentage: DEFAULT_DEMO_SETTINGS.showPercentage,
     showMoreInfoLink: DEFAULT_DEMO_SETTINGS.showMoreInfoLink,
     feedbackText: DEFAULT_DEMO_SETTINGS.feedbackText.slice() as [string, string, string],
-    scoreThresholds: DEFAULT_DEMO_SETTINGS.scoreThresholds.slice() as [number, number, number]
+    scoreThresholds: DEFAULT_DEMO_SETTINGS.scoreThresholds.slice() as [number, number, number],
+    hideLoadingIconAfterLoad: DEFAULT_DEMO_SETTINGS.hideLoadingIconAfterLoad,
+    hideLoadingIconForScoresBelowMinThreshold:
+      DEFAULT_DEMO_SETTINGS.hideLoadingIconForScoresBelowMinThreshold,
+    userFeedbackPromptText: DEFAULT_DEMO_SETTINGS.userFeedbackPromptText
   };
 }
 

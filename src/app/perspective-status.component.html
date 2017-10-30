@@ -81,7 +81,7 @@
                [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
                (click)="feedbackContainerClicked()"
                tabindex=0>
-            Seem wrong?
+            {{userFeedbackPromptText}}
           </button>
         </div>
 
@@ -137,7 +137,7 @@
                    [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
                    (click)="feedbackContainerClicked()"
                    tabindex=0>
-                Seem wrong?
+                {{userFeedbackPromptText}}
               </button>
               <div id="seemWrongQuestion" *ngIf="showFeedbackQuestion && !feedbackRequestInProgress">
                 <div class="feedbackQuestion widgetText" tabindex=0>Is this text toxic?</div>

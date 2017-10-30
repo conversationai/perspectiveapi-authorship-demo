@@ -47,18 +47,53 @@ export interface InputEvent {
 }
 
 export interface DemoSettings {
+  // Refers to the correction UI style. Current options are "default" or
+  // "external" (see perspective-status.ConfigurationInput).
   configuration: string;
+
+  // An array of colors to use as the gradient for the animated loading widget.
+  // Minimum length is two, but there is no maximum length.
   gradientColors: string[];
-  apiKey: string;
+
+  // Optional. API key to use when using the Gapi endpoint. Should be empty or
+  // omittedwhen not using the Gapi endpoint.
+  apiKey?: string;
+
+  // Whether to use the Gapi endpoint.
   useGapi: boolean;
+
+  // Whether to show the model score in the UI.
   showPercentage: boolean;
+
+  // Determines whether “More info” link is visible.
   showMoreInfoLink: boolean;
+
+  // Three feedback messages to display to the user. These can contain emoji
+  // unicode. This must be length 3.
   feedbackText: [string, string, string];
+
+  // The numeric thresholds for showing each severity. Index 0 contains the
+  // minimum threshold to show scores. Index 1 is the threshold for medium
+  // severity, and index 2 is the threshold for high severity. Note that if you
+  // want only scores with medium severity to be shown (and never scores for
+  // low severity), indices 0 and 1 should have the same value.
   scoreThresholds: [number, number, number];
+
+  // Whether to hide the loading icon after loading completes; this will allow
+  // for loading animation to play, but no circle/square/diamond will be
+  // present after the loading finishes.
+  hideLoadingIconAfterLoad: boolean;
+
+  // Whether to hide the loading icon when the score is below the minimum
+  // threshold to show feedback (index 0 of scoreThresholds).
+  hideLoadingIconForScoresBelowMinThreshold: boolean;
+
+  // The string to use to prompt users to submit feedback.
+  userFeedbackPromptText: string;
 }
 
 export const DEFAULT_DEMO_SETTINGS = {
-  configuration: 'demo',
+  configuration: 'default',
   gradientColors: ["#25C1F9", "#7C4DFF", "#D400F9"],
   apiKey: '',
   useGapi: false,
@@ -69,7 +104,10 @@ export const DEFAULT_DEMO_SETTINGS = {
     'Unsure if this will be perceived as toxic',
     'Likely to be perceived as toxic'
   ] as [string, string, string],
-  scoreThresholds: [0, 0.4, 0.7] as [number, number, number]
+  scoreThresholds: [0, 0.4, 0.7] as [number, number, number],
+  hideLoadingIconAfterLoad: false,
+  hideLoadingIconForScoresBelowMinThreshold: false,
+  userFeedbackPromptText: 'Seem wrong?'
 };
 
 @Component({
@@ -108,7 +146,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   public feedbackRequestInProgress: boolean = false;
   private sessionId: string|null = null;
   private gradientColors: string[] = ["#25C1F9", "#7C4DFF", "#D400F9"];
-  private apiKey: string = '';
+  private apiKey: string|undefined;
   private configuration: string;
 
   constructor(
@@ -146,7 +184,8 @@ export class ConvaiChecker implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) : void {
     if (changes['demoSettings']) {
-      if (this.demoSettings && this.apiKey !== this.demoSettings.apiKey) {
+      if (this.demoSettings && this.demoSettings.apiKey &&
+          this.apiKey !== this.demoSettings.apiKey) {
         console.debug('Api key changes detected in demoSettings');
         this.apiKey = this.demoSettings.apiKey;
         this.analyzeApiService.initGapiClient(this.apiKey);

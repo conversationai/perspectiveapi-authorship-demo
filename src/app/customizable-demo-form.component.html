@@ -138,9 +138,23 @@
   </div>
 
   <div class="setting">
+    <md-slide-toggle disabled [(ngModel)]="hideLoadingIconAfterLoad">Hide loading icon after load (Not yet implemented)</md-slide-toggle>
+  </div>
+
+  <div class="setting">
+    <md-slide-toggle disabled [(ngModel)]="hideLoadingIconForScoresBelowMinThreshold">Hide loading icon for scores below the minimum threshold. (Not yet implemented) </md-slide-toggle>
+  </div>
+
+  <div class="setting">
     <md-slide-toggle [(ngModel)]="useGapi" (change)="updateApiKey($event)">Use gapi</md-slide-toggle>
     <md-input-container>
       <input mdInput [disabled]="!useGapi" [(ngModel)]="apiKey" placeholder="API key"/>
+    </md-input-container>
+  </div>
+
+  <div class="setting">
+    <md-input-container>
+      <input mdInput [(ngModel)]="userFeedbackPromptText" placeholder="Feedback prompt"/>
     </md-input-container>
   </div>
 </div>
