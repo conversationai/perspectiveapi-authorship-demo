@@ -60,7 +60,9 @@ const FADE_DETAILS_TIME_SECONDS = 0.4;
 const FADE_ANIMATION_TIME_SECONDS = 0.3;
 const GRAYSCALE_ANIMATION_TIME_SECONDS = 0.2
 const LAYER_TRANSITION_TIME_SECONDS = 0.5;
-const PADDING_PX = 4;
+const FADE_WIDGET_TIME_SECONDS = 0.4;
+const WIDGET_PADDING_PX = 4;
+const WIDGET_RIGHT_MARGIN_PX = 10;
 
 @Component({
   selector: 'perspective-status',
@@ -119,6 +121,7 @@ export class PerspectiveStatus implements OnChanges {
   isLoading: boolean = false;
   public isPlayingLoadingAnimation: boolean = false;
   public isPlayingShowOrHideDetailsAnimation: boolean = false;
+  public isPlayingShowOrHideLoadingWidgetAnimation: boolean = false;
   public shouldHideStatusWidget: boolean = false;
   public showScore: boolean = true;
   private currentShape: Shape = Shape.CIRCLE;
@@ -200,22 +203,98 @@ export class PerspectiveStatus implements OnChanges {
     }
   }
 
-  private updateStatusWidgetVisibility() {
+  private getShouldHideStatusWidget(loadStart: boolean): boolean {
     let shouldHide = false;
 
     if (this.hideLoadingIconAfterLoad) {
-      shouldHide = shouldHide ||
-        (!this.isPlayingLoadingAnimation && !this.isPlayingShowOrHideDetailsAnimation);
+      shouldHide = shouldHide || !loadStart;
     }
     if (this.hideLoadingIconForScoresBelowMinThreshold) {
-      shouldHide = shouldHide || this.score < this.scoreThresholds[0];
+      shouldHide = shouldHide || loadStart || (this.score < this.scoreThresholds[0]);
     }
 
-    if (this.shouldHideStatusWidget != shouldHide) {
-      console.log('Updating status widget visibility to '
-                  + (shouldHide ? 'hidden' : 'visible'));
+    return shouldHide;
+  }
+
+  private getUpdateStatusWidgetVisibilityAnimation(loadStart: boolean): TimelineMax {
+    let hide = this.getShouldHideStatusWidget(loadStart);
+
+    // If nothing has changed, return an empty animation.
+    if (hide === this.shouldHideStatusWidget) {
+      console.log('Returning');
+      return new TimelineMax({});
     }
-    this.shouldHideStatusWidget = shouldHide;
+
+    let timeline = new TimelineMax({
+      onStart: () => {
+        this.ngZone.run(() => {
+          this.isPlayingShowOrHideLoadingWidgetAnimation = true;
+          this.shouldHideStatusWidget = false;
+          console.log('Updating status widget visibility to '
+                      + (hide ? 'hidden' : 'visible')
+                      + ' from ' + (this.shouldHideStatusWidget ? 'hidden' : 'visible'));
+        });
+      },
+      onComplete: () => {
+        this.ngZone.run(() => {
+          console.debug('Changing status widget visibility complete');
+          this.isPlayingShowOrHideLoadingWidgetAnimation = false;
+          this.shouldHideStatusWidget = hide;
+        });
+      },
+    });
+    timeline.add([this.getChangeLoadingIconVisibilityAnimation(hide),
+                  this.getChangeLoadingIconXValueAnimation(hide)]);
+    return timeline;
+  }
+
+  private getChangeLoadingIconVisibilityAnimation(hide: boolean): TweenMax {
+    return TweenMax.to(
+      this.widget, FADE_WIDGET_TIME_SECONDS, { opacity: hide ? 0 : 1})
+  }
+
+  private getChangeLoadingIconXValueAnimation(hide: boolean): TimelineMax {
+    let timeline = new TimelineMax({});
+    let translateXAnimations: Animation[] = [];
+    translateXAnimations.push(
+      TweenMax.to(this.widget, FADE_WIDGET_TIME_SECONDS,
+                  { x: hide ? -1 * (this.indicatorWidth
+                                    + WIDGET_PADDING_PX
+                                    + WIDGET_RIGHT_MARGIN_PX)
+                            : 0}));
+    if (this.configuration === Configuration.DEMO_SITE) {
+      // Also shift the text for the leftmost element in each layer left/right
+      // as needed. Even though only layer 0 is visible when the score changes,
+      // the elements in the rest of the layers need to be adjusted to match
+      // for when we transition to other layers.
+      let layer0TextContainer = this.elementRef.nativeElement.querySelector(
+          this.layerAnimationSelectors[0] + ' .layerText');
+      let layer1TextContainer = this.elementRef.nativeElement.querySelector(
+          this.layerAnimationSelectors[1] + ' .layerText');
+      let layer2InteractiveContainer =
+        this.elementRef.nativeElement.querySelector(
+          this.layerAnimationSelectors[2] + ' .interactiveElement');
+      translateXAnimations.push(
+        TweenMax.to(layer0TextContainer, FADE_WIDGET_TIME_SECONDS,
+                    { x: hide ? -1 * (this.indicatorWidth
+                                      + WIDGET_PADDING_PX
+                                      + WIDGET_RIGHT_MARGIN_PX)
+                              : 0}));
+      translateXAnimations.push(
+        TweenMax.to(layer1TextContainer, FADE_WIDGET_TIME_SECONDS,
+                    { x: hide ? -1 * (this.indicatorWidth
+                                      + WIDGET_PADDING_PX
+                                      + WIDGET_RIGHT_MARGIN_PX)
+                              : 0}));
+      translateXAnimations.push(
+        TweenMax.to(layer2InteractiveContainer, FADE_WIDGET_TIME_SECONDS,
+                    { x: hide ? -1 * (this.indicatorWidth
+                                      + WIDGET_PADDING_PX
+                                      + WIDGET_RIGHT_MARGIN_PX)
+                              : 0}));
+    }
+    timeline.add(translateXAnimations);
+    return timeline;
   }
 
   private getConfigurationFromInputString(inputString: string): Configuration {
@@ -401,7 +480,6 @@ export class PerspectiveStatus implements OnChanges {
           this.ngZone.run(() => {
             console.debug('Starting timeline');
             this.isPlayingLoadingAnimation = true;
-            this.updateStatusWidgetVisibility();
           });
         },
         onComplete: () => {
@@ -421,7 +499,6 @@ export class PerspectiveStatus implements OnChanges {
                 },
                 onComplete: () => {
                   this.ngZone.run(() => {
-                    this.updateStatusWidgetVisibility();
                     this.scoreChangeAnimationCompleted.emit();
                   });
                 }
@@ -429,12 +506,29 @@ export class PerspectiveStatus implements OnChanges {
               let scoreCompletedAnimations: Animation[] = [];
               scoreCompletedAnimations.push(
                 this.getUpdateShapeAnimation(this.score));
+
               if (this.showScore) {
                 scoreCompletedAnimations.push(
                   this.getFadeDetailsAnimation(
                     FADE_DETAILS_TIME_SECONDS, false, 0));
               }
+
+              // If we're revealing the status widget, play the reveal animation
+              // before the update shape animation.
+              if (!this.getShouldHideStatusWidget(false)) {
+                updateScoreCompletedTimeline.add(
+                  this.getUpdateStatusWidgetVisibilityAnimation(false));
+              }
+
               updateScoreCompletedTimeline.add(scoreCompletedAnimations);
+
+              // If we're hiding the status widget, play the hide widget
+              // animation after the update shape animation.
+              if (this.getShouldHideStatusWidget(false)) {
+                updateScoreCompletedTimeline.add(
+                  this.getUpdateStatusWidgetVisibilityAnimation(false));
+              }
+
               updateScoreCompletedTimeline.play();
 
               this.isPlayingLoadingAnimation = false;
@@ -446,10 +540,18 @@ export class PerspectiveStatus implements OnChanges {
       let startAnimationsTimeline = new TimelineMax({
         align: 'sequence',
       });
-      // Start animations happen in two groups. Group 1 animates before
-      // group 2, and the animations within each group start at the same time.
+
+      // Start animations happen in three groups. Group 0 animations before
+      // group 1, which animates before group 2. The animations within each
+      // group start at the same time.
+      let startAnimationsGroup0: Animation[] = [];
       let startAnimationsGroup1: Animation[] = [];
       let startAnimationsGroup2: Animation[] = [];
+
+      // Update visibility of the status widget before starting; it could have
+      // disappeared due to certain settings, and in some of these cases it
+      // needs to reappear before loading animation begins.
+      startAnimationsGroup0.push(this.getUpdateStatusWidgetVisibilityAnimation(true));
 
       startAnimationsGroup2.push(this.getToGrayScaleAnimation(GRAYSCALE_ANIMATION_TIME_SECONDS));
       if (this.showScore) {
@@ -459,6 +561,7 @@ export class PerspectiveStatus implements OnChanges {
         startAnimationsGroup2.push(
           this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
       }
+      startAnimationsTimeline.add(startAnimationsGroup0);
       startAnimationsTimeline.add(startAnimationsGroup1);
       startAnimationsTimeline.add(startAnimationsGroup2);
 
@@ -551,7 +654,7 @@ export class PerspectiveStatus implements OnChanges {
       TweenMax.to(this.layerTextContainer, 0.4, { opacity: 0, delay: 0.1 }),
       TweenMax.to(this.layerTextContainer, 0.4, { x: 20, delay: 0.1 }),
       TweenMax.to(this.widget, 0.6, {
-        x: this.container.offsetWidth - this.indicatorWidth - PADDING_PX,
+        x: this.container.offsetWidth - this.indicatorWidth - WIDGET_PADDING_PX,
         delay: 0.2,
       })
     ], 0, 'normal', 0);
