@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import {
-  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -55,6 +54,7 @@ export const ScoreThreshold = {
 export const DEFAULT_FEEDBACK_TEXT = 'likely to be perceived as "toxic."';
 
 const FADE_START_LABEL = "fadeStart";
+const LOADING_START_ANIMATIONS_LABEL = "loadingAnimationStart";
 const SHAPE_MORPH_TIME_SECONDS = 1;
 const FADE_DETAILS_TIME_SECONDS = 0.4;
 const FADE_ANIMATION_TIME_SECONDS = 0.3;
@@ -118,7 +118,7 @@ export class PerspectiveStatus implements OnChanges {
   ];
 
   private showFeedbackQuestion: boolean = false;
-  isLoading: boolean = false;
+  @Input() isLoading: boolean = false;
   public isPlayingLoadingAnimation: boolean = false;
   public isPlayingShowOrHideDetailsAnimation: boolean = false;
   public isPlayingShowOrHideLoadingWidgetAnimation: boolean = false;
@@ -137,6 +137,9 @@ export class PerspectiveStatus implements OnChanges {
   // should not be used for a loading animation.
   private updateDemoSettingsAnimation: any;
   private isPlayingUpdateShapeAnimation: boolean;
+  
+  private updateStatusWidgetVisibilityAnimation: any;
+  private loadingAnimation: any;
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
@@ -167,15 +170,6 @@ export class PerspectiveStatus implements OnChanges {
       || this.layerTextContainer === undefined
       || this.interactiveLayerControlsContainer === undefined) {
       return;
-    }
-
-    if (changes['score'] !== undefined) {
-      if (!this.isPlayingLoadingAnimation) {
-        console.debug('Updating shape from ngOnChanges: ' + this.score);
-        let currentRotation = (this.widget as any)._gsTransform.rotation;
-        console.log('getUpdateShape from score change; Current rotation:', currentRotation);
-        this.getUpdateShapeAnimation(this.score).play();
-      }
     }
 
     if (changes['gradientColors'] !== undefined) {
@@ -219,33 +213,49 @@ export class PerspectiveStatus implements OnChanges {
   private getUpdateStatusWidgetVisibilityAnimation(loadStart: boolean): TimelineMax {
     let hide = this.getShouldHideStatusWidget(loadStart);
 
-    // If nothing has changed, return an empty animation.
-    if (hide === this.shouldHideStatusWidget) {
-      console.log('Returning');
-      return new TimelineMax({});
+    let needsReset = false;
+    if (this.isPlayingShowOrHideLoadingWidgetAnimation) {
+      console.log('Calling getUpdateStatusWidgetVisibility while isPlayingShowOfHideLoadingWidgetAnimation');
+      this.updateStatusWidgetVisibilityAnimation.kill();
+      //needsReset = true;
     }
 
-    let timeline = new TimelineMax({
+    console.log('loadStart=', loadStart);
+    console.log('Hide=', hide);
+
+    // If nothing has changed, return an empty animation.
+    //if (hide === this.shouldHideStatusWidget && !loadStart) {
+    //  console.log('Returning');
+    //  return new TimelineMax({});
+    //}
+    this.updateStatusWidgetVisibilityAnimation = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
           this.isPlayingShowOrHideLoadingWidgetAnimation = true;
-          this.shouldHideStatusWidget = false;
           console.log('Updating status widget visibility to '
-                      + (hide ? 'hidden' : 'visible')
-                      + ' from ' + (this.shouldHideStatusWidget ? 'hidden' : 'visible'));
+                        + (hide ? 'hidden' : 'visible') + ' from '
+                        + (this.shouldHideStatusWidget ? 'hidden' : 'visible'));
+          // Disable hiding so animations will show up.
+          this.shouldHideStatusWidget = false;
         });
       },
       onComplete: () => {
         this.ngZone.run(() => {
-          console.debug('Changing status widget visibility complete');
+          console.log('Changing status widget visibility complete');
           this.isPlayingShowOrHideLoadingWidgetAnimation = false;
           this.shouldHideStatusWidget = hide;
         });
       },
     });
-    timeline.add([this.getChangeLoadingIconVisibilityAnimation(hide),
-                  this.getChangeLoadingIconXValueAnimation(hide)]);
-    return timeline;
+    // Make sure loading x positions of everything are reset before starting a
+    // hide or show animation if we're interrupting an existing animation.
+    //if (needsReset) {
+    //  timeline.add(this.getChangeLoadingIconXValueAnimation(!hide));
+    //}
+    this.updateStatusWidgetVisibilityAnimation.add([
+      this.getChangeLoadingIconVisibilityAnimation(hide),
+      this.getChangeLoadingIconXValueAnimation(hide)]);
+    return this.updateStatusWidgetVisibilityAnimation;
   }
 
   private getChangeLoadingIconVisibilityAnimation(hide: boolean): TweenMax {
@@ -466,12 +476,46 @@ export class PerspectiveStatus implements OnChanges {
     this.modelInfoLinkClicked.emit();
   }
 
+  notifyScoreChange(score: number): void {
+    console.debug('Setting this.score =', score);
+    this.score = score;
+    if (this.isPlayingLoadingAnimation) {
+      // Loading just ended.
+      this.setLoading(false);
+    } else {
+      // This indicates that the score was reset without being the result of a
+      // load completing, such as the text being cleared.
+      let updateScoreCompletedTimeline = new TimelineMax({
+        onStart: () => {
+          this.ngZone.run(() => {
+            console.log('Updating shape from notifyScoreChange');
+          });
+        },
+        onComplete: () => {
+          this.ngZone.run(() => {
+            this.scoreChangeAnimationCompleted.emit();
+          });
+        }
+      });
+      updateScoreCompletedTimeline.add(
+        this.getUpdateStatusWidgetVisibilityAnimation(false));
+      updateScoreCompletedTimeline.add(this.getUpdateShapeAnimation(this.score));
+      updateScoreCompletedTimeline.play();
+    }
+  }
+
   setLoading(loading: boolean): void {
     if (this.widget === null) {
       return;
     }
     this.isLoading = loading;
-    console.debug('Setting loading to ', loading);
+    if (loading && this.isPlayingShowOrHideLoadingWidgetAnimation
+        && this.isPlayingLoadingAnimation) {
+      // Special case; kill the loading animation and restart loading.
+      console.log('Restart loading requested, but animation is playing');
+      //this.loadingAnimation.kill();
+      //this.isPlayingLoadingAnimation = false;
+    }
     if (loading && !this.isPlayingLoadingAnimation) {
       let loadingTimeline = new TimelineMax({
         paused:true,
@@ -487,13 +531,18 @@ export class PerspectiveStatus implements OnChanges {
             console.debug('Completing timeline');
             console.debug('Updating shape from animation complete');
             if (this.isLoading) {
-              console.debug('Restarting loading');
-              loadingTimeline.seek(FADE_START_LABEL);
+              if (this.isPlayingShowOrHideLoadingWidgetAnimation) {
+                console.log('Restarting loading from loading start');
+                loadingTimeline.seek(LOADING_START_ANIMATIONS_LABEL);
+              } else {
+                console.log('Restarting loading from fade');
+                loadingTimeline.seek(FADE_START_LABEL);
+              }
             } else {
               console.debug('Loading complete');
               console.debug('hasScore:', this.hasScore);
               let updateScoreCompletedTimeline = new TimelineMax({
-                paused:true,
+                //paused:true,
                 onStart: () => {
                   console.debug('Score change animation start');
                 },
@@ -516,6 +565,7 @@ export class PerspectiveStatus implements OnChanges {
               // If we're revealing the status widget, play the reveal animation
               // before the update shape animation.
               if (!this.getShouldHideStatusWidget(false)) {
+                console.log('Before');
                 updateScoreCompletedTimeline.add(
                   this.getUpdateStatusWidgetVisibilityAnimation(false));
               }
@@ -525,6 +575,7 @@ export class PerspectiveStatus implements OnChanges {
               // If we're hiding the status widget, play the hide widget
               // animation after the update shape animation.
               if (this.getShouldHideStatusWidget(false)) {
+                console.log('After');
                 updateScoreCompletedTimeline.add(
                   this.getUpdateStatusWidgetVisibilityAnimation(false));
               }
@@ -565,7 +616,7 @@ export class PerspectiveStatus implements OnChanges {
       startAnimationsTimeline.add(startAnimationsGroup1);
       startAnimationsTimeline.add(startAnimationsGroup2);
 
-      loadingTimeline.add(startAnimationsTimeline);
+      loadingTimeline.add(startAnimationsTimeline, LOADING_START_ANIMATIONS_LABEL);
 
       // Include shrink in and out animation in a separate timeline so an
       // ease can be applied.

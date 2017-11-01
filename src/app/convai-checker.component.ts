@@ -19,6 +19,7 @@ import {
   ElementRef,
   EventEmitter,
   Input,
+  NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
@@ -148,10 +149,12 @@ export class ConvaiChecker implements OnInit, OnChanges {
   private gradientColors: string[] = ["#25C1F9", "#7C4DFF", "#D400F9"];
   private apiKey: string|undefined;
   private configuration: string;
+  private isLoading = false;
 
   constructor(
       private elementRef: ElementRef,
       private analyzeApiService: PerspectiveApiService,
+      private changeDetectorRef: ChangeDetectorRef
   ) {
     // Extracts attribute fields from the element declaration. This
     // covers the case where this component is used as a root level
@@ -229,7 +232,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
     if (!text) {
       this.analyzeCommentResponse = null;
       this.analyzeCommentResponseChanged.emit(this.analyzeCommentResponse);
-      this.statusWidget.setLoading(false);
+      this.statusWidget.notifyScoreChange(0);
       this.canAcceptFeedback = false;
       this.statusWidget.resetFeedback();
       return;
@@ -337,8 +340,9 @@ export class ConvaiChecker implements OnInit, OnChanges {
           this.demoSettings.useGapi /* makeDirectApiCall */,
           this.serverUrl)
         .finally(() => {
-          console.debug('Request done');
-          this.statusWidget.setLoading(this.checkInProgress);
+          console.log('Request done');
+          this.statusWidget.notifyScoreChange(
+            this.getMaxScore(this.analyzeCommentResponse));
           this.mostRecentRequestSubscription = null;
         })
         .subscribe(
