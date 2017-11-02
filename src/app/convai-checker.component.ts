@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import {
-  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -153,8 +152,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
 
   constructor(
       private elementRef: ElementRef,
-      private analyzeApiService: PerspectiveApiService,
-      private changeDetectorRef: ChangeDetectorRef
+      private analyzeApiService: PerspectiveApiService
   ) {
     // Extracts attribute fields from the element declaration. This
     // covers the case where this component is used as a root level

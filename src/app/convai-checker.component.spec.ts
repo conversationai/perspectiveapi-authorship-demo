@@ -1375,20 +1375,30 @@ describe('Convai checker test', () => {
       ConvaiCheckerTestComponentHideLoadingIconAfterLoadSetting);
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
-    let queryText = 'Your mother was a hamster';
+    let queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?'
+    ];
 
-    let mockResponse: AnalyzeCommentResponse =
-      getMockCheckerResponse(checker.getToken(queryText));
+    let mockResponses = [
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[0])),
+      getMockCheckerResponseWithScore(0.5, checker.getToken(queryTexts[1])),
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+
+    let callCount = 0;
 
     let mockBackend = TestBed.get(MockBackend);
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
+       fixture.detectChanges();
        expect(getIsElementWithIdVisible('statusWidget')).toBe(true);
        expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
            new ResponseOptions({
-              body: mockResponse
+              body: mockResponses[callCount]
            })
          )
        );
@@ -1400,6 +1410,20 @@ describe('Convai checker test', () => {
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
          expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
+         if (callCount < 2) {
+           callCount++;
+
+           setTextAndFireInputEvent('', textArea);
+
+           // Checks that clearing the textbox hides the status widget.
+           fixture.whenStable().then(() => {
+             fixture.detectChanges();
+             expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
+
+             // Fire another request.
+             setTextAndFireInputEvent(queryTexts[callCount], textArea);
+           });
+         }
        });
     });
 
@@ -1407,7 +1431,7 @@ describe('Convai checker test', () => {
       By.css('#' + checker.inputId)).nativeElement;
 
     // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea);
+    setTextAndFireInputEvent(queryTexts[callCount], textArea);
   }));
 
   it('Test loading icon visibility with setting hideLoadingIconForScoresBelowMinThreshold',
