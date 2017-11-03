@@ -136,8 +136,8 @@ export class PerspectiveStatus implements OnChanges {
   // Animation being used to update the display settings of the demo. This
   // should not be used for a loading animation.
   private updateDemoSettingsAnimation: any;
-  private isPlayingUpdateShapeAnimation: boolean; 
-  private updateStatusWidgetVisibilityAnimation: any;
+  private isPlayingUpdateShapeAnimation: boolean;
+  private updateStatusWidgetVisibilityAnimation: TimelineMax;
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
