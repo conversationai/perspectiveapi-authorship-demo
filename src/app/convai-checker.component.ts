@@ -237,7 +237,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
     }
 
     this.lastPendingRequestedText = text;
-    console.log('Calling setLoading(true) before updating this.pendingRequest for text', text);
     this.statusWidget.setLoading(true);
 
     // Use window.setTimeout() instead of just setTimeout() because
@@ -245,7 +244,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
     // a development environment vs a testing environment (the former sees
     // NodeJS.Timer while the latter sees number). Using window.setTimeout
     // makes it consistently type number.
-    console.debug('Updating this.pendingRequest', text);
+    console.debug('Updating this.pendingRequest for text: ', text);
     this.pendingRequest = window.setTimeout(() => {
       this._checkText(text);
     }, REQUEST_LIMIT_MS);
