@@ -147,7 +147,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
   private gradientColors: string[] = ["#25C1F9", "#7C4DFF", "#D400F9"];
   private apiKey: string|undefined;
   private configuration: string;
-  private isLoading = false;
 
   constructor(
       private elementRef: ElementRef,

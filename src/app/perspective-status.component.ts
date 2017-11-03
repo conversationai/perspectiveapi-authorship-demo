@@ -118,7 +118,7 @@ export class PerspectiveStatus implements OnChanges {
   ];
 
   private showFeedbackQuestion: boolean = false;
-  @Input() isLoading: boolean = false;
+  isLoading: boolean = false;
   public isPlayingLoadingAnimation: boolean = false;
   public isPlayingShowOrHideDetailsAnimation: boolean = false;
   public isPlayingShowOrHideLoadingWidgetAnimation: boolean = false;
@@ -136,10 +136,8 @@ export class PerspectiveStatus implements OnChanges {
   // Animation being used to update the display settings of the demo. This
   // should not be used for a loading animation.
   private updateDemoSettingsAnimation: any;
-  private isPlayingUpdateShapeAnimation: boolean;
-  
+  private isPlayingUpdateShapeAnimation: boolean; 
   private updateStatusWidgetVisibilityAnimation: any;
-  private loadingAnimation: any;
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
