@@ -223,8 +223,10 @@ export class PerspectiveStatus implements OnChanges {
 
     // If nothing has changed, return an empty animation.
     if (hide === this.shouldHideStatusWidget) {
-      console.log('Returning');
+      console.log('Returning without update status widget visibility animation');
       return new TimelineMax({});
+    } else {
+      console.log('Getting update status widget visibility animation');
     }
 
     this.updateStatusWidgetVisibilityAnimation = new TimelineMax({
@@ -510,18 +512,25 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   setLoading(loading: boolean): void {
+    console.log('Calling setLoading(' + loading + ')');
+    console.log('this.isPlayingLoadingAnimation=', this.isPlayingLoadingAnimation);
     if (this.widget === null) {
       return;
     }
     this.isLoading = loading;
     if (loading && !this.isPlayingLoadingAnimation) {
+      console.log('About to create loadingTimeline');
+      // Set isPlayingLoadingAnimation = true here instead of in the onStart()
+      // of the animation, so that the animation does not start twice if this
+      // function gets called twice in rapid succession.
+      this.isPlayingLoadingAnimation = true;
+
       let loadingTimeline = new TimelineMax({
         paused:true,
         ease: Power3.easeInOut,
         onStart: () => {
           this.ngZone.run(() => {
             console.debug('Starting timeline');
-            this.isPlayingLoadingAnimation = true;
           });
         },
         onComplete: () => {
@@ -535,6 +544,8 @@ export class PerspectiveStatus implements OnChanges {
                 console.log('Restarting loading to loading start');
                 loadingTimeline.seek(LOADING_START_ANIMATIONS_LABEL);
               } else {
+                console.log('isPlayingLoadingAnimation', this.isPlayingLoadingAnimation);
+                console.log('this.score=', this.score);
                 console.log('Restarting loading to fade');
                 loadingTimeline.seek(FADE_START_LABEL);
               }
@@ -547,13 +558,18 @@ export class PerspectiveStatus implements OnChanges {
                 },
                 onComplete: () => {
                   this.ngZone.run(() => {
+                    console.log('Score change animation end');
+                    console.log('Setting this.isPlayingLoadingAnimation to false');
                     this.isPlayingLoadingAnimation = false;
+                    console.log('Clearing loadingTimeline');
                     loadingTimeline.clear();
                     this.scoreChangeAnimationCompleted.emit();
                     if (this.isLoading) {
                       // If we finish the end loading animation and we're supposed
                       // to be loading again, restart the loading animation!
                       console.debug('Restarting loading from ending animation completion');
+                      console.debug('this.score=', this.score);
+                      console.debug('this.currentShape=', this.currentShape);
                       this.setLoading(true);
                     } else if (this.currentShape !== this.getShapeForScore(this.score)) {
                       // The score has changed between now and when the animation
