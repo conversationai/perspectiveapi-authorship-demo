@@ -461,13 +461,22 @@ describe('Convai checker test', () => {
     let checker = fixture.componentInstance.checker;
     let queryText = 'Your mother was a hamster';
 
+    let mockScore = 0.3;
     let mockResponse: AnalyzeCommentResponse =
-      getMockCheckerResponse(checker.getToken(queryText));
+      getMockCheckerResponseWithScore(mockScore, checker.getToken(queryText));
 
     // Checks that the response is emitted.
     checker.analyzeCommentResponseChanged.subscribe(
       (emittedItem: AnalyzeCommentResponse|null) => {
         expect(emittedItem).toEqual(mockResponse);
+    });
+
+    // Checks that the score change event is emitted.
+    // TODO(rachelrosen): Figure out a way to write these tests to guarantee
+    // that we wait for these subscribe calls; currently it seems async() and
+    // done() are not compatible.
+    checker.scoreChanged.subscribe((emittedScore: number) => {
+      expect(emittedScore).toEqual(mockScore);
     });
 
     let mockBackend = TestBed.get(MockBackend);
