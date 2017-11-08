@@ -465,18 +465,21 @@ describe('Convai checker test', () => {
     let mockResponse: AnalyzeCommentResponse =
       getMockCheckerResponseWithScore(mockScore, checker.getToken(queryText));
 
-    // Checks that the response is emitted.
+    let lastEmittedResponse: AnalyzeCommentResponse|null = null;
+    let lastEmittedScore: number = -1;
+    let emittedResponseCount = 0;
+    let emittedScoreCount = 0;
+
+    // Records when the response is emitted.
     checker.analyzeCommentResponseChanged.subscribe(
       (emittedItem: AnalyzeCommentResponse|null) => {
-        expect(emittedItem).toEqual(mockResponse);
+        lastEmittedResponse = emittedItem;
+        emittedResponseCount++;
     });
 
-    // Checks that the score change event is emitted.
-    // TODO(rachelrosen): Figure out a way to write these tests to guarantee
-    // that we wait for these subscribe calls; currently it seems async() and
-    // done() are not compatible.
     checker.scoreChanged.subscribe((emittedScore: number) => {
-      expect(emittedScore).toEqual(mockScore);
+      lastEmittedScore = emittedScore;
+      emittedScoreCount++;
     });
 
     let mockBackend = TestBed.get(MockBackend);
@@ -497,6 +500,14 @@ describe('Convai checker test', () => {
          // Checks that the response is received and stored.
          expect(checker.analyzeCommentResponse).not.toBe(null);
          expect(checker.analyzeCommentResponse).toEqual(mockResponse);
+
+         // Checks that the response was emitted.
+         expect(lastEmittedResponse).toEqual(mockResponse);
+         expect(emittedResponseCount).toEqual(1);
+
+         // Checks that the score was emitted.
+         expect(lastEmittedScore).toEqual(mockScore);
+         expect(emittedScoreCount).toEqual(1);
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
