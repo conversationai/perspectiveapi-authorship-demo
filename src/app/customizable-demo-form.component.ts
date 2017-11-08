@@ -17,6 +17,7 @@ import {MdSlideToggleChange, MdSliderChange} from '@angular/material';
 import {DemoSettings} from './convai-checker.component';
 import {
   ConfigurationInput,
+  LoadingIconStyle,
   ScoreThreshold,
   DEFAULT_FEEDBACK_TEXT
 } from './perspective-status.component';
@@ -210,7 +211,9 @@ export class CustomizableDemoForm {
       hideLoadingIconAfterLoad: this.hideLoadingIconAfterLoad,
       hideLoadingIconForScoresBelowMinThreshold:
         this.hideLoadingIconForScoresBelowMinThreshold,
-      userFeedbackPromptText: this.userFeedbackPromptText
+      userFeedbackPromptText: this.userFeedbackPromptText,
+      alwaysHideLoadingIcon: false,
+      loadingIconStyle: LoadingIconStyle.DEFAULT
     };
   }
 }

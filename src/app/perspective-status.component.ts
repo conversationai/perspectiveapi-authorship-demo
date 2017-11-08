@@ -51,6 +51,11 @@ export const ScoreThreshold = {
   MAX: 1,
 };
 
+export const LoadingIconStyle = {
+  DEFAULT: 'default',
+  EMOJI: 'emoji',
+};
+
 export const DEFAULT_FEEDBACK_TEXT = 'likely to be perceived as "toxic."';
 
 const FADE_START_LABEL = "fadeStart";
