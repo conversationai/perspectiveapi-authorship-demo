@@ -477,6 +477,7 @@ describe('Convai checker test', () => {
         emittedResponseCount++;
     });
 
+    // Records when the score is emitted.
     checker.scoreChanged.subscribe((emittedScore: number) => {
       lastEmittedScore = emittedScore;
       emittedScoreCount++;
