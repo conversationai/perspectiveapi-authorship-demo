@@ -20,6 +20,10 @@
   margin: 2px;
 }
 
+#emojiWidget {
+  background-color: #ffcc4d;
+}
+
 #animationContainer {
   z-index: 5;
   width: 20px;

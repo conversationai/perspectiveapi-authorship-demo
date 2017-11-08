@@ -112,6 +112,10 @@ export class CustomizableDemoForm {
   ];
   customizeScoreThresholds = false;
 
+  /** Loading icon style options. */
+  loadingIconStyles = [LoadingIconStyle.DEFAULT, LoadingIconStyle.EMOJI];
+  selectedLoadingIconStyle = LoadingIconStyle.DEFAULT;
+
   /** Feedback text options. */
   feedbackTextSchemes: FeedbackTextScheme[] = [
     {
@@ -213,7 +217,7 @@ export class CustomizableDemoForm {
         this.hideLoadingIconForScoresBelowMinThreshold,
       userFeedbackPromptText: this.userFeedbackPromptText,
       alwaysHideLoadingIcon: false,
-      loadingIconStyle: LoadingIconStyle.DEFAULT
+      loadingIconStyle: this.selectedLoadingIconStyle
     };
   }
 }

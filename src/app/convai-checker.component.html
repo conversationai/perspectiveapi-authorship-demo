@@ -19,6 +19,8 @@
     [userFeedbackPromptText]="demoSettings.userFeedbackPromptText"
     [hideLoadingIconAfterLoad]="demoSettings.hideLoadingIconAfterLoad"
     [hideLoadingIconForScoresBelowMinThreshold]="demoSettings.hideLoadingIconForScoresBelowMinThreshold"
+    [alwaysHideLoadingIcon]="demoSettings.alwaysHideLoadingIcon"
+    [loadingIconStyle]="demoSettings.loadingIconStyle"
     (commentFeedbackSubmitted)="onCommentFeedbackReceived($event)"
     (scoreChangeAnimationCompleted)="handleScoreChangeAnimationCompleted()"
     (modelInfoLinkClicked)="handleModelInfoLinkClicked()">

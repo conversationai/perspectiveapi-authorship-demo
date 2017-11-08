@@ -1,4 +1,4 @@
-<div id="widgetContainer" class="horizontal-container">
+<div #widgetContainer id="widgetContainer" class="horizontal-container">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
         rel="stylesheet">
   <!-- For items that need to be animated, hidden is used instead of *ngIf.
@@ -6,20 +6,30 @@
        cannot be found when the component is initializing if their display
        conditions are not met. -->
   <div id="animationContainer">
-    <button
-         id="statusWidget"
-         class="dot"
-         [style.width]="indicatorWidth"
-         [style.height]="indicatorHeight"
-         [hidden]="shouldHideStatusWidget"
-         [attr.aria-hidden]="shouldHideStatusWidget || isPlayingShowOrHideLoadingWidgetAnimation"
-         [disabled]="isPlayingShowOrHideLoadingWidgetAnimation"
-         role="button"
-         [attr.aria-label]=
-            "getAnimationA11yLabel(showScore, isPlayingLoadingAnimation, isPlayingShowOrHideDetailsAnimation)"
-         (click)="toggleScore()"
-         tabindex=0>
-    </button>
+    <div *ngIf="loadingIconStyle === loadingIconStyleConst.DEFAULT">
+      <button
+           #defaultStatusWidget
+           id="defaultStatusWidget"
+           class="dot"
+           [style.width]="indicatorWidth"
+           [style.height]="indicatorHeight"
+           [hidden]="shouldHideStatusWidget || alwaysHideLoadingIcon"
+           [attr.aria-hidden]="shouldHideStatusWidget || isPlayingShowOrHideLoadingWidgetAnimation || alwaysHideLoadingIcon"
+           [disabled]="isPlayingShowOrHideLoadingWidgetAnimation"
+           role="button"
+           [attr.aria-label]=
+              "getAnimationA11yLabel(showScore, isPlayingLoadingAnimation, isPlayingShowOrHideDetailsAnimation)"
+           (click)="toggleScore()"
+           tabindex=0>
+      </button>
+    </div>
+    <div *ngIf="loadingIconStyle === loadingIconStyleConst.EMOJI">
+      <button
+           #emojiStatusWidget
+           class="dot emojiWidget"
+           (click)="toggleScore()">
+      </button>
+    </div>
   </div>
 
   <div class="layersContainer">
