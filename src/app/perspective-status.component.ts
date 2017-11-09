@@ -80,7 +80,6 @@ export class PerspectiveStatus implements OnChanges {
   // convai-checker component with this one.
   @Input() indicatorWidth: number = 13;
   @Input() indicatorHeight: number = 13;
-  @Input() score: number = 0;
   @Input() configurationInput: string = ConfigurationInput.DEMO_SITE;
   // Since score is zero for both no score and legitimate scores of zero, keep
   // a flag to indicate whether we should show UI for showing score info.
@@ -116,6 +115,7 @@ export class PerspectiveStatus implements OnChanges {
   public configurationEnum = Configuration;
   public configuration = this.configurationEnum.DEMO_SITE;
 
+  public score: number = 0;
   public currentLayerIndex: number = 0;
   private layerAnimationHandles: HTMLElement[] = [];
   private layerAnimationSelectors: string[] = [
@@ -284,24 +284,24 @@ export class PerspectiveStatus implements OnChanges {
       let layer2InteractiveContainer =
         this.elementRef.nativeElement.querySelector(
           this.layerAnimationSelectors[2] + ' .interactiveElement');
+      let translateXSettings = {
+        x: hide ? -1 * (this.indicatorWidth
+                        + WIDGET_PADDING_PX
+                        + WIDGET_RIGHT_MARGIN_PX)
+                : 0
+      };
       translateXAnimations.push(
-        TweenMax.to(layer0TextContainer, FADE_WIDGET_TIME_SECONDS,
-                    { x: hide ? -1 * (this.indicatorWidth
-                                      + WIDGET_PADDING_PX
-                                      + WIDGET_RIGHT_MARGIN_PX)
-                              : 0}));
+        TweenMax.to(layer0TextContainer,
+                    FADE_WIDGET_TIME_SECONDS,
+                    translateXSettings));
       translateXAnimations.push(
-        TweenMax.to(layer1TextContainer, FADE_WIDGET_TIME_SECONDS,
-                    { x: hide ? -1 * (this.indicatorWidth
-                                      + WIDGET_PADDING_PX
-                                      + WIDGET_RIGHT_MARGIN_PX)
-                              : 0}));
+        TweenMax.to(layer1TextContainer,
+                    FADE_WIDGET_TIME_SECONDS,
+                    translateXSettings));
       translateXAnimations.push(
-        TweenMax.to(layer2InteractiveContainer, FADE_WIDGET_TIME_SECONDS,
-                    { x: hide ? -1 * (this.indicatorWidth
-                                      + WIDGET_PADDING_PX
-                                      + WIDGET_RIGHT_MARGIN_PX)
-                              : 0}));
+        TweenMax.to(layer2InteractiveContainer,
+                    FADE_WIDGET_TIME_SECONDS,
+                    translateXSettings));
     }
     timeline.add(translateXAnimations);
     return timeline;

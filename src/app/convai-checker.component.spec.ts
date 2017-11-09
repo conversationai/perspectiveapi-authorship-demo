@@ -41,7 +41,7 @@ import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import 'gsap';
 
 @Component({
-  selector: 'my-comp',
+  selector: 'test-comp',
   template: `
         <convai-checker
            id="checker"
@@ -70,7 +70,7 @@ class ConvaiCheckerTestComponentExternalConfig implements OnInit {
 }
 
 @Component({
-  selector: 'my-comp',
+  selector: 'test-comp',
   template: `
         <convai-checker
            id="checker"
@@ -183,7 +183,7 @@ class ConvaiCheckerInvalidInputTestComponent {
 }
 
 @Component({
-  selector: 'my-comp-attribute-input',
+  selector: 'test-comp-attribute-input',
   template: `
         <convai-checker
            id="checker"
@@ -206,7 +206,7 @@ class ConvaiCheckerWithAttributeInputTestComponent {
 }
 
 @Component({
-  selector: 'my-comp-hide-loading-icon-after-load-setting',
+  selector: 'test-comp-hide-loading-icon-after-load-setting',
   template: `
         <convai-checker
            id="checker"
@@ -235,7 +235,7 @@ class ConvaiCheckerTestComponentHideLoadingIconAfterLoadSetting implements OnIni
 }
 
 @Component({
-  selector: 'my-comp-hide-loading-icon-for-scores-below-threshold-setting',
+  selector: 'test-comp-hide-loading-icon-for-scores-below-threshold-setting',
   template: `
         <convai-checker
            id="checker"
