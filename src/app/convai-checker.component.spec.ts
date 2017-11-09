@@ -461,13 +461,26 @@ describe('Convai checker test', () => {
     let checker = fixture.componentInstance.checker;
     let queryText = 'Your mother was a hamster';
 
+    let mockScore = 0.3;
     let mockResponse: AnalyzeCommentResponse =
-      getMockCheckerResponse(checker.getToken(queryText));
+      getMockCheckerResponseWithScore(mockScore, checker.getToken(queryText));
 
-    // Checks that the response is emitted.
+    let lastEmittedResponse: AnalyzeCommentResponse|null = null;
+    let lastEmittedScore: number = -1;
+    let emittedResponseCount = 0;
+    let emittedScoreCount = 0;
+
+    // Records when the response is emitted.
     checker.analyzeCommentResponseChanged.subscribe(
       (emittedItem: AnalyzeCommentResponse|null) => {
-        expect(emittedItem).toEqual(mockResponse);
+        lastEmittedResponse = emittedItem;
+        emittedResponseCount++;
+    });
+
+    // Records when the score is emitted.
+    checker.scoreChanged.subscribe((emittedScore: number) => {
+      lastEmittedScore = emittedScore;
+      emittedScoreCount++;
     });
 
     let mockBackend = TestBed.get(MockBackend);
@@ -488,6 +501,14 @@ describe('Convai checker test', () => {
          // Checks that the response is received and stored.
          expect(checker.analyzeCommentResponse).not.toBe(null);
          expect(checker.analyzeCommentResponse).toEqual(mockResponse);
+
+         // Checks that the response was emitted.
+         expect(lastEmittedResponse).toEqual(mockResponse);
+         expect(emittedResponseCount).toEqual(1);
+
+         // Checks that the score was emitted.
+         expect(lastEmittedScore).toEqual(mockScore);
+         expect(emittedScoreCount).toEqual(1);
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
