@@ -20,8 +20,18 @@
   margin: 2px;
 }
 
-#emojiWidget {
+.emojiWidget {
   background-color: #ffcc4d;
+}
+
+.iconEmoji {
+  width: 13px;
+  height: 13px;
+  opacity: 0;
+}
+
+.hiddenEmoji {
+  display: none;
 }
 
 #animationContainer {

@@ -140,6 +140,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   @ViewChild('defaultStatusWidget') private defaultWidget: ElementRef;
   @ViewChild('emojiStatusWidget') private emojiWidget: ElementRef;
   @ViewChild('widgetContainer') private container: ElementRef;
+  @ViewChild('smileEmoji') private smileEmoji: ElementRef;
+  @ViewChild('neutralEmoji') private neutralEmoji: ElementRef;
+  @ViewChild('sadEmoji') private sadEmoji: ElementRef;
   private widgetElement: HTMLElement|null = null;
   private layerTextContainer: HTMLElement;
   private interactiveLayerControlsContainer: HTMLElement;
@@ -211,7 +214,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
         this.updateDemoSettingsAnimation.kill();
       }
 
-      this.updateDemoSettingsAnimation = this.getUpdateShapeAnimation(this.score);
+      this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
       this.updateDemoSettingsAnimation.play();
     }
   }
@@ -223,6 +226,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
     } else if (this.emojiWidget != null) {
       console.log('2');
       this.widgetElement = this.emojiWidget.nativeElement;
+      this.getShowEmojiAnimation().play();
     } else {
       console.log('3');
       this.widgetElement = null;
@@ -517,12 +521,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
     this.modelInfoLinkClicked.emit();
   }
 
-  updateWidgetState(): void {
+  getUpdateWidgetStateAnimation(): TimelineMax {
     if (this.loadingIconStyle === LoadingIconStyle.DEFAULT) {
       let updateScoreCompletedTimeline = new TimelineMax({
         onStart: () => {
           this.ngZone.run(() => {
-            console.debug('Updating shape from notifyScoreChange');
           });
         },
         onComplete: () => {
@@ -534,12 +537,14 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
       updateScoreCompletedTimeline.add(
         this.getUpdateStatusWidgetVisibilityAnimation(false));
       updateScoreCompletedTimeline.add(this.getUpdateShapeAnimation(this.score));
-      updateScoreCompletedTimeline.play();
+      return updateScoreCompletedTimeline;
     } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
-      console.log('Update widget state');
+      console.log('Update widget state for emoji style');
+      return new TimelineMax({});
     } else {
       console.error('Calling updateWidgetState for unknown loadingIconStyle: '
                     + this.loadingIconStyle);
+      return null;
     }
   }
 
@@ -552,7 +557,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
     } else {
       // This indicates that the score was reset without being the result of a
       // load completing, such as the text being cleared.
-      this.updateWidgetState();
+      console.debug('Updating shape from notifyScoreChange');
+      this.getUpdateWidgetStateAnimation().play();
     }
   }
 
@@ -571,6 +577,28 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
     }
   }
 
+  getShowEmojiAnimation(): TimelineMax {
+    let emojiElementToShow: HTMLElement|null = null;
+    if (this.score > this.scoreThresholds[2]) {
+      emojiElementToShow = this.sadEmoji.nativeElement;
+    } else if (this.score > this.scoreThresholds[1]) {
+      emojiElementToShow = this.neutralEmoji.nativeElement;
+    } else {
+      emojiElementToShow = this.smileEmoji.nativeElement;
+    }
+    let showEmojiTimeline = new TimelineMax({
+      onComplete: () => {
+        this.ngZone.run(() => {
+          this.isPlayingLoadingAnimation = false;
+        });
+      }
+    });
+
+    showEmojiTimeline.add(
+      TweenMax.to(emojiElementToShow, 0.5, { opacity: 1}));
+    return showEmojiTimeline;
+  }
+
   setLoadingForEmojiWidget(loading: boolean): void {
     if (loading && !this.isPlayingLoadingAnimation) {
       this.isPlayingLoadingAnimation = true;
@@ -579,26 +607,46 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
         ease: Power3.easeInOut,
         onStart: () => {
           this.ngZone.run(() => {
-            console.debug('Starting timeline');
+            console.debug('Starting timeline (emoji)');
           });
         },
         onComplete: () => {
           this.ngZone.run(() => {
-            console.debug('Completing timeline');
-            console.debug('Updating shape from animation complete');
+            console.debug('Completing timeline (emoji)');
             if (this.isLoading) {
+              console.debug('Restarting color change animation');
               loadingTimeline.seek('test label');
             } else {
-              this.isPlayingLoadingAnimation = false;
+              console.debug('Setting this.isPlayingLoadingAnimation = false (emoji)');
+              this.getShowEmojiAnimation().play();
             }
           });
         }
       });
 
+      let hideEmojiTimeline = new TimelineMax({});
+      hideEmojiTimeline.add([
+        TweenMax.to(this.smileEmoji.nativeElement, 0.5, { opacity: 0}),
+        TweenMax.to(this.neutralEmoji.nativeElement, 0.5, { opacity: 0}),
+        TweenMax.to(this.sadEmoji.nativeElement, 0.5, { opacity: 0})
+      ]);
+
       let changeColorBackAndForthTimeline = new TimelineMax({
-        yoyo: true
+        repeat: 1,
+        yoyo: true,
+        onStart: () => {
+          this.ngZone.run(()=> {
+            console.log('changeColorBackAndForth animation start');
+          });
+        },
+        onComplete: () => {
+          this.ngZone.run(()=> {
+            console.log('changeColorBackAndForth animation complete');
+          });
+        }
       });
       changeColorBackAndForthTimeline.add(this.getChangeColorAnimation(0.5, '#cccccc'));
+      loadingTimeline.add(hideEmojiTimeline);
       loadingTimeline.add(changeColorBackAndForthTimeline, 'test label');
       loadingTimeline.play();
     }
