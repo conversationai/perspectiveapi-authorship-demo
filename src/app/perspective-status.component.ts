@@ -284,7 +284,7 @@ export class PerspectiveStatus implements OnChanges {
       let layer2InteractiveContainer =
         this.elementRef.nativeElement.querySelector(
           this.layerAnimationSelectors[2] + ' .interactiveElement');
-      let translateXSettings = {
+      const translateXSettings = {
         x: hide ? -1 * (this.indicatorWidth
                         + WIDGET_PADDING_PX
                         + WIDGET_RIGHT_MARGIN_PX)
