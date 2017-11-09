@@ -263,20 +263,7 @@ let sendClickEvent = function(item: HTMLElement): void {
 }
 
 function getCopyOfDefaultDemoSettings(): DemoSettings {
-  return {
-    configuration: DEFAULT_DEMO_SETTINGS.configuration,
-    gradientColors: DEFAULT_DEMO_SETTINGS.gradientColors,
-    apiKey: DEFAULT_DEMO_SETTINGS.apiKey,
-    useGapi: DEFAULT_DEMO_SETTINGS.useGapi,
-    showPercentage: DEFAULT_DEMO_SETTINGS.showPercentage,
-    showMoreInfoLink: DEFAULT_DEMO_SETTINGS.showMoreInfoLink,
-    feedbackText: DEFAULT_DEMO_SETTINGS.feedbackText.slice() as [string, string, string],
-    scoreThresholds: DEFAULT_DEMO_SETTINGS.scoreThresholds.slice() as [number, number, number],
-    hideLoadingIconAfterLoad: DEFAULT_DEMO_SETTINGS.hideLoadingIconAfterLoad,
-    hideLoadingIconForScoresBelowMinThreshold:
-      DEFAULT_DEMO_SETTINGS.hideLoadingIconForScoresBelowMinThreshold,
-    userFeedbackPromptText: DEFAULT_DEMO_SETTINGS.userFeedbackPromptText
-  };
+  return JSON.parse(JSON.stringify(DEFAULT_DEMO_SETTINGS));
 }
 
 function getNormalizedInnerText(element: HTMLElement) {

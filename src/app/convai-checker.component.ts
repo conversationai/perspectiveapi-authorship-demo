@@ -27,7 +27,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { Injectable } from '@angular/core';
-import { PerspectiveStatus, CommentFeedback } from './perspective-status.component';
+import { PerspectiveStatus, CommentFeedback, LoadingIconStyle } from './perspective-status.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import {
   AnalyzeCommentResponse,
@@ -88,6 +88,14 @@ export interface DemoSettings {
   // threshold to show feedback (index 0 of scoreThresholds).
   hideLoadingIconForScoresBelowMinThreshold: boolean;
 
+  // Whether to always hide the loading icon (results in only showing the text
+  // feedback and never showing loading animation).
+  alwaysHideLoadingIcon: boolean;
+
+  // The loading icon style. See perspective-status.LoadingIconStyle for
+  // options.
+  loadingIconStyle: string;
+
   // The string to use to prompt users to submit feedback.
   userFeedbackPromptText: string;
 }
@@ -107,6 +115,8 @@ export const DEFAULT_DEMO_SETTINGS = {
   scoreThresholds: [0, 0.4, 0.7] as [number, number, number],
   hideLoadingIconAfterLoad: false,
   hideLoadingIconForScoresBelowMinThreshold: false,
+  alwaysHideLoadingIcon: false,
+  loadingIconStyle: LoadingIconStyle.DEFAULT,
   userFeedbackPromptText: 'Seem wrong?'
 };
 
