@@ -1074,6 +1074,7 @@ describe('Convai checker test', () => {
 
     checker.checkText(queryText);
   }));
+  */
 
   it('Should handle UI layer changes, external config', (done: Function) => {
     // Note: This test doesn't test error case UI, since that is handled in
@@ -1101,8 +1102,8 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        lastRequestUrl = connection.request.url;
+       fixture.detectChanges();
        if (lastRequestUrl === suggestScoreUrl) {
-         fixture.detectChanges();
          expect(fixture.nativeElement.textContent).toContain('Sending');
        } else if (lastRequestUrl === checkUrl) {
          expect(checker.statusWidget.isLoading).toBe(true);
@@ -1379,6 +1380,7 @@ describe('Convai checker test', () => {
     setTextAndFireInputEvent(queryText, textArea);
   });
 
+  /*
   it('Test loading icon visibility with setting hideLoadingIconAfterLoad', async(() => {
     let fixture = TestBed.createComponent(
       ConvaiCheckerTestComponentHideLoadingIconAfterLoadSetting);
@@ -1402,7 +1404,7 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        fixture.detectChanges();
-       expect(getIsElementWithIdVisible('statusWidget')).toBe(true);
+       expect(getIsElementWithIdVisible('defaultStatusWidget')).toBe(true);
        expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
@@ -1418,7 +1420,7 @@ describe('Convai checker test', () => {
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
-         expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
+         expect(getIsElementWithIdVisible('defaultStatusWidget')).toBe(false);
          if (callCount < 2) {
            callCount++;
 
@@ -1427,7 +1429,7 @@ describe('Convai checker test', () => {
            // Checks that clearing the textbox hides the status widget.
            fixture.whenStable().then(() => {
              fixture.detectChanges();
-             expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
+             expect(getIsElementWithIdVisible('defaultStatusWidget')).toBe(false);
 
              // Fire another request.
              setTextAndFireInputEvent(queryTexts[callCount], textArea);
@@ -1442,7 +1444,6 @@ describe('Convai checker test', () => {
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
   }));
-  */
 
   it('Test loading icon visibility with setting hideLoadingIconForScoresBelowMinThreshold',
      async(() => {
@@ -1466,9 +1467,9 @@ describe('Convai checker test', () => {
     let mockBackend = TestBed.get(MockBackend);
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
-       fixture.detectChanges();
-       expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
-       expect(checker.statusWidget.isLoading).toBe(true);
+       //fixture.detectChanges();
+       //expect(getIsElementWithIdVisible('defaultStatusWidget')).toBe(false);
+       //expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
            new ResponseOptions({
@@ -1483,11 +1484,15 @@ describe('Convai checker test', () => {
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
+         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
-         let statusWidgetVisible = getIsElementWithIdVisible('statusWidget');
+         let statusWidgetVisible = getIsElementWithIdVisible('defaultStatusWidget');
          // The first and fourth responses (indices 0 and 2) have a score below
          // the min threshold, so the loading widget should only be visible for
          // the second one (index 1).
+         console.log('shouldHideStatusWidget=', checker.statusWidget.shouldHideStatusWidget);
+         console.log('isPlayingLoadingAnimation=', checker.statusWidget.isPlayingLoadingAnimation);
+         console.log('alwaysHideLoadingIcon=', checker.statusWidget.alwaysHideLoadingIcon);
          console.log('callCount = ' + callCount + ' and statusWidgetVisible = ' + statusWidgetVisible);
          expect(statusWidgetVisible).toBe(callCount === 1);
 
@@ -1505,8 +1510,6 @@ describe('Convai checker test', () => {
              console.log('statusWidgetVisible=', statusWidgetVisible);
              expect(statusWidgetVisible).toBe(false);
 
-             // Fire another request.
-             setTextAndFireInputEvent(queryTexts[callCount], textArea);
            });
          }
        });
@@ -1518,4 +1521,5 @@ describe('Convai checker test', () => {
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
   }));
+  */
 });
