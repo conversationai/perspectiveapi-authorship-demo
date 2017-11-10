@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import {
-  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -137,6 +136,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   @Input() fontSize: number = 12;
   @Input() demoSettings: DemoSettings = DEFAULT_DEMO_SETTINGS;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
+  @Output() scoreChanged: EventEmitter<number> = new EventEmitter<number>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() analyzeCommentResponseChanged: EventEmitter<AnalyzeCommentResponse|null> =
     new EventEmitter<AnalyzeCommentResponse|null>();
@@ -161,7 +161,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
 
   constructor(
       private elementRef: ElementRef,
-      private analyzeApiService: PerspectiveApiService,
+      private analyzeApiService: PerspectiveApiService
   ) {
     // Extracts attribute fields from the element declaration. This
     // covers the case where this component is used as a root level
@@ -239,7 +239,8 @@ export class ConvaiChecker implements OnInit, OnChanges {
     if (!text) {
       this.analyzeCommentResponse = null;
       this.analyzeCommentResponseChanged.emit(this.analyzeCommentResponse);
-      this.statusWidget.setLoading(false);
+      this.statusWidget.notifyScoreChange(0);
+      this.scoreChanged.emit(0);
       this.canAcceptFeedback = false;
       this.statusWidget.resetFeedback();
       return;
@@ -253,7 +254,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
     // a development environment vs a testing environment (the former sees
     // NodeJS.Timer while the latter sees number). Using window.setTimeout
     // makes it consistently type number.
-    console.debug('Updating this.pendingRequest');
+    console.debug('Updating this.pendingRequest for text: ', text);
     this.pendingRequest = window.setTimeout(() => {
       this._checkText(text);
     }, REQUEST_LIMIT_MS);
@@ -347,8 +348,10 @@ export class ConvaiChecker implements OnInit, OnChanges {
           this.demoSettings.useGapi /* makeDirectApiCall */,
           this.serverUrl)
         .finally(() => {
-          console.debug('Request done');
-          this.statusWidget.setLoading(this.checkInProgress);
+          console.log('Request done');
+          let newScore = this.getMaxScore(this.analyzeCommentResponse);
+          this.statusWidget.notifyScoreChange(newScore);
+          this.scoreChanged.emit(newScore);
           this.mostRecentRequestSubscription = null;
         })
         .subscribe(

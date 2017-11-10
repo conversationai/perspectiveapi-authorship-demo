@@ -41,7 +41,7 @@ import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import 'gsap';
 
 @Component({
-  selector: 'my-comp',
+  selector: 'test-comp',
   template: `
         <convai-checker
            id="checker"
@@ -70,7 +70,7 @@ class ConvaiCheckerTestComponentExternalConfig implements OnInit {
 }
 
 @Component({
-  selector: 'my-comp',
+  selector: 'test-comp',
   template: `
         <convai-checker
            id="checker"
@@ -183,7 +183,7 @@ class ConvaiCheckerInvalidInputTestComponent {
 }
 
 @Component({
-  selector: 'my-comp-attribute-input',
+  selector: 'test-comp-attribute-input',
   template: `
         <convai-checker
            id="checker"
@@ -205,13 +205,74 @@ class ConvaiCheckerWithAttributeInputTestComponent {
   }
 }
 
+@Component({
+  selector: 'test-comp-hide-loading-icon-after-load-setting',
+  template: `
+        <convai-checker
+           id="checker"
+           [inputId]="checkerInputId"
+           [demoSettings]="demoSettings"
+           [serverUrl]="serverUrl">
+          Loading...
+        </convai-checker>
+        <textarea id="checkerTextarea"
+                  placeholder="type something here and see how the dot above reacts.">
+        </textarea>`,
+})
+class ConvaiCheckerTestComponentHideLoadingIconAfterLoadSetting implements OnInit {
+  @ViewChild(ConvaiChecker) checker: ConvaiChecker;
+  textArea: HTMLTextAreaElement;
+  checkerInputId: string = 'checkerTextarea';
+  serverUrl: string = 'test-url';
+  demoSettings = getCopyOfDefaultDemoSettings();
+  constructor() {
+    this.demoSettings.hideLoadingIconAfterLoad = true;
+  }
+
+  ngOnInit() {
+    this.textArea = document.getElementById('checkerTextarea') as HTMLTextAreaElement;
+  }
+}
+
+@Component({
+  selector: 'test-comp-hide-loading-icon-for-scores-below-threshold-setting',
+  template: `
+        <convai-checker
+           id="checker"
+           [inputId]="checkerInputId"
+           [demoSettings]="demoSettings"
+           [serverUrl]="serverUrl">
+          Loading...
+        </convai-checker>
+        <textarea id="checkerTextarea"
+                  placeholder="type something here and see how the dot above reacts.">
+        </textarea>`,
+})
+class ConvaiCheckerTestComponentHideLoadingIconForScoresBelowThresholdSetting
+    implements OnInit {
+  @ViewChild(ConvaiChecker) checker: ConvaiChecker;
+  textArea: HTMLTextAreaElement;
+  checkerInputId: string = 'checkerTextarea';
+  serverUrl: string = 'test-url';
+  demoSettings = getCopyOfDefaultDemoSettings();
+  constructor() {
+    this.demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
+    this.demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
+  }
+
+  ngOnInit() {
+    this.textArea = document.getElementById('checkerTextarea') as HTMLTextAreaElement;
+  }
+}
+
 let getIsElementWithIdVisible = function(id: string): boolean {
   let element = document.getElementById(id);
   return element != null && element.offsetWidth > 0 && element.offsetHeight > 0
       && window.getComputedStyle(element).display !== 'none';
 }
 
-let getMockCheckerResponse = function(token: string): AnalyzeCommentResponse {
+let getMockCheckerResponseWithScore = function(score: number, token: string):
+  AnalyzeCommentResponse {
   return {
     attributeScores: {
       'TOXICITY_ATTRIBUTE': {
@@ -220,7 +281,7 @@ let getMockCheckerResponse = function(token: string): AnalyzeCommentResponse {
               begin: 0,
               end: 25,
               score: {
-                value: 0.5,
+                value: score,
                 type: "PROBABILITY"
               }
             }
@@ -232,7 +293,7 @@ let getMockCheckerResponse = function(token: string): AnalyzeCommentResponse {
             begin: 0,
             end: 25,
             score: {
-              value: 0.2,
+              value: score,
               type: "PROBABILITY"
             }
           }
@@ -242,6 +303,10 @@ let getMockCheckerResponse = function(token: string): AnalyzeCommentResponse {
     languages: ["en"],
     clientToken: token,
   }
+}
+
+let getMockCheckerResponse = function(token: string): AnalyzeCommentResponse {
+  return getMockCheckerResponseWithScore(0.5, token);
 }
 
 let setTextAndFireInputEvent = function(text: string,
@@ -285,6 +350,8 @@ describe('Convai checker test', () => {
         ConvaiCheckerNoInputTestComponent,
         ConvaiCheckerTestComponentDemoConfig,
         ConvaiCheckerTestComponentExternalConfig,
+        ConvaiCheckerTestComponentHideLoadingIconAfterLoadSetting,
+        ConvaiCheckerTestComponentHideLoadingIconForScoresBelowThresholdSetting,
         ConvaiCheckerWithAttributeInputTestComponent,
         ConvaiChecker
       ],
@@ -381,13 +448,26 @@ describe('Convai checker test', () => {
     let checker = fixture.componentInstance.checker;
     let queryText = 'Your mother was a hamster';
 
+    let mockScore = 0.3;
     let mockResponse: AnalyzeCommentResponse =
-      getMockCheckerResponse(checker.getToken(queryText));
+      getMockCheckerResponseWithScore(mockScore, checker.getToken(queryText));
 
-    // Checks that the response is emitted.
+    let lastEmittedResponse: AnalyzeCommentResponse|null = null;
+    let lastEmittedScore: number = -1;
+    let emittedResponseCount = 0;
+    let emittedScoreCount = 0;
+
+    // Records when the response is emitted.
     checker.analyzeCommentResponseChanged.subscribe(
       (emittedItem: AnalyzeCommentResponse|null) => {
-        expect(emittedItem).toEqual(mockResponse);
+        lastEmittedResponse = emittedItem;
+        emittedResponseCount++;
+    });
+
+    // Records when the score is emitted.
+    checker.scoreChanged.subscribe((emittedScore: number) => {
+      lastEmittedScore = emittedScore;
+      emittedScoreCount++;
     });
 
     let mockBackend = TestBed.get(MockBackend);
@@ -408,6 +488,14 @@ describe('Convai checker test', () => {
          // Checks that the response is received and stored.
          expect(checker.analyzeCommentResponse).not.toBe(null);
          expect(checker.analyzeCommentResponse).toEqual(mockResponse);
+
+         // Checks that the response was emitted.
+         expect(lastEmittedResponse).toEqual(mockResponse);
+         expect(emittedResponseCount).toEqual(1);
+
+         // Checks that the score was emitted.
+         expect(lastEmittedScore).toEqual(mockScore);
+         expect(emittedScoreCount).toEqual(1);
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
@@ -1289,4 +1377,142 @@ describe('Convai checker test', () => {
     // Step 1: Send an input event to trigger the check call.
     setTextAndFireInputEvent(queryText, textArea);
   });
+
+  it('Test loading icon visibility with setting hideLoadingIconAfterLoad', async(() => {
+    let fixture = TestBed.createComponent(
+      ConvaiCheckerTestComponentHideLoadingIconAfterLoadSetting);
+    fixture.detectChanges();
+    let checker = fixture.componentInstance.checker;
+    let queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?'
+    ];
+
+    let mockResponses = [
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[0])),
+      getMockCheckerResponseWithScore(0.5, checker.getToken(queryTexts[1])),
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+
+    let callCount = 0;
+
+    let mockBackend = TestBed.get(MockBackend);
+    mockBackend.connections
+     .subscribe((connection: MockConnection) => {
+       fixture.detectChanges();
+       expect(getIsElementWithIdVisible('statusWidget')).toBe(true);
+       expect(checker.statusWidget.isLoading).toBe(true);
+       connection.mockRespond(
+         new Response(
+           new ResponseOptions({
+              body: mockResponses[callCount]
+           })
+         )
+       );
+
+       // Wait for async code to complete.
+       fixture.whenStable().then(() => {
+         fixture.detectChanges();
+
+         // Checks that loading has stopped.
+         expect(checker.statusWidget.isLoading).toBe(false);
+         expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
+         if (callCount < 2) {
+           callCount++;
+
+           setTextAndFireInputEvent('', textArea);
+
+           // Checks that clearing the textbox hides the status widget.
+           fixture.whenStable().then(() => {
+             fixture.detectChanges();
+             expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
+
+             // Fire another request.
+             setTextAndFireInputEvent(queryTexts[callCount], textArea);
+           });
+         }
+       });
+    });
+
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryTexts[callCount], textArea);
+  }));
+
+  it('Test loading icon visibility with setting hideLoadingIconForScoresBelowMinThreshold',
+     async(() => {
+    let fixture = TestBed.createComponent(
+      ConvaiCheckerTestComponentHideLoadingIconForScoresBelowThresholdSetting);
+    fixture.detectChanges();
+    let checker = fixture.componentInstance.checker;
+    let queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?'
+    ];
+
+    let callCount = 0;
+    let mockResponses = [
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[0])),
+      getMockCheckerResponseWithScore(0.5, checker.getToken(queryTexts[1])),
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+
+    let mockBackend = TestBed.get(MockBackend);
+    mockBackend.connections
+     .subscribe((connection: MockConnection) => {
+       fixture.detectChanges();
+       expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
+       expect(checker.statusWidget.isLoading).toBe(true);
+       connection.mockRespond(
+         new Response(
+           new ResponseOptions({
+              body: mockResponses[callCount]
+           })
+         )
+       );
+
+       // Wait for async code to complete.
+       fixture.whenStable().then(() => {
+         fixture.detectChanges();
+
+         // Checks that loading has stopped.
+         expect(checker.statusWidget.isLoading).toBe(false);
+
+         let statusWidgetVisible = getIsElementWithIdVisible('statusWidget');
+         // The first and fourth responses (indices 0 and 2) have a score below
+         // the min threshold, so the loading widget should only be visible for
+         // the second one (index 1).
+         expect(statusWidgetVisible).toBe(callCount === 1);
+
+         if (callCount < 2) {
+           callCount++;
+
+           setTextAndFireInputEvent('', textArea);
+
+           // Checks that clearing the textbox hides the status widget.
+           fixture.whenStable().then(() => {
+             console.log('Checking clearing');
+             fixture.detectChanges();
+             statusWidgetVisible = getIsElementWithIdVisible('statusWidget');
+             console.log('Callcount=', callCount);
+             console.log('statusWidgetVisible=', statusWidgetVisible);
+             expect(statusWidgetVisible).toBe(false);
+
+             // Fire another request.
+             setTextAndFireInputEvent(queryTexts[callCount], textArea);
+           });
+         }
+       });
+    });
+
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryTexts[callCount], textArea);
+  }));
 });
