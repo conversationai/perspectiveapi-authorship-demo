@@ -1487,10 +1487,6 @@ describe('Convai checker test', () => {
          // The first and fourth responses (indices 0 and 2) have a score below
          // the min threshold, so the loading widget should only be visible for
          // the second one (index 1).
-         console.log('shouldHideStatusWidget=', checker.statusWidget.shouldHideStatusWidget);
-         console.log('isPlayingLoadingAnimation=', checker.statusWidget.isPlayingLoadingAnimation);
-         console.log('alwaysHideLoadingIcon=', checker.statusWidget.alwaysHideLoadingIcon);
-         console.log('callCount = ' + callCount + ' and statusWidgetVisible = ' + statusWidgetVisible);
          expect(statusWidgetVisible).toBe(callCount === 1);
 
          if (callCount < 2) {
@@ -1503,8 +1499,6 @@ describe('Convai checker test', () => {
              console.log('Checking clearing');
              fixture.detectChanges();
              statusWidgetVisible = getIsElementWithIdVisible('defaultStatusWidget');
-             console.log('Callcount=', callCount);
-             console.log('statusWidgetVisible=', statusWidgetVisible);
              expect(statusWidgetVisible).toBe(false);
 
            });
