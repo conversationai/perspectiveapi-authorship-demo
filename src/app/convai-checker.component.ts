@@ -136,6 +136,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   @Input() fontSize: number = 12;
   @Input() demoSettings: DemoSettings = DEFAULT_DEMO_SETTINGS;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
+  @Output() scoreChanged: EventEmitter<number> = new EventEmitter<number>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() analyzeCommentResponseChanged: EventEmitter<AnalyzeCommentResponse|null> =
     new EventEmitter<AnalyzeCommentResponse|null>();
@@ -239,6 +240,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
       this.analyzeCommentResponse = null;
       this.analyzeCommentResponseChanged.emit(this.analyzeCommentResponse);
       this.statusWidget.notifyScoreChange(0);
+      this.scoreChanged.emit(0);
       this.canAcceptFeedback = false;
       this.statusWidget.resetFeedback();
       return;
@@ -347,8 +349,9 @@ export class ConvaiChecker implements OnInit, OnChanges {
           this.serverUrl)
         .finally(() => {
           console.log('Request done');
-          this.statusWidget.notifyScoreChange(
-            this.getMaxScore(this.analyzeCommentResponse));
+          let newScore = this.getMaxScore(this.analyzeCommentResponse);
+          this.statusWidget.notifyScoreChange(newScore);
+          this.scoreChanged.emit(newScore);
           this.mostRecentRequestSubscription = null;
         })
         .subscribe(
