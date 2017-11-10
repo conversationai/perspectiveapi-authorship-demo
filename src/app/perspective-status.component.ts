@@ -157,6 +157,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   private isPlayingUpdateShapeAnimation: boolean;
   private updateStatusWidgetVisibilityAnimation: TimelineMax;
   private hideEmojiIconsForLoadingAnimation = false;
+  // Promise that should resolve once this.widget has been initialized.
+  private widgetReady: Promise<void>;
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
@@ -179,7 +181,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    Promise.resolve().then(() => {this.updateWidgetElement();});
+    this.widgetReady = Promise.resolve().then(() => {
+      this.updateWidgetElement();
+    });
   }
 
   ngOnChanges(changes: SimpleChanges) : void {
@@ -193,7 +197,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
     }
 
     if (changes['loadingIconStyle'] !== undefined) {
-      console.log(changes['loadingIconStyle']);
+      console.debug(changes['loadingIconStyle']);
       Promise.resolve().then(() => {this.updateWidgetElement();});
     }
 
@@ -223,19 +227,16 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   }
 
   private updateWidgetElement(): void {
-    console.log('Calling updateWidgetElement');
     if (this.defaultWidget != null) {
       this.widgetElement = this.defaultWidget.nativeElement;
-      console.log('1');
     } else if (this.emojiWidget != null) {
-      console.log('2');
       this.widgetElement = this.emojiWidget.nativeElement;
     } else {
-      console.log('3');
       this.widgetElement = null;
     }
-    console.log('this.widgetElement =', this.widgetElement);
-    this.getUpdateWidgetStateAnimation().play();
+    let updateWidgetStateTimeline = new TimelineMax({});
+    updateWidgetStateTimeline.add(this.getUpdateWidgetStateAnimation());
+    updateWidgetStateTimeline.play();
   }
 
   private getShouldHideStatusWidget(loadStart: boolean): boolean {
@@ -253,7 +254,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
 
   private getUpdateStatusWidgetVisibilityAnimation(loadStart: boolean): TimelineMax {
     let hide = this.getShouldHideStatusWidget(loadStart);
-    console.log('In Angular Zone?', NgZone.isInAngularZone());
 
     if (this.isPlayingShowOrHideLoadingWidgetAnimation) {
       // TODO: This doesn't seem to get triggered in the logs; remove it? Might
@@ -266,17 +266,17 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
 
     // If nothing has changed, return an empty animation.
     if (hide === this.shouldHideStatusWidget) {
-      console.log('Returning without update status widget visibility animation. Loadstart = ' + loadStart);
+      console.debug('Returning without update status widget visibility animation.');
       return new TimelineMax({});
     } else {
-      console.log('Getting update status widget visibility animation. LoadStart = ' + loadStart);
+      console.debug('Getting update status widget visibility animation.');
     }
 
     this.isPlayingShowOrHideLoadingWidgetAnimation = true;
     this.updateStatusWidgetVisibilityAnimation = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
-          console.log('Updating status widget visibility to '
+          console.debug('Updating status widget visibility to '
                         + (hide ? 'hidden' : 'visible') + ' from '
                         + (this.shouldHideStatusWidget ? 'hidden' : 'visible'));
           // Disable hiding so animations will show up.
@@ -285,10 +285,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
       },
       onComplete: () => {
         this.ngZone.run(() => {
-          console.log('Changing status widget visibility complete');
+          console.debug('Changing status widget visibility complete');
           this.isPlayingShowOrHideLoadingWidgetAnimation = false;
           this.shouldHideStatusWidget = hide;
-          console.log('In Angular Zone?', NgZone.isInAngularZone());
         });
       },
     });
@@ -529,7 +528,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
 
   getUpdateWidgetStateAnimation(): TimelineMax {
     if (this.loadingIconStyle === LoadingIconStyle.DEFAULT) {
-      console.log('Update widget state for default style');
+      console.debug('Update widget state for default style');
       let updateScoreCompletedTimeline = new TimelineMax({
         onComplete: () => {
           this.ngZone.run(() => {
@@ -542,7 +541,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
       updateScoreCompletedTimeline.add(this.getUpdateShapeAnimation(this.score));
       return updateScoreCompletedTimeline;
     } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
-      console.log('Update widget state for emoji style');
+      console.debug('Update widget state for emoji style');
       return this.getShowEmojiAnimation();
     } else {
       console.error('Calling updateWidgetState for unknown loadingIconStyle: '
@@ -552,7 +551,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   }
 
   notifyScoreChange(score: number): void {
-    console.log('Setting this.score =', score);
+    console.debug('Setting this.score =', score);
     this.score = score;
     if (this.isPlayingLoadingAnimation) {
       // Loading just ended.
@@ -565,21 +564,28 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
     }
   }
 
+  // Figure out solution to the following bug: In tests, setLoading(true) gets
+  // called before this.widgetElement gets set, since this.widgetElement gets
+  // initialized after ngOnInit, which the test doesn't wait for. The
+  // pendingSetLoadingCall doesn't work because another setLoading call could
+  // happen in the mean time.
   setLoading(loading: boolean): void {
-    console.log('Calling setLoading(' + loading + ')');
-    if (this.widgetElement === null) {
-      console.log('this.widgetElement = null, returning');
-      return;
-    }
-    this.isLoading = loading;
-    if (this.loadingIconStyle === LoadingIconStyle.DEFAULT) {
-      this.setLoadingForDefaultWidget(loading);
-    } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
-      this.setLoadingForEmojiWidget(loading);
-    } else {
-      console.error(
-        'Calling setLoading for unknown loadingIconStyle: ' + this.loadingIconStyle);
-    }
+    this.widgetReady.then(() => {
+      console.debug('Calling setLoading(' + loading + ')');
+      if (this.widgetElement === null) {
+        console.error('this.widgetElement = null in call to setLoading');
+        return;
+      }
+      this.isLoading = loading;
+      if (this.loadingIconStyle === LoadingIconStyle.DEFAULT) {
+        this.setLoadingForDefaultWidget(loading);
+      } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
+        this.setLoadingForEmojiWidget(loading);
+      } else {
+        console.error(
+          'Calling setLoading for unknown loadingIconStyle: ' + this.loadingIconStyle);
+      }
+    });
   }
 
   getChangeOpacityAnimation(element: HTMLElement, timeSeconds: number,
@@ -709,9 +715,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   // TODO(rachelrosen): Refactor this into separate functions for
   // before loading/loading/end loading animations.
   setLoadingForDefaultWidget(loading: boolean): void {
-    console.log('setLoadingForDefaultWidget');
-    console.log('loading=', loading);
-    console.log('this.isPlayingLoadingAnimation = ', this.isPlayingLoadingAnimation);
     if (loading && !this.isPlayingLoadingAnimation) {
       console.debug('About to create loadingTimeline');
       // Set isPlayingLoadingAnimation = true here instead of in the onStart()
@@ -724,44 +727,43 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
         ease: Power3.easeInOut,
         onStart: () => {
           this.ngZone.run(() => {
-            console.log('Starting timeline');
+            console.debug('Starting timeline');
           });
         },
         onComplete: () => {
           this.ngZone.run(() => {
-            console.log('Completing timeline');
+            console.debug('Completing timeline');
             console.debug('Updating shape from animation complete');
             if (this.isLoading) {
               // TODO(rachelrosen): Consider the edge case where
               // isPlayingShowOrHideLoadingWidgetAnimation is true here. It's
               // not ever getting triggered in the existing logsi and might not
               // be possible to hit now, but could become an issue later.
-              console.log('Restarting loading to fade animation.');
+              console.debug('Restarting loading to fade animation.');
               loadingTimeline.seek(FADE_START_LABEL);
             } else {
-              console.log('Loading complete');
+              console.debug('Loading complete');
               console.debug('hasScore:', this.hasScore);
               let updateScoreCompletedTimeline = new TimelineMax({
                 onStart: () => {
-                  console.log('Score change animation start');
+                  console.debug('Score change animation start');
                 },
                 onComplete: () => {
                   this.ngZone.run(() => {
                     console.debug('Score change animation end');
                     console.debug('Clearing loadingTimeline');
-                    console.log('Setting this.isPlayingLoadingAnimation = false');
                     this.isPlayingLoadingAnimation = false;
                     loadingTimeline.clear();
                     this.scoreChangeAnimationCompleted.emit();
                     if (this.isLoading) {
                       // If we finish the end loading animation and we're supposed
                       // to be loading again, restart the loading animation!
-                      console.log('Restarting loading from ending animation completion');
+                      console.debug('Restarting loading from ending animation completion');
                       this.setLoading(true);
                     } else if (this.currentShape !== this.getShapeForScore(this.score)) {
                       // The score has changed between now and when the animation
                       // started (the shape is no longer valid).
-                      console.log(
+                      console.debug(
                         'Load ending animation completed, found an out of date shape');
                       this.notifyScoreChange(this.score);
                     }

@@ -379,8 +379,7 @@ describe('Convai checker test', () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
   });
 
-  /*
-  it('should recognize inputs from attributes', () => {
+  it('should recognize inputs from attributes', async(() => {
     let fixture = TestBed.createComponent(
       ConvaiCheckerWithAttributeInputTestComponent);
 
@@ -390,9 +389,9 @@ describe('Convai checker test', () => {
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
     expect(checker.demoSettings.configuration).toEqual('external');
-  });
+  }));
 
-  it('should recognize inputs from angular input bindings', () => {
+  it('should recognize inputs from angular input bindings', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerTestComponentExternalConfig);
     fixture.detectChanges();
 
@@ -401,9 +400,9 @@ describe('Convai checker test', () => {
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
     expect(checker.demoSettings.configuration).toEqual('external');
-  });
+  }));
 
-  it('should default to demo configuration when no configuration is specified', () => {
+  it('should default to demo configuration when no configuration is specified', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerNoConfigurationTestComponent);
     fixture.detectChanges();
 
@@ -414,9 +413,9 @@ describe('Convai checker test', () => {
     expect(checker.statusWidget.configuration).toEqual(
       checker.statusWidget.configurationEnum.DEMO_SITE);
 
-  });
+  }));
 
-  it('should default to demo configuration when an invalid configuration is specified', () => {
+  it('should default to demo configuration when an invalid configuration is specified', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerInvalidConfigurationTestComponent);
     fixture.detectChanges();
 
@@ -427,21 +426,21 @@ describe('Convai checker test', () => {
     expect(checker.statusWidget.configuration).toEqual(
       checker.statusWidget.configurationEnum.DEMO_SITE);
 
-  });
+  }));
 
-  it('should show an error if no textarea id is specified', () => {
+  it('should show an error if no textarea id is specified', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerNoInputTestComponent);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Error');
-  });
+  }));
 
-  it('should show an error if an invalid textarea id is specified', () => {
+  it('should show an error if an invalid textarea id is specified', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerInvalidInputTestComponent);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Error');
-  });
+  }));
 
   it('Should analyze comment and store and emit response', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerTestComponentDemoConfig);
@@ -1074,7 +1073,6 @@ describe('Convai checker test', () => {
 
     checker.checkText(queryText);
   }));
-  */
 
   it('Should handle UI layer changes, external config', (done: Function) => {
     // Note: This test doesn't test error case UI, since that is handled in
@@ -1380,7 +1378,6 @@ describe('Convai checker test', () => {
     setTextAndFireInputEvent(queryText, textArea);
   });
 
-  /*
   it('Test loading icon visibility with setting hideLoadingIconAfterLoad', async(() => {
     let fixture = TestBed.createComponent(
       ConvaiCheckerTestComponentHideLoadingIconAfterLoadSetting);
@@ -1505,7 +1502,7 @@ describe('Convai checker test', () => {
            fixture.whenStable().then(() => {
              console.log('Checking clearing');
              fixture.detectChanges();
-             statusWidgetVisible = getIsElementWithIdVisible('statusWidget');
+             statusWidgetVisible = getIsElementWithIdVisible('defaultStatusWidget');
              console.log('Callcount=', callCount);
              console.log('statusWidgetVisible=', statusWidgetVisible);
              expect(statusWidgetVisible).toBe(false);
@@ -1521,5 +1518,4 @@ describe('Convai checker test', () => {
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
   }));
-  */
 });
