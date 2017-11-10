@@ -70,6 +70,10 @@ const LAYER_TRANSITION_TIME_SECONDS = 0.5;
 const FADE_WIDGET_TIME_SECONDS = 0.4;
 const WIDGET_PADDING_PX = 4;
 const WIDGET_RIGHT_MARGIN_PX = 10;
+const EMOJI_MAIN_LOADING_ANIMATION_LABEL = "emojiMainLoadingAnimation";
+const FADE_EMOJI_TIME_SECONDS = 0.5;
+const COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.5;
+const GRAY_LOADING_COLOR = '#cccccc';
 
 @Component({
   selector: 'perspective-status',
@@ -154,6 +158,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   private updateDemoSettingsAnimation: any;
   private isPlayingUpdateShapeAnimation: boolean;
   private updateStatusWidgetVisibilityAnimation: TimelineMax;
+  private hideEmojiIconsForLoadingAnimation = false;
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
@@ -573,9 +578,16 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
     } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
       this.setLoadingForEmojiWidget(loading);
     } else {
-      console.error('Calling setLoading for unknown loadingIconStyle: ' + this.loadingIconStyle);
+      console.error(
+        'Calling setLoading for unknown loadingIconStyle: ' + this.loadingIconStyle);
     }
   }
+
+  getChangeOpacityAnimation(element: HTMLElement, timeSeconds: number,
+                            opacity: number): TweenMax {
+    return TweenMax.to(element, timeSeconds, { opacity: opacity});
+  }
+
 
   getShowEmojiAnimation(): TimelineMax {
     let emojiElementToShow: HTMLElement|null = null;
@@ -587,16 +599,81 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
       emojiElementToShow = this.smileEmoji.nativeElement;
     }
     let showEmojiTimeline = new TimelineMax({
-      onComplete: () => {
+      onStart:() => {
         this.ngZone.run(() => {
+          this.hideEmojiIconsForLoadingAnimation = false;
+        });
+      },
+    });
+
+    showEmojiTimeline.add(this.getChangeOpacityAnimation(
+      emojiElementToShow, FADE_EMOJI_TIME_SECONDS, 1));
+    return showEmojiTimeline;
+  }
+
+  /** Loading animations to play before loading starts for emoji-style loading. */
+  getStartAnimationsForEmojiWidgetLoading(): TimelineMax {
+    let loadingStartTimeline = new TimelineMax({});
+    let hideEmojiTimeline = new TimelineMax({
+      onComplete: () => {
+        this.ngZone.run(()=> {
+          this.hideEmojiIconsForLoadingAnimation = true;
+        });
+      }
+    });
+    hideEmojiTimeline.add([
+      this.getChangeOpacityAnimation(
+        this.smileEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0),
+      this.getChangeOpacityAnimation(
+        this.neutralEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0),
+      this.getChangeOpacityAnimation(
+        this.sadEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0)
+    ]);
+    loadingStartTimeline.add(
+      this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
+    loadingStartTimeline.add(hideEmojiTimeline);
+
+    return loadingStartTimeline;
+  }
+
+  /** Loopable loading animations to play for emoji-style loading. */
+  getEmojiWidgetLoadingAnimation(): TimelineMax {
+    let loadingTimeline = new TimelineMax({});
+    let changeColorBackAndForthTimeline = new TimelineMax({
+      repeat: 1,
+      yoyo: true,
+      onStart: () => {
+        this.ngZone.run(()=> {
+          console.debug('changeColorBackAndForth animation start');
+        });
+      },
+      onComplete: () => {
+        this.ngZone.run(()=> {
+          console.debug('changeColorBackAndForth animation complete');
+        });
+      }
+    });
+    changeColorBackAndForthTimeline.add(
+      this.getChangeColorAnimation(COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS,
+                                   GRAY_LOADING_COLOR));
+    loadingTimeline.add(changeColorBackAndForthTimeline);
+    return loadingTimeline;
+  }
+
+  /** Loading animations to play when loading finishes for emoji-style loading. */
+  getEndAnimationsForEmojiWidgetLoading(): TimelineMax {
+    let loadingEndTimeline = new TimelineMax({
+      onComplete: () => {
+        this.ngZone.run(()=> {
+          console.debug('Setting this.isPlayingLoadingAnimation = false (emoji)');
           this.isPlayingLoadingAnimation = false;
         });
       }
     });
-
-    showEmojiTimeline.add(
-      TweenMax.to(emojiElementToShow, 0.5, { opacity: 1}));
-    return showEmojiTimeline;
+    loadingEndTimeline.add(this.getShowEmojiAnimation());
+    loadingEndTimeline.add(
+      this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, false, 0));
+    return loadingEndTimeline;
   }
 
   setLoadingForEmojiWidget(loading: boolean): void {
@@ -614,44 +691,24 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
           this.ngZone.run(() => {
             console.debug('Completing timeline (emoji)');
             if (this.isLoading) {
-              console.debug('Restarting color change animation');
-              loadingTimeline.seek('test label');
+              console.debug('Restarting main emoji loading animation');
+              loadingTimeline.seek(EMOJI_MAIN_LOADING_ANIMATION_LABEL);
             } else {
-              console.debug('Setting this.isPlayingLoadingAnimation = false (emoji)');
-              this.getShowEmojiAnimation().play();
+              this.getEndAnimationsForEmojiWidgetLoading().play();
             }
           });
         }
       });
 
-      let hideEmojiTimeline = new TimelineMax({});
-      hideEmojiTimeline.add([
-        TweenMax.to(this.smileEmoji.nativeElement, 0.5, { opacity: 0}),
-        TweenMax.to(this.neutralEmoji.nativeElement, 0.5, { opacity: 0}),
-        TweenMax.to(this.sadEmoji.nativeElement, 0.5, { opacity: 0})
-      ]);
-
-      let changeColorBackAndForthTimeline = new TimelineMax({
-        repeat: 1,
-        yoyo: true,
-        onStart: () => {
-          this.ngZone.run(()=> {
-            console.log('changeColorBackAndForth animation start');
-          });
-        },
-        onComplete: () => {
-          this.ngZone.run(()=> {
-            console.log('changeColorBackAndForth animation complete');
-          });
-        }
-      });
-      changeColorBackAndForthTimeline.add(this.getChangeColorAnimation(0.5, '#cccccc'));
-      loadingTimeline.add(hideEmojiTimeline);
-      loadingTimeline.add(changeColorBackAndForthTimeline, 'test label');
+      loadingTimeline.add(this.getStartAnimationsForEmojiWidgetLoading());
+      loadingTimeline.add(this.getEmojiWidgetLoadingAnimation(),
+                          EMOJI_MAIN_LOADING_ANIMATION_LABEL);
       loadingTimeline.play();
     }
   }
 
+  // TODO(rachelrosen): Refactor this into separate functions for
+  // before loading/loading/end loading animations.
   setLoadingForDefaultWidget(loading: boolean): void {
     if (loading && !this.isPlayingLoadingAnimation) {
       console.debug('About to create loadingTimeline');

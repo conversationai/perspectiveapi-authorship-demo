@@ -29,13 +29,13 @@
            class="dot emojiWidget"
            (click)="toggleScore()">
         <img #smileEmoji class="iconEmoji"
-             [ngClass]="{hiddenEmoji: !isPlayingLoadingAnimation && score >= scoreThresholds[1]}"
+             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score >= scoreThresholds[1]}"
              src="assets/grinning_face.png">
         <img #neutralEmoji class="iconEmoji"
-             [ngClass]="{hiddenEmoji: !isPlayingLoadingAnimation && (score < scoreThresholds[1] || score >= scoreThresholds[2])}"
+             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || (score < scoreThresholds[1] || score >= scoreThresholds[2])}"
              src="assets/thinking_face.png">
         <img #sadEmoji class="iconEmoji"
-             [ngClass]="{hiddenEmoji: !isPlayingLoadingAnimation && score < scoreThresholds[2]}"
+             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score < scoreThresholds[2]}"
              src="assets/disappointed_face.png">
       </button>
     </div>
