@@ -1464,9 +1464,9 @@ describe('Convai checker test', () => {
     let mockBackend = TestBed.get(MockBackend);
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
-       //fixture.detectChanges();
-       //expect(getIsElementWithIdVisible('defaultStatusWidget')).toBe(false);
-       //expect(checker.statusWidget.isLoading).toBe(true);
+       fixture.detectChanges();
+       expect(getIsElementWithIdVisible('defaultStatusWidget')).toBe(false);
+       expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
            new ResponseOptions({
@@ -1501,6 +1501,8 @@ describe('Convai checker test', () => {
              statusWidgetVisible = getIsElementWithIdVisible('defaultStatusWidget');
              expect(statusWidgetVisible).toBe(false);
 
+             // Fire another request.
+             setTextAndFireInputEvent(queryTexts[callCount], textArea);
            });
          }
        });
