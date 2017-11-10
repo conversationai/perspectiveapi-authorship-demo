@@ -20,13 +20,19 @@
   margin: 2px;
 }
 
+#defaultLoadingIconContainer {
+  padding-top: 2px;
+}
+
 .emojiWidget {
   background-color: #ffcc4d;
+  width: 16px;
+  height: 16px;
 }
 
 .iconEmoji {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
   opacity: 0;
 }
 
@@ -39,7 +45,6 @@
   width: 20px;
   height: 22px;
   margin-right: 10px;
-  padding-top: 2px;
 }
 
 #scoreInfoContainer {

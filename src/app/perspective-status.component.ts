@@ -231,12 +231,12 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
     } else if (this.emojiWidget != null) {
       console.log('2');
       this.widgetElement = this.emojiWidget.nativeElement;
-      this.getShowEmojiAnimation().play();
     } else {
       console.log('3');
       this.widgetElement = null;
     }
     console.log('this.widgetElement=', this.widgetElement);
+    this.getUpdateWidgetStateAnimation().play();
   }
 
   private getShouldHideStatusWidget(loadStart: boolean): boolean {
@@ -545,7 +545,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
       return updateScoreCompletedTimeline;
     } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
       console.log('Update widget state for emoji style');
-      return new TimelineMax({});
+      return this.getShowEmojiAnimation();
     } else {
       console.error('Calling updateWidgetState for unknown loadingIconStyle: '
                     + this.loadingIconStyle);
@@ -1021,7 +1021,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   }
 
   private getToFullScaleCompleteRotationAnimation(timeSeconds: number, fromShape: Shape) {
-    let currentRotation = (this.widgetElement as any)._gsTransform.rotation;
+    let currentRotation = 0;
+    let currentWidgetTransform = (this.widgetElement as any)._gsTransform;
+    if (currentWidgetTransform !== undefined) {
+      currentRotation = currentWidgetTransform.rotation;
+    }
     console.debug('Current rotation:', currentRotation);
     console.debug('From shape:', this.getNameFromShape(fromShape));
     let rotationDegrees = fromShape === Shape.DIAMOND ? 315 : 360;

@@ -6,7 +6,8 @@
        cannot be found when the component is initializing if their display
        conditions are not met. -->
   <div id="animationContainer">
-    <div *ngIf="loadingIconStyle === loadingIconStyleConst.DEFAULT">
+    <div *ngIf="loadingIconStyle === loadingIconStyleConst.DEFAULT"
+         id="defaultLoadingIconContainer">
       <button
            #defaultStatusWidget
            id="defaultStatusWidget"
