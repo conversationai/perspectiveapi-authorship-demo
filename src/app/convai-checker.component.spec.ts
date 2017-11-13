@@ -1401,7 +1401,7 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        fixture.detectChanges();
-       expect(getIsElementWithIdVisible('defaultStatusWidget')).toBe(true);
+       expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(true);
        expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
@@ -1417,7 +1417,7 @@ describe('Convai checker test', () => {
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
-         expect(getIsElementWithIdVisible('defaultStatusWidget')).toBe(false);
+         expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
          if (callCount < 2) {
            callCount++;
 
@@ -1426,7 +1426,7 @@ describe('Convai checker test', () => {
            // Checks that clearing the textbox hides the status widget.
            fixture.whenStable().then(() => {
              fixture.detectChanges();
-             expect(getIsElementWithIdVisible('defaultStatusWidget')).toBe(false);
+             expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
 
              // Fire another request.
              setTextAndFireInputEvent(queryTexts[callCount], textArea);
@@ -1465,7 +1465,7 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        fixture.detectChanges();
-       expect(getIsElementWithIdVisible('defaultStatusWidget')).toBe(false);
+       expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
        expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
@@ -1483,7 +1483,7 @@ describe('Convai checker test', () => {
          expect(checker.statusWidget.isLoading).toBe(false);
          expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
-         let statusWidgetVisible = getIsElementWithIdVisible('defaultStatusWidget');
+         let statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
          // The first and fourth responses (indices 0 and 2) have a score below
          // the min threshold, so the loading widget should only be visible for
          // the second one (index 1).
@@ -1498,7 +1498,7 @@ describe('Convai checker test', () => {
            fixture.whenStable().then(() => {
              console.log('Checking clearing');
              fixture.detectChanges();
-             statusWidgetVisible = getIsElementWithIdVisible('defaultStatusWidget');
+             statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
              expect(statusWidgetVisible).toBe(false);
 
              // Fire another request.

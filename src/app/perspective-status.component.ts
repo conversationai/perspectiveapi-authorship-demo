@@ -54,7 +54,7 @@ export const ScoreThreshold = {
 };
 
 export const LoadingIconStyle = {
-  DEFAULT: 'default',
+  CIRCLE_SQUARE_DIAMOND: 'circle_square_diamond',
   EMOJI: 'emoji',
 };
 
@@ -139,7 +139,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   public showScore: boolean = true;
   private currentShape: Shape = Shape.CIRCLE;
   private showingMoreInfo: boolean = false;
-  @ViewChild('defaultStatusWidget') private defaultWidget: ElementRef;
+  @ViewChild('circleSquareDiamondWidget') private circleSquareDiamondWidget: ElementRef;
   @ViewChild('emojiStatusWidget') private emojiWidget: ElementRef;
   @ViewChild('widgetContainer') private container: ElementRef;
   @ViewChild('smileEmoji') private smileEmoji: ElementRef;
@@ -227,11 +227,12 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   }
 
   private updateWidgetElement(): void {
-    if (this.defaultWidget != null) {
-      this.widgetElement = this.defaultWidget.nativeElement;
+    if (this.circleSquareDiamondWidget != null) {
+      this.widgetElement = this.circleSquareDiamondWidget.nativeElement;
     } else if (this.emojiWidget != null) {
       this.widgetElement = this.emojiWidget.nativeElement;
     } else {
+      console.error('Widget element is null.');
       this.widgetElement = null;
     }
     let updateWidgetStateTimeline = new TimelineMax({});
@@ -527,7 +528,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   }
 
   getUpdateWidgetStateAnimation(): TimelineMax {
-    if (this.loadingIconStyle === LoadingIconStyle.DEFAULT) {
+    if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
       console.debug('Update widget state for default style');
       let updateScoreCompletedTimeline = new TimelineMax({
         onComplete: () => {
@@ -564,11 +565,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
     }
   }
 
-  // Figure out solution to the following bug: In tests, setLoading(true) gets
-  // called before this.widgetElement gets set, since this.widgetElement gets
-  // initialized after ngOnInit, which the test doesn't wait for. The
-  // pendingSetLoadingCall doesn't work because another setLoading call could
-  // happen in the mean time.
   setLoading(loading: boolean): void {
     this.widgetReady.then(() => {
       console.debug('Calling setLoading(' + loading + ')');
@@ -577,7 +573,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
         return;
       }
       this.isLoading = loading;
-      if (this.loadingIconStyle === LoadingIconStyle.DEFAULT) {
+      if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
         this.setLoadingForDefaultWidget(loading);
       } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
         this.setLoadingForEmojiWidget(loading);

@@ -113,8 +113,9 @@ export class CustomizableDemoForm {
   customizeScoreThresholds = false;
 
   /** Loading icon style options. */
-  loadingIconStyles = [LoadingIconStyle.DEFAULT, LoadingIconStyle.EMOJI];
-  selectedLoadingIconStyle = LoadingIconStyle.DEFAULT;
+  loadingIconStyles =
+    [LoadingIconStyle.CIRCLE_SQUARE_DIAMOND, LoadingIconStyle.EMOJI];
+  selectedLoadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
 
   /** Feedback text options. */
   feedbackTextSchemes: FeedbackTextScheme[] = [

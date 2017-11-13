@@ -6,11 +6,11 @@
        cannot be found when the component is initializing if their display
        conditions are not met. -->
   <div id="animationContainer">
-    <div *ngIf="loadingIconStyle === loadingIconStyleConst.DEFAULT"
-         id="defaultLoadingIconContainer">
+    <div *ngIf="loadingIconStyle === loadingIconStyleConst.CIRCLE_SQUARE_DIAMOND"
+         id="circleSquareDiamondLoadingIconContainer">
       <button
-           #defaultStatusWidget
-           id="defaultStatusWidget"
+           #circleSquareDiamondWidget
+           id="circleSquareDiamondWidget"
            class="dot"
            [style.width]="indicatorWidth"
            [style.height]="indicatorHeight"

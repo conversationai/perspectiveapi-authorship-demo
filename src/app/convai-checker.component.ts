@@ -115,7 +115,7 @@ export const DEFAULT_DEMO_SETTINGS = {
   hideLoadingIconAfterLoad: false,
   hideLoadingIconForScoresBelowMinThreshold: false,
   alwaysHideLoadingIcon: false,
-  loadingIconStyle: LoadingIconStyle.DEFAULT,
+  loadingIconStyle: LoadingIconStyle.CIRCLE_SQUARE_DIAMOND,
   userFeedbackPromptText: 'Seem wrong?'
 };
 
