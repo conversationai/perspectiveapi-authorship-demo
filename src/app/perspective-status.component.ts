@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import {
+  AfterViewInit,
   Component,
   ElementRef,
   EventEmitter,
@@ -23,6 +24,7 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  ViewChild
 } from '@angular/core';
 import * as d3 from 'd3-interpolate';
 import twemoji from 'twemoji';
@@ -52,7 +54,7 @@ export const ScoreThreshold = {
 };
 
 export const LoadingIconStyle = {
-  DEFAULT: 'default',
+  CIRCLE_SQUARE_DIAMOND: 'circle_square_diamond',
   EMOJI: 'emoji',
 };
 
@@ -68,6 +70,10 @@ const LAYER_TRANSITION_TIME_SECONDS = 0.5;
 const FADE_WIDGET_TIME_SECONDS = 0.4;
 const WIDGET_PADDING_PX = 4;
 const WIDGET_RIGHT_MARGIN_PX = 10;
+const EMOJI_MAIN_LOADING_ANIMATION_LABEL = "emojiMainLoadingAnimation";
+const FADE_EMOJI_TIME_SECONDS = 0.5;
+const COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.5;
+const GRAY_LOADING_COLOR = '#cccccc';
 
 @Component({
   selector: 'perspective-status',
@@ -75,7 +81,7 @@ const WIDGET_RIGHT_MARGIN_PX = 10;
   styleUrls: ['./perspective-status.component.css'],
 })
 @Injectable()
-export class PerspectiveStatus implements OnChanges {
+export class PerspectiveStatus implements OnChanges, AfterViewInit {
   // TODO(rachelrosen): Instead of all these inputs, we should merge the
   // convai-checker component with this one.
   @Input() indicatorWidth: number = 13;
@@ -107,6 +113,8 @@ export class PerspectiveStatus implements OnChanges {
   @Input() userFeedbackPromptText: string;
   @Input() hideLoadingIconAfterLoad: boolean;
   @Input() hideLoadingIconForScoresBelowMinThreshold: boolean;
+  @Input() alwaysHideLoadingIcon: boolean;
+  @Input() loadingIconStyle: string;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() commentFeedbackSubmitted: EventEmitter<CommentFeedback> =
@@ -114,7 +122,7 @@ export class PerspectiveStatus implements OnChanges {
 
   public configurationEnum = Configuration;
   public configuration = this.configurationEnum.DEMO_SITE;
-
+  public loadingIconStyleConst = LoadingIconStyle;
   public score: number = 0;
   public currentLayerIndex: number = 0;
   private layerAnimationHandles: HTMLElement[] = [];
@@ -131,8 +139,13 @@ export class PerspectiveStatus implements OnChanges {
   public showScore: boolean = true;
   private currentShape: Shape = Shape.CIRCLE;
   private showingMoreInfo: boolean = false;
-  private widget: HTMLElement;
-  private container: HTMLElement;
+  @ViewChild('circleSquareDiamondWidget') private circleSquareDiamondWidget: ElementRef;
+  @ViewChild('emojiStatusWidget') private emojiWidget: ElementRef;
+  @ViewChild('widgetContainer') private container: ElementRef;
+  @ViewChild('smileEmoji') private smileEmoji: ElementRef;
+  @ViewChild('neutralEmoji') private neutralEmoji: ElementRef;
+  @ViewChild('sadEmoji') private sadEmoji: ElementRef;
+  private widgetElement: HTMLElement|null = null;
   private layerTextContainer: HTMLElement;
   private interactiveLayerControlsContainer: HTMLElement;
   private interpolateColors: Function;
@@ -143,6 +156,9 @@ export class PerspectiveStatus implements OnChanges {
   private updateDemoSettingsAnimation: any;
   private isPlayingUpdateShapeAnimation: boolean;
   private updateStatusWidgetVisibilityAnimation: TimelineMax;
+  private hideEmojiIconsForLoadingAnimation = false;
+  // Promise that should resolve once this.widget has been initialized.
+  private widgetReady: Promise<void>;
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
@@ -152,10 +168,8 @@ export class PerspectiveStatus implements OnChanges {
   ngOnInit() {
     this.configuration = this.getConfigurationFromInputString(this.configurationInput);
 
-    this.widget = this.elementRef.nativeElement.querySelector('#statusWidget');
-    this.container = this.elementRef.nativeElement.querySelector(
-        '#widgetContainer');
-
+    // TODO(rachelrosen): Investigate changing these to ViewChildren/replacing
+    // calls to querySelector, if possible.
     for (let layerAnimationSelector of this.layerAnimationSelectors) {
       this.layerAnimationHandles.push(
         this.elementRef.nativeElement.querySelector(layerAnimationSelector));
@@ -163,22 +177,34 @@ export class PerspectiveStatus implements OnChanges {
     this.updateLayerElementContainers();
 
     this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
+
+  }
+
+  ngAfterViewInit() {
+    this.widgetReady = Promise.resolve().then(() => {
+      this.updateWidgetElement();
+    });
   }
 
   ngOnChanges(changes: SimpleChanges) : void {
     // Return if ngOnInit has not been called yet, since the animation code
     // cannot run.
-    if (this.widget === undefined
+    if (this.widgetElement === null
       || this.container === undefined
       || this.layerTextContainer === undefined
       || this.interactiveLayerControlsContainer === undefined) {
       return;
     }
 
+    if (changes['loadingIconStyle'] !== undefined) {
+      console.debug(changes['loadingIconStyle']);
+      Promise.resolve().then(() => {this.updateWidgetElement();});
+    }
+
     if (changes['gradientColors'] !== undefined) {
       console.debug('Change in gradientColors');
       this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
-      this.getUpdateColorAnimation(0.1).play();
+      this.getUpdateGradientColorAnimation(0.1).play();
     }
 
     if (changes['configurationInput'] !== undefined) {
@@ -195,9 +221,23 @@ export class PerspectiveStatus implements OnChanges {
         this.updateDemoSettingsAnimation.kill();
       }
 
-      this.updateDemoSettingsAnimation = this.getUpdateShapeAnimation(this.score);
+      this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
       this.updateDemoSettingsAnimation.play();
     }
+  }
+
+  private updateWidgetElement(): void {
+    if (this.circleSquareDiamondWidget != null) {
+      this.widgetElement = this.circleSquareDiamondWidget.nativeElement;
+    } else if (this.emojiWidget != null) {
+      this.widgetElement = this.emojiWidget.nativeElement;
+    } else {
+      console.error('Widget element is null.');
+      this.widgetElement = null;
+    }
+    let updateWidgetStateTimeline = new TimelineMax({});
+    updateWidgetStateTimeline.add(this.getUpdateWidgetStateAnimation());
+    updateWidgetStateTimeline.play();
   }
 
   private getShouldHideStatusWidget(loadStart: boolean): boolean {
@@ -227,16 +267,16 @@ export class PerspectiveStatus implements OnChanges {
 
     // If nothing has changed, return an empty animation.
     if (hide === this.shouldHideStatusWidget) {
-      console.debug('Returning without update status widget visibility animation');
+      console.debug('Returning without update status widget visibility animation.');
       return new TimelineMax({});
     } else {
-      console.debug('Getting update status widget visibility animation');
+      console.debug('Getting update status widget visibility animation.');
     }
 
+    this.isPlayingShowOrHideLoadingWidgetAnimation = true;
     this.updateStatusWidgetVisibilityAnimation = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
-          this.isPlayingShowOrHideLoadingWidgetAnimation = true;
           console.debug('Updating status widget visibility to '
                         + (hide ? 'hidden' : 'visible') + ' from '
                         + (this.shouldHideStatusWidget ? 'hidden' : 'visible'));
@@ -260,14 +300,14 @@ export class PerspectiveStatus implements OnChanges {
 
   private getChangeLoadingIconVisibilityAnimation(hide: boolean): TweenMax {
     return TweenMax.to(
-      this.widget, FADE_WIDGET_TIME_SECONDS, { opacity: hide ? 0 : 1})
+      this.widgetElement, FADE_WIDGET_TIME_SECONDS, { opacity: hide ? 0 : 1})
   }
 
   private getChangeLoadingIconXValueAnimation(hide: boolean): TimelineMax {
     let timeline = new TimelineMax({});
     let translateXAnimations: Animation[] = [];
     translateXAnimations.push(
-      TweenMax.to(this.widget, FADE_WIDGET_TIME_SECONDS,
+      TweenMax.to(this.widgetElement, FADE_WIDGET_TIME_SECONDS,
                   { x: hide ? -1 * (this.indicatorWidth
                                     + WIDGET_PADDING_PX
                                     + WIDGET_RIGHT_MARGIN_PX)
@@ -389,7 +429,7 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   getResetRotationAnimation(): TweenMax {
-    return TweenMax.to(this.widget, 0.1, {
+    return TweenMax.to(this.widgetElement, 0.1, {
       rotation: this.currentShape === Shape.DIAMOND ? 45 : 0,
     });
 
@@ -487,21 +527,10 @@ export class PerspectiveStatus implements OnChanges {
     this.modelInfoLinkClicked.emit();
   }
 
-  notifyScoreChange(score: number): void {
-    console.debug('Setting this.score =', score);
-    this.score = score;
-    if (this.isPlayingLoadingAnimation) {
-      // Loading just ended.
-      this.setLoading(false);
-    } else {
-      // This indicates that the score was reset without being the result of a
-      // load completing, such as the text being cleared.
+  getUpdateWidgetStateAnimation(): TimelineMax {
+    if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+      console.debug('Update widget state for default style');
       let updateScoreCompletedTimeline = new TimelineMax({
-        onStart: () => {
-          this.ngZone.run(() => {
-            console.debug('Updating shape from notifyScoreChange');
-          });
-        },
         onComplete: () => {
           this.ngZone.run(() => {
             this.scoreChangeAnimationCompleted.emit();
@@ -511,16 +540,177 @@ export class PerspectiveStatus implements OnChanges {
       updateScoreCompletedTimeline.add(
         this.getUpdateStatusWidgetVisibilityAnimation(false));
       updateScoreCompletedTimeline.add(this.getUpdateShapeAnimation(this.score));
-      updateScoreCompletedTimeline.play();
+      return updateScoreCompletedTimeline;
+    } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
+      console.debug('Update widget state for emoji style');
+      return this.getShowEmojiAnimation();
+    } else {
+      console.error('Calling updateWidgetState for unknown loadingIconStyle: '
+                    + this.loadingIconStyle);
+      return null;
+    }
+  }
+
+  notifyScoreChange(score: number): void {
+    console.debug('Setting this.score =', score);
+    this.score = score;
+    if (this.isPlayingLoadingAnimation) {
+      // Loading just ended.
+      this.setLoading(false);
+    } else {
+      // This indicates that the score was reset without being the result of a
+      // load completing, such as the text being cleared.
+      console.debug('Updating shape from notifyScoreChange');
+      this.getUpdateWidgetStateAnimation().play();
     }
   }
 
   setLoading(loading: boolean): void {
-    console.debug('Calling setLoading(' + loading + ')');
-    if (this.widget === null) {
-      return;
+    this.widgetReady.then(() => {
+      console.debug('Calling setLoading(' + loading + ')');
+      if (this.widgetElement === null) {
+        console.error('this.widgetElement = null in call to setLoading');
+        return;
+      }
+      this.isLoading = loading;
+      if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+        this.setLoadingForDefaultWidget(loading);
+      } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
+        this.setLoadingForEmojiWidget(loading);
+      } else {
+        console.error(
+          'Calling setLoading for unknown loadingIconStyle: ' + this.loadingIconStyle);
+      }
+    });
+  }
+
+  getChangeOpacityAnimation(element: HTMLElement, timeSeconds: number,
+                            opacity: number): TweenMax {
+    return TweenMax.to(element, timeSeconds, { opacity: opacity});
+  }
+
+
+  getShowEmojiAnimation(): TimelineMax {
+    let emojiElementToShow: HTMLElement|null = null;
+    if (this.score > this.scoreThresholds[2]) {
+      emojiElementToShow = this.sadEmoji.nativeElement;
+    } else if (this.score > this.scoreThresholds[1]) {
+      emojiElementToShow = this.neutralEmoji.nativeElement;
+    } else {
+      emojiElementToShow = this.smileEmoji.nativeElement;
     }
-    this.isLoading = loading;
+    let showEmojiTimeline = new TimelineMax({
+      onStart:() => {
+        this.ngZone.run(() => {
+          this.hideEmojiIconsForLoadingAnimation = false;
+        });
+      },
+    });
+
+    showEmojiTimeline.add(this.getChangeOpacityAnimation(
+      emojiElementToShow, FADE_EMOJI_TIME_SECONDS, 1));
+    return showEmojiTimeline;
+  }
+
+  /** Loading animations to play before loading starts for emoji-style loading. */
+  getStartAnimationsForEmojiWidgetLoading(): TimelineMax {
+    let loadingStartTimeline = new TimelineMax({});
+    let hideEmojiTimeline = new TimelineMax({
+      onComplete: () => {
+        this.ngZone.run(()=> {
+          this.hideEmojiIconsForLoadingAnimation = true;
+        });
+      }
+    });
+    hideEmojiTimeline.add([
+      this.getChangeOpacityAnimation(
+        this.smileEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0),
+      this.getChangeOpacityAnimation(
+        this.neutralEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0),
+      this.getChangeOpacityAnimation(
+        this.sadEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0)
+    ]);
+    loadingStartTimeline.add(
+      this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
+    loadingStartTimeline.add(hideEmojiTimeline);
+
+    return loadingStartTimeline;
+  }
+
+  /** Loopable loading animations to play for emoji-style loading. */
+  getEmojiWidgetLoadingAnimation(): TimelineMax {
+    let loadingTimeline = new TimelineMax({});
+    let changeColorBackAndForthTimeline = new TimelineMax({
+      repeat: 1,
+      yoyo: true,
+      onStart: () => {
+        this.ngZone.run(()=> {
+          console.debug('changeColorBackAndForth animation start');
+        });
+      },
+      onComplete: () => {
+        this.ngZone.run(()=> {
+          console.debug('changeColorBackAndForth animation complete');
+        });
+      }
+    });
+    changeColorBackAndForthTimeline.add(
+      this.getChangeColorAnimation(COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS,
+                                   GRAY_LOADING_COLOR));
+    loadingTimeline.add(changeColorBackAndForthTimeline);
+    return loadingTimeline;
+  }
+
+  /** Loading animations to play when loading finishes for emoji-style loading. */
+  getEndAnimationsForEmojiWidgetLoading(): TimelineMax {
+    let loadingEndTimeline = new TimelineMax({
+      onComplete: () => {
+        this.ngZone.run(()=> {
+          console.debug('Setting this.isPlayingLoadingAnimation = false (emoji)');
+          this.isPlayingLoadingAnimation = false;
+        });
+      }
+    });
+    loadingEndTimeline.add(this.getShowEmojiAnimation());
+    loadingEndTimeline.add(
+      this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, false, 0));
+    return loadingEndTimeline;
+  }
+
+  setLoadingForEmojiWidget(loading: boolean): void {
+    if (loading && !this.isPlayingLoadingAnimation) {
+      this.isPlayingLoadingAnimation = true;
+      let loadingTimeline = new TimelineMax({
+        paused:true,
+        ease: Power3.easeInOut,
+        onStart: () => {
+          this.ngZone.run(() => {
+            console.debug('Starting timeline (emoji)');
+          });
+        },
+        onComplete: () => {
+          this.ngZone.run(() => {
+            console.debug('Completing timeline (emoji)');
+            if (this.isLoading) {
+              console.debug('Restarting main emoji loading animation');
+              loadingTimeline.seek(EMOJI_MAIN_LOADING_ANIMATION_LABEL);
+            } else {
+              this.getEndAnimationsForEmojiWidgetLoading().play();
+            }
+          });
+        }
+      });
+
+      loadingTimeline.add(this.getStartAnimationsForEmojiWidgetLoading());
+      loadingTimeline.add(this.getEmojiWidgetLoadingAnimation(),
+                          EMOJI_MAIN_LOADING_ANIMATION_LABEL);
+      loadingTimeline.play();
+    }
+  }
+
+  // TODO(rachelrosen): Refactor this into separate functions for
+  // before loading/loading/end loading animations.
+  setLoadingForDefaultWidget(loading: boolean): void {
     if (loading && !this.isPlayingLoadingAnimation) {
       console.debug('About to create loadingTimeline');
       // Set isPlayingLoadingAnimation = true here instead of in the onStart()
@@ -669,9 +859,14 @@ export class PerspectiveStatus implements OnChanges {
     }
   }
 
-  private getUpdateColorAnimation(timeSeconds: number) {
-    return TweenMax.to(this.widget, timeSeconds, {
-      backgroundColor: this.interpolateColors(this.score),
+  private getUpdateGradientColorAnimation(timeSeconds: number): TweenMax {
+    return this.getChangeColorAnimation(
+      timeSeconds, this.interpolateColors(this.score));
+  }
+
+  private getChangeColorAnimation(timeSeconds: number, color: string): TweenMax {
+    return TweenMax.to(this.widgetElement, timeSeconds, {
+      backgroundColor: color,
     });
   }
 
@@ -681,7 +876,7 @@ export class PerspectiveStatus implements OnChanges {
       onStart: () => {
         this.ngZone.run(() => {
           this.isPlayingShowOrHideDetailsAnimation = true;
-          this.widget.blur();
+          this.widgetElement.blur();
         });
       },
       onComplete: () => {
@@ -693,7 +888,7 @@ export class PerspectiveStatus implements OnChanges {
     });
     let staggerAmount = 0;
     timeline.add([
-      TweenMax.to(this.widget, 0.6, { x: 0 }),
+      TweenMax.to(this.widgetElement, 0.6, { x: 0 }),
       TweenMax.to(this.layerTextContainer, 0.4, { opacity: 1, delay: 0.3 }),
       TweenMax.to(this.layerTextContainer, 0.4, { x: 0, delay: 0.3}),
       TweenMax.to(this.interactiveLayerControlsContainer, 0.4, { opacity: 1, delay: 0.4}),
@@ -708,7 +903,7 @@ export class PerspectiveStatus implements OnChanges {
       onStart: () => {
         this.ngZone.run(() => {
           this.isPlayingShowOrHideDetailsAnimation = true;
-          this.widget.blur();
+          this.widgetElement.blur();
         });
       },
       onComplete: () => {
@@ -723,8 +918,8 @@ export class PerspectiveStatus implements OnChanges {
       TweenMax.to(this.interactiveLayerControlsContainer, 0.4, { x: 20}),
       TweenMax.to(this.layerTextContainer, 0.4, { opacity: 0, delay: 0.1 }),
       TweenMax.to(this.layerTextContainer, 0.4, { x: 20, delay: 0.1 }),
-      TweenMax.to(this.widget, 0.6, {
-        x: this.container.offsetWidth - this.indicatorWidth - WIDGET_PADDING_PX,
+      TweenMax.to(this.widgetElement, 0.6, {
+        x: this.container.nativeElement.offsetWidth - this.indicatorWidth - WIDGET_PADDING_PX,
         delay: 0.2,
       })
     ], 0, 'normal', 0);
@@ -749,7 +944,7 @@ export class PerspectiveStatus implements OnChanges {
   private getTransitionToSquareAnimation(timeSeconds: number) {
     let squareAnimationTimeline = new TimelineMax({
       onStart: () => {
-        let currentRotation = (this.widget as any)._gsTransform.rotation;
+        let currentRotation = (this.widgetElement as any)._gsTransform.rotation;
         console.debug('getTransitionToSquare; Current rotation:', currentRotation);
       },
       onComplete: () => {
@@ -788,7 +983,7 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getRotateBackAndForthAnimation(timeSeconds: number, degrees: number) {
-    return TweenMax.to(this.widget, timeSeconds, {
+    return TweenMax.to(this.widgetElement, timeSeconds, {
       rotation: degrees,
       onStart: () => {
         console.debug('Starting rotate back and forth animation');
@@ -800,7 +995,7 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getToFullScaleBounceAnimation(timeSeconds: number) {
-    return TweenMax.to(this.widget, timeSeconds, {
+    return TweenMax.to(this.widgetElement, timeSeconds, {
       scaleX: 1,
       scaleY: 1,
       ease: Elastic.easeOut.config(1, 0.3),
@@ -814,7 +1009,7 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getToFullScaleAnimation(timeSeconds: number) {
-    return TweenMax.to(this.widget, timeSeconds, {
+    return TweenMax.to(this.widgetElement, timeSeconds, {
       scaleX: 1,
       scaleY: 1,
       onStart: () => {
@@ -827,11 +1022,15 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getToFullScaleCompleteRotationAnimation(timeSeconds: number, fromShape: Shape) {
-    let currentRotation = (this.widget as any)._gsTransform.rotation;
+    let currentRotation = 0;
+    let currentWidgetTransform = (this.widgetElement as any)._gsTransform;
+    if (currentWidgetTransform !== undefined) {
+      currentRotation = currentWidgetTransform.rotation;
+    }
     console.debug('Current rotation:', currentRotation);
     console.debug('From shape:', this.getNameFromShape(fromShape));
     let rotationDegrees = fromShape === Shape.DIAMOND ? 315 : 360;
-    return TweenMax.to(this.widget, timeSeconds, {
+    return TweenMax.to(this.widgetElement, timeSeconds, {
       rotation: "+=" + rotationDegrees + "_ccw",
       scaleX: 1,
       scaleY: 1,
@@ -895,7 +1094,7 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getCircleAnimation(timeSeconds: number) {
-    return TweenMax.to(this.widget, timeSeconds, {
+    return TweenMax.to(this.widgetElement, timeSeconds, {
       rotation: 0,
       borderRadius: "50%",
       backgroundColor: this.interpolateColors(this.score),
@@ -912,7 +1111,7 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getSquareAnimation(timeSeconds: number) {
-    return TweenMax.to(this.widget, timeSeconds, {
+    return TweenMax.to(this.widgetElement, timeSeconds, {
       rotation: 0,
       borderRadius: 0,
       backgroundColor: this.interpolateColors(this.score),
@@ -929,7 +1128,7 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getDiamondAnimation(timeSeconds: number) {
-    return TweenMax.to(this.widget, timeSeconds, {
+    return TweenMax.to(this.widgetElement, timeSeconds, {
       borderRadius: 0,
       rotation: 45,
       backgroundColor: this.interpolateColors(this.score),
@@ -945,13 +1144,13 @@ export class PerspectiveStatus implements OnChanges {
   }
 
   private getToGrayScaleAnimation(timeSeconds: number) {
-    return TweenMax.to(this.widget, timeSeconds, {
+    return TweenMax.to(this.widgetElement, timeSeconds, {
       backgroundColor: "rgba(227,229,230,1)",
     });
   }
 
   private getFadeAndShrinkAnimation(timeSeconds: number, repeat: boolean) {
-    return TweenMax.to(this.widget, timeSeconds, {
+    return TweenMax.to(this.widgetElement, timeSeconds, {
       repeat: repeat ? 1 : 0,
       backgroundColor: "rgba(227,229,230,0.54)",
       scaleX: 0.5,
