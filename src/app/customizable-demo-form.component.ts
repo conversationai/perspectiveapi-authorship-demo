@@ -236,7 +236,7 @@ export class CustomizableDemoForm implements OnInit {
           decodedDemoSettings.hideLoadingIconForScoresBelowMinThreshold;
         this.userFeedbackPromptText = decodedDemoSettings.userFeedbackPromptText;
         this.alwaysHideLoadingIcon = decodedDemoSettings.alwaysHideLoadingIcon;
-        this.loadingIconStyle = decodedDemoSettings.loadingIconStyle;
+        this.selectedLoadingIconStyle = decodedDemoSettings.loadingIconStyle;
       }
     });
     this.demoSettings = this.getDemoSettings();

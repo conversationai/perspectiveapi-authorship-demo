@@ -61,7 +61,8 @@
   <div class="setting">
     <md-select placeholder="Loading icon style"
                floatPlaceholder="always"
-               [(ngModel)]="selectedLoadingIconStyle">
+               [(ngModel)]="selectedLoadingIconStyle"
+               (change)="onDemoSettingsChanged()">
       <md-option *ngFor="let loadingIconStyle of loadingIconStyles"
                  [value]="loadingIconStyle">
         {{loadingIconStyle}}
