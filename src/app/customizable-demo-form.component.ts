@@ -14,7 +14,7 @@ import {
   Component,
   OnInit,
 } from '@angular/core';
-import {MdSlideToggleChange, MdSliderChange} from '@angular/material';
+import {MatSlideToggleChange, MatSliderChange} from '@angular/material';
 import {DemoSettings} from './convai-checker.component';
 import {
   ConfigurationInput,
@@ -31,7 +31,8 @@ const RAISED_EYEBROW_EMOJI = "🤨 ";
 interface UISettings {
   useCustomColorScheme: boolean,
   useCustomFeedbackText: boolean,
-  customizeScoreThresholds: boolean
+  customizeScoreThresholds: boolean,
+  showDemoSettings: boolean
 };
 
 /** Describes a configuration for demo colors. */
@@ -92,6 +93,9 @@ const EMOJIES: [string, string, string] = [
   styleUrls: ['./customizable-demo-form.component.css'],
 })
 export class CustomizableDemoForm implements OnInit {
+  /** Whether to show the expanded demo settings. */
+  showDemoSettings = true;
+
   /** Color scheme options. */
   colorSchemes: ColorScheme[] = [
     {name: ColorSchemes.DEFAULT, colors: DEFAULT_COLORS},
@@ -177,6 +181,7 @@ export class CustomizableDemoForm implements OnInit {
   alwaysHideLoadingIcon = false;
 
   demoSettings: DemoSettings|null = null;
+  uiSettings: UISettings|null = null;
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 
@@ -188,6 +193,7 @@ export class CustomizableDemoForm implements OnInit {
         this.useCustomColorScheme = decodedUISettings.useCustomColorScheme;
         this.useCustomFeedbackText = decodedUISettings.useCustomFeedbackText;
         this.customizeScoreThresholds = decodedUISettings.customizeScoreThresholds;
+        this.showDemoSettings = decodedUISettings.showDemoSettings;
       }
       if (params['encodedDemoSettings']) {
         const decodedDemoSettings: DemoSettings = JSON.parse(
@@ -238,6 +244,7 @@ export class CustomizableDemoForm implements OnInit {
       }
     });
     this.demoSettings = this.getDemoSettings();
+    this.uiSettings = this.getUISettings();
     console.debug('Updating this.demoSettings (init)', this.demoSettings);
   }
 
@@ -247,7 +254,7 @@ export class CustomizableDemoForm implements OnInit {
   }
 
   /** Clears the API key field when the "Use gapi" option is toggled off. */
-  updateApiKey(event: MdSlideToggleChange) {
+  updateApiKey(event: MatSlideToggleChange) {
     if (!event.checked) {
       this.apiKey = '';
     }
@@ -265,20 +272,24 @@ export class CustomizableDemoForm implements OnInit {
    * is subtracted from the max slider value. Values are also divided by 100 to
    * fall between 0 and 1.
    */
-  onSliderValueChange(change: MdSliderChange) {
+  onSliderValueChange(change: MatSliderChange) {
     this.sliderScoreThresholds[0] = (change.source.max - change.value) / 100;
     this.sliderScoreThresholds[1] = (change.source.max - change.value) / 100;
     this.sliderScoreThresholds[2] = (1 + this.sliderScoreThresholds[1]) / 2;
   }
 
-  onDemoSettingsChanged() {
+  onSettingsChanged() {
     let newDemoSettings = this.getDemoSettings();
-    if (JSON.stringify(this.demoSettings) !== JSON.stringify(newDemoSettings)) {
+    let newUISettings = this.getUISettings();
+    if (JSON.stringify(this.demoSettings) !== JSON.stringify(newDemoSettings)
+        || JSON.stringify(this.uiSettings) !== JSON.stringify(newUISettings)) {
       console.debug('Updating this.demoSettings', newDemoSettings);
+      console.debug('Updating this.uiSettings', newUISettings);
       this.demoSettings = newDemoSettings;
+      this.uiSettings = newUISettings;
 
       const encodedUISettings =
-        encodeURIComponent(JSON.stringify(this.getUISettings()));
+        encodeURIComponent(JSON.stringify(this.uiSettings));
       const encodedDemoSettings =
         encodeURIComponent(JSON.stringify(this.demoSettings));
 
@@ -286,8 +297,7 @@ export class CustomizableDemoForm implements OnInit {
         ['/customize', encodedUISettings, encodedDemoSettings]);
     } else {
       console.debug(
-        'Calling onDemoSettingsChanged(), but settings are unchanged',
-        newDemoSettings);
+        'Calling onSettingsChanged(), but settings are unchanged', newDemoSettings);
     }
   }
 
@@ -323,7 +333,8 @@ export class CustomizableDemoForm implements OnInit {
     return {
       useCustomColorScheme: this.useCustomColorScheme,
       useCustomFeedbackText: this.useCustomFeedbackText,
-      customizeScoreThresholds: this.customizeScoreThresholds
+      customizeScoreThresholds: this.customizeScoreThresholds,
+      showDemoSettings: this.showDemoSettings
     };
   }
 }
