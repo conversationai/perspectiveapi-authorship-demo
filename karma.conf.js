@@ -16,6 +16,7 @@ module.exports = function (config) {
       clearContext: false // leave Jasmine Spec Runner output visible in browser
     },
     files: [
+      { pattern: './node_modules/twemoji/2/twemoji.js' },
       { pattern: './src/test.ts', watched: false }
     ],
     preprocessors: {
