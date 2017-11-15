@@ -57,6 +57,18 @@
     </md-select>
   </div>
 
+  <!-- Loading icon/widget style. -->
+  <div class="setting">
+    <md-select placeholder="Loading icon style"
+               floatPlaceholder="always"
+               [(ngModel)]="selectedLoadingIconStyle">
+      <md-option *ngFor="let loadingIconStyle of loadingIconStyles"
+                 [value]="loadingIconStyle">
+        {{loadingIconStyle}}
+      </md-option>
+    </md-select>
+  </div>
+
   <!-- Feedback message -->
   <div class="setting">
     <md-select placeholder="Feedback message"

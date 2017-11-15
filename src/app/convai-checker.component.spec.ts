@@ -379,7 +379,7 @@ describe('Convai checker test', () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
   });
 
-  it('should recognize inputs from attributes', () => {
+  it('should recognize inputs from attributes', async(() => {
     let fixture = TestBed.createComponent(
       ConvaiCheckerWithAttributeInputTestComponent);
 
@@ -389,9 +389,9 @@ describe('Convai checker test', () => {
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
     expect(checker.demoSettings.configuration).toEqual('external');
-  });
+  }));
 
-  it('should recognize inputs from angular input bindings', () => {
+  it('should recognize inputs from angular input bindings', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerTestComponentExternalConfig);
     fixture.detectChanges();
 
@@ -400,9 +400,9 @@ describe('Convai checker test', () => {
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
     expect(checker.demoSettings.configuration).toEqual('external');
-  });
+  }));
 
-  it('should default to demo configuration when no configuration is specified', () => {
+  it('should default to demo configuration when no configuration is specified', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerNoConfigurationTestComponent);
     fixture.detectChanges();
 
@@ -413,9 +413,9 @@ describe('Convai checker test', () => {
     expect(checker.statusWidget.configuration).toEqual(
       checker.statusWidget.configurationEnum.DEMO_SITE);
 
-  });
+  }));
 
-  it('should default to demo configuration when an invalid configuration is specified', () => {
+  it('should default to demo configuration when an invalid configuration is specified', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerInvalidConfigurationTestComponent);
     fixture.detectChanges();
 
@@ -426,21 +426,21 @@ describe('Convai checker test', () => {
     expect(checker.statusWidget.configuration).toEqual(
       checker.statusWidget.configurationEnum.DEMO_SITE);
 
-  });
+  }));
 
-  it('should show an error if no textarea id is specified', () => {
+  it('should show an error if no textarea id is specified', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerNoInputTestComponent);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Error');
-  });
+  }));
 
-  it('should show an error if an invalid textarea id is specified', () => {
+  it('should show an error if an invalid textarea id is specified', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerInvalidInputTestComponent);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Error');
-  });
+  }));
 
   it('Should analyze comment and store and emit response', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerTestComponentDemoConfig);
@@ -1100,8 +1100,8 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        lastRequestUrl = connection.request.url;
+       fixture.detectChanges();
        if (lastRequestUrl === suggestScoreUrl) {
-         fixture.detectChanges();
          expect(fixture.nativeElement.textContent).toContain('Sending');
        } else if (lastRequestUrl === checkUrl) {
          expect(checker.statusWidget.isLoading).toBe(true);
@@ -1401,7 +1401,7 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        fixture.detectChanges();
-       expect(getIsElementWithIdVisible('statusWidget')).toBe(true);
+       expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(true);
        expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
@@ -1417,7 +1417,7 @@ describe('Convai checker test', () => {
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
-         expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
+         expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
          if (callCount < 2) {
            callCount++;
 
@@ -1426,7 +1426,7 @@ describe('Convai checker test', () => {
            // Checks that clearing the textbox hides the status widget.
            fixture.whenStable().then(() => {
              fixture.detectChanges();
-             expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
+             expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
 
              // Fire another request.
              setTextAndFireInputEvent(queryTexts[callCount], textArea);
@@ -1465,7 +1465,7 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        fixture.detectChanges();
-       expect(getIsElementWithIdVisible('statusWidget')).toBe(false);
+       expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
        expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
@@ -1481,8 +1481,9 @@ describe('Convai checker test', () => {
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
+         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
-         let statusWidgetVisible = getIsElementWithIdVisible('statusWidget');
+         let statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
          // The first and fourth responses (indices 0 and 2) have a score below
          // the min threshold, so the loading widget should only be visible for
          // the second one (index 1).
@@ -1497,9 +1498,7 @@ describe('Convai checker test', () => {
            fixture.whenStable().then(() => {
              console.log('Checking clearing');
              fixture.detectChanges();
-             statusWidgetVisible = getIsElementWithIdVisible('statusWidget');
-             console.log('Callcount=', callCount);
-             console.log('statusWidgetVisible=', statusWidgetVisible);
+             statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
              expect(statusWidgetVisible).toBe(false);
 
              // Fire another request.

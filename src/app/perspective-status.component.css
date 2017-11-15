@@ -20,12 +20,31 @@
   margin: 2px;
 }
 
+#circleSquareDiamondLoadingIconContainer {
+  padding-top: 2px;
+}
+
+.emojiWidget {
+  background-color: #ffcc4d;
+  width: 16px;
+  height: 16px;
+}
+
+.iconEmoji {
+  width: 16px;
+  height: 16px;
+  opacity: 0;
+}
+
+.hiddenEmoji {
+  display: none;
+}
+
 #animationContainer {
   z-index: 5;
   width: 20px;
   height: 22px;
   margin-right: 10px;
-  padding-top: 2px;
 }
 
 #scoreInfoContainer {

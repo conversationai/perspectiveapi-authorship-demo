@@ -121,6 +121,11 @@ export class CustomizableDemoForm implements OnInit {
   ];
   customizeScoreThresholds = false;
 
+  /** Loading icon style options. */
+  loadingIconStyles =
+    [LoadingIconStyle.CIRCLE_SQUARE_DIAMOND, LoadingIconStyle.EMOJI];
+  selectedLoadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+
   /** Feedback text options. */
   feedbackTextSchemes: FeedbackTextScheme[] = [
     {
@@ -168,9 +173,8 @@ export class CustomizableDemoForm implements OnInit {
   // Whether to hide the loading icon when the score is below the minimum
   // threshold to show feedback.
   hideLoadingIconForScoresBelowMinThreshold = false;
-
+  // Whether to always hide the loading icon.
   alwaysHideLoadingIcon = false;
-  loadingIconStyle = LoadingIconStyle.DEFAULT;
 
   demoSettings: DemoSettings|null = null;
 
@@ -311,8 +315,8 @@ export class CustomizableDemoForm implements OnInit {
       hideLoadingIconForScoresBelowMinThreshold:
         this.hideLoadingIconForScoresBelowMinThreshold,
       userFeedbackPromptText: this.userFeedbackPromptText,
-      alwaysHideLoadingIcon: false,
-      loadingIconStyle: LoadingIconStyle.DEFAULT
+      alwaysHideLoadingIcon: this.alwaysHideLoadingIcon,
+      loadingIconStyle: this.selectedLoadingIconStyle
     }));
   }
 
