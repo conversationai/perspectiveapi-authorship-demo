@@ -185,7 +185,6 @@ export class CustomizableDemoForm implements OnInit {
       if (params['uiSettings']) {
         const decodedUISettings: UISettings = JSON.parse(
               decodeURIComponent(params['uiSettings'] as string));
-        console.log('decodedUISettings:', decodedUISettings);
         this.useCustomColorScheme = decodedUISettings.useCustomColorScheme;
         this.useCustomFeedbackText = decodedUISettings.useCustomFeedbackText;
         this.customizeScoreThresholds = decodedUISettings.customizeScoreThresholds;
@@ -193,7 +192,7 @@ export class CustomizableDemoForm implements OnInit {
       if (params['encodedDemoSettings']) {
         const decodedDemoSettings: DemoSettings = JSON.parse(
             decodeURIComponent(params['encodedDemoSettings'] as string));
-        console.log('I see demo settings in the url:', decodedDemoSettings);
+        console.debug('I see demo settings in the url:', decodedDemoSettings);
         this.configuration = decodedDemoSettings.configuration;
         if (this.useCustomColorScheme) {
           this.customColorScheme = decodedDemoSettings.gradientColors;
@@ -222,7 +221,6 @@ export class CustomizableDemoForm implements OnInit {
         if (this.customizeScoreThresholds) {
           this.scoreThresholds = decodedDemoSettings.scoreThresholds;
         } else {
-          console.log('Setting slideScoreThresholds');
           this.sliderScoreThresholds = decodedDemoSettings.scoreThresholds;
           this.sliderValue = (1 - this.sliderScoreThresholds[1]) * 100;
         }
@@ -240,7 +238,7 @@ export class CustomizableDemoForm implements OnInit {
       }
     });
     this.demoSettings = this.getDemoSettings();
-    console.log('Updating this.demoSettings (init)', this.demoSettings);
+    console.debug('Updating this.demoSettings (init)', this.demoSettings);
   }
 
   /** Resets the custom color scheme UI to use the default color scheme. */
@@ -276,7 +274,7 @@ export class CustomizableDemoForm implements OnInit {
   onDemoSettingsChanged() {
     let newDemoSettings = this.getDemoSettings();
     if (JSON.stringify(this.demoSettings) !== JSON.stringify(newDemoSettings)) {
-      console.log('Updating this.demoSettings', newDemoSettings);
+      console.debug('Updating this.demoSettings', newDemoSettings);
       this.demoSettings = newDemoSettings;
 
       const encodedUISettings =
@@ -287,8 +285,9 @@ export class CustomizableDemoForm implements OnInit {
       this.router.navigate(
         ['/customize', encodedUISettings, encodedDemoSettings]);
     } else {
-      console.log('Settings are unchanged', newDemoSettings);
-      console.log(this.demoSettings);
+      console.debug(
+        'Calling onDemoSettingsChanged(), but settings are unchanged',
+        newDemoSettings);
     }
   }
 
