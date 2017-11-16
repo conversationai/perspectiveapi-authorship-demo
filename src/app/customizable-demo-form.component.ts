@@ -85,6 +85,11 @@ const EMOJIES: [string, string, string] = [
   emoji.emojify(':cry: :scream: :angry:'),
 ];
 
+function arraysEqual<T>(array1: T[], array2: T[]): boolean {
+  return array1.length === array2.length &&
+    array1.every((element, index) => element === array2[index]);
+}
+
 
 @Component({
   selector: 'customizable-demo-form',
@@ -197,10 +202,14 @@ export class CustomizableDemoForm implements OnInit {
         if (this.useCustomColorScheme) {
           this.customColorScheme = decodedDemoSettings.gradientColors;
         } else {
+          // If the color setting wasn't custom, then it must be one of the ones
+          // in our selection list. Iterate over the color schemes in the
+          // selection list and find the one that equals the color scheme passed
+          // in via the URL parameters.
           for (let i = 0; i < this.colorSchemes.length; i++) {
             let colorScheme = this.colorSchemes[i];
-            if (colorScheme.colors.every(
-                (element, index) => element === decodedDemoSettings.gradientColors[index])) {
+            if (arraysEqual(
+              colorScheme.colors, decodedDemoSettings.gradientColors)) {
               this.selectedColorScheme = this.colorSchemes[i];
             }
           }
@@ -209,10 +218,14 @@ export class CustomizableDemoForm implements OnInit {
         if (this.useCustomFeedbackText) {
           this.customFeedbackTextScheme = decodedDemoSettings.feedbackText;
         } else {
+          // If the feedback text setting wasn't custom, then it must be one of
+          // the ones in our selection list. Iterate over the feedback text
+          // schemes in the selection list and find the one that equals the
+          // feedback text passed in via the URL parameters.
           for (let i = 0; i < this.feedbackTextSchemes.length; i++) {
             let feedbackTextScheme = this.feedbackTextSchemes[i];
-            if (feedbackTextScheme.feedbackTextSet.every(
-                (element, index) => element === decodedDemoSettings.feedbackText[index])) {
+            if (arraysEqual(feedbackTextScheme.feedbackTextSet,
+                            decodedDemoSettings.feedbackText)) {
               this.selectedFeedbackTextScheme = this.feedbackTextSchemes[i];
             }
           }
