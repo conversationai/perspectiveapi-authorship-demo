@@ -49,7 +49,7 @@ module.exports = function (config) {
      * How long will Karma wait for a message from a browser before
      * disconnecting from it (in ms).
      */
-    browserNoActivityTimeout: 5000,
+    browserNoActivityTimeout: 50000,
     customLaunchers: {
       Chrome_travis_ci: {
         base: 'Chrome',
