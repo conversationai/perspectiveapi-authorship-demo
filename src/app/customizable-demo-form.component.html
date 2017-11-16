@@ -3,17 +3,17 @@
   <div class="setting">
     <div>Feedback Threshold</div>
     <mat-slider
-       class="slider"
-       [invert]="true"
-       [min]="0"
-       [max]="100"
-       [step]="1"
-       [disabled]="customizeScoreThresholds"
-       [(ngModel)]="sliderValue"
-       (change)="onSliderValueChange($event)"></mat-slider>
-     <div [ngClass]="{'disabled': customizeScoreThresholds}">
-       Show feedback when a comment has a toxicity score of {{100 - sliderValue}}-100%.
-     </div>
+      class="slider"
+      [invert]="true"
+      [min]="0"
+      [max]="100"
+      [step]="1"
+      [disabled]="customizeScoreThresholds"
+      [(ngModel)]="sliderValue"
+      (change)="onSliderValueChange($event)"></mat-slider>
+    <div [ngClass]="{'disabled': customizeScoreThresholds}">
+      Show feedback when a comment has a toxicity score of {{100 - sliderValue}}-100%.
+    </div>
 
     <div class="customizeSwitch">
       <mat-slide-toggle [(ngModel)]="customizeScoreThresholds">Customize</mat-slide-toggle>
@@ -44,8 +44,8 @@
   <div class="setting">
     <mat-form-field>
       <mat-select placeholder="Correction style"
-                 floatPlaceholder="always"
-                 [(ngModel)]="configuration">
+                  floatPlaceholder="always"
+                  [(ngModel)]="configuration">
         <mat-option *ngFor="let configuration of configurations" [value]="configuration">
           {{ configuration }}
         </mat-option>
@@ -57,8 +57,8 @@
   <div class="setting">
     <mat-form-field>
       <mat-select placeholder="Loading icon style"
-                 floatPlaceholder="always"
-                 [(ngModel)]="selectedLoadingIconStyle">
+                  floatPlaceholder="always"
+                  [(ngModel)]="selectedLoadingIconStyle">
         <mat-option *ngFor="let loadingIconStyle of loadingIconStyles"
                    [value]="loadingIconStyle">
           {{loadingIconStyle}}
@@ -71,11 +71,11 @@
   <div class="setting">
     <mat-form-field>
       <mat-select placeholder="Feedback message"
-                 floatPlaceholder="always"
-                 [disabled]="useCustomFeedbackText"
-                 [(ngModel)]="selectedFeedbackTextScheme">
+                  floatPlaceholder="always"
+                  [disabled]="useCustomFeedbackText"
+                  [(ngModel)]="selectedFeedbackTextScheme">
         <mat-option *ngFor="let feedbackTextScheme of feedbackTextSchemes"
-                   [value]="feedbackTextScheme">
+                    [value]="feedbackTextScheme">
           {{feedbackTextScheme.name}}
         </mat-option>
       </mat-select>
@@ -115,9 +115,9 @@
   <div class="setting">
     <mat-form-field>
       <mat-select placeholder="Color theme"
-                 floatPlaceholder="always"
-                 [(ngModel)]="selectedColorScheme"
-                 [disabled]="useCustomColorScheme">
+                  floatPlaceholder="always"
+                  [(ngModel)]="selectedColorScheme"
+                  [disabled]="useCustomColorScheme">
         <mat-option *ngFor="let colorScheme of colorSchemes" [value]="colorScheme">
           {{colorScheme.name}}
         </mat-option>
