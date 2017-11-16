@@ -14,7 +14,7 @@ import {
   Component,
   OnInit,
 } from '@angular/core';
-import {MdSlideToggleChange, MdSliderChange} from '@angular/material';
+import {MatSlideToggleChange, MatSliderChange} from '@angular/material';
 import {DemoSettings} from './convai-checker.component';
 import {
   ConfigurationInput,
@@ -260,7 +260,7 @@ export class CustomizableDemoForm implements OnInit {
   }
 
   /** Clears the API key field when the "Use gapi" option is toggled off. */
-  updateApiKey(event: MdSlideToggleChange) {
+  updateApiKey(event: MatSlideToggleChange) {
     if (!event.checked) {
       this.apiKey = '';
     }
@@ -278,7 +278,7 @@ export class CustomizableDemoForm implements OnInit {
    * is subtracted from the max slider value. Values are also divided by 100 to
    * fall between 0 and 1.
    */
-  onSliderValueChange(change: MdSliderChange) {
+  onSliderValueChange(change: MatSliderChange) {
     this.sliderScoreThresholds[0] = (change.source.max - change.value) / 100;
     this.sliderScoreThresholds[1] = (change.source.max - change.value) / 100;
     this.sliderScoreThresholds[2] = (1 + this.sliderScoreThresholds[1]) / 2;

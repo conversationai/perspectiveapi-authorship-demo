@@ -5,13 +5,14 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import {
-  MdButtonModule,
-  MdCheckboxModule,
-  MdInputModule,
-  MdSelectModule,
-  MdSlideToggleModule,
-  MdSliderModule,
+  MatButtonModule,
+  MatCheckboxModule,
+  MatInputModule,
+  MatSelectModule,
+  MatSlideToggleModule,
+  MatSliderModule,
 } from '@angular/material';
+import {MatFormFieldModule} from '@angular/material/form-field';
 import {RouterModule, Routes} from '@angular/router';
 import {ColorPickerModule} from 'ngx-color-picker';
 
@@ -51,12 +52,13 @@ const appRoutes: Routes = [
     ColorPickerModule,
     FormsModule,
     HttpModule,
-    MdButtonModule,
-    MdCheckboxModule,
-    MdInputModule,
-    MdSelectModule,
-    MdSlideToggleModule,
-    MdSliderModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatSlideToggleModule,
+    MatSliderModule,
     RouterModule.forRoot(appRoutes, {useHash: true})
   ],
   providers: [PerspectiveApiService, {provide: APP_BASE_HREF, useValue: '/'},],
