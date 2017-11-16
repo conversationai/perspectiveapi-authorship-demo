@@ -4,13 +4,14 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import {
-  MdButtonModule,
-  MdCheckboxModule,
-  MdInputModule,
-  MdSelectModule,
-  MdSlideToggleModule,
-  MdSliderModule,
+  MatButtonModule,
+  MatCheckboxModule,
+  MatInputModule,
+  MatSelectModule,
+  MatSlideToggleModule,
+  MatSliderModule,
 } from '@angular/material';
+import {MatFormFieldModule} from '@angular/material/form-field';
 import {ColorPickerModule} from 'ngx-color-picker';
 
 import { PerspectiveStatus } from './perspective-status.component';
@@ -30,12 +31,13 @@ import { CustomizableDemoForm } from './customizable-demo-form.component';
     ColorPickerModule,
     FormsModule,
     HttpModule,
-    MdButtonModule,
-    MdCheckboxModule,
-    MdInputModule,
-    MdSelectModule,
-    MdSlideToggleModule,
-    MdSliderModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatSlideToggleModule,
+    MatSliderModule,
   ],
   providers: [PerspectiveApiService],
   bootstrap: [CustomizableDemoForm]

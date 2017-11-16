@@ -2,121 +2,129 @@
   <!-- Feedback thresholds -->
   <div class="setting">
     <div>Feedback Threshold</div>
-    <md-slider
-       class="slider"
-       [invert]="true"
-       [min]="0"
-       [max]="100"
-       [step]="1"
-       [disabled]="customizeScoreThresholds"
-       [(ngModel)]="sliderValue"
-       (change)="onSliderValueChange($event)"></md-slider>
-     <div [ngClass]="{'disabled': customizeScoreThresholds}">
-       Show feedback when a comment has a toxicity score of {{100 - sliderValue}}-100%.
-     </div>
+    <mat-slider
+      class="slider"
+      [invert]="true"
+      [min]="0"
+      [max]="100"
+      [step]="1"
+      [disabled]="customizeScoreThresholds"
+      [(ngModel)]="sliderValue"
+      (change)="onSliderValueChange($event)"></mat-slider>
+    <div [ngClass]="{'disabled': customizeScoreThresholds}">
+      Show feedback when a comment has a toxicity score of {{100 - sliderValue}}-100%.
+    </div>
 
     <div class="customizeSwitch">
-      <md-slide-toggle [(ngModel)]="customizeScoreThresholds">Customize</md-slide-toggle>
+      <mat-slide-toggle [(ngModel)]="customizeScoreThresholds">Customize</mat-slide-toggle>
     </div>
   </div>
   <div class="setting customizableSetting" *ngIf="customizeScoreThresholds">
-    <md-input-container [floatPlaceholder]="'always'">
-      <input mdInput [(ngModel)]="scoreThresholds[0]"
+    <mat-input-container [floatPlaceholder]="'always'">
+      <input matInput [(ngModel)]="scoreThresholds[0]"
              (input)="scoreThresholds = scoreThresholds.slice()"
              type="number"
              placeholder="Min threshold for displaying feedback"/>
-    </md-input-container>
-    <md-input-container [floatPlaceholder]="'always'">
-      <input mdInput [(ngModel)]="scoreThresholds[1]"
+    </mat-input-container>
+    <mat-input-container [floatPlaceholder]="'always'">
+      <input matInput [(ngModel)]="scoreThresholds[1]"
              (input)="scoreThresholds = scoreThresholds.slice()"
              type="number"
              placeholder="Threshold for medium toxicity"/>
-    </md-input-container>
-    <md-input-container [floatPlaceholder]="'always'">
-      <input mdInput [(ngModel)]="scoreThresholds[2]"
+    </mat-input-container>
+    <mat-input-container [floatPlaceholder]="'always'">
+      <input matInput [(ngModel)]="scoreThresholds[2]"
              (input)="scoreThresholds = scoreThresholds.slice()"
              type="number"
              placeholder="Threshold for high toxicity"/>
-    </md-input-container>
+    </mat-input-container>
   </div>
 
   <!-- Configuration for user suggestions. -->
   <div class="setting">
-    <md-select placeholder="Correction style"
-               floatPlaceholder="always"
-               [(ngModel)]="configuration">
-      <md-option *ngFor="let configuration of configurations" [value]="configuration">
-        {{ configuration }}
-      </md-option>
-    </md-select>
+    <mat-form-field>
+      <mat-select placeholder="Correction style"
+                  floatPlaceholder="always"
+                  [(ngModel)]="configuration">
+        <mat-option *ngFor="let configuration of configurations" [value]="configuration">
+          {{ configuration }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </div>
 
   <!-- Loading icon/widget style. -->
   <div class="setting">
-    <md-select placeholder="Loading icon style"
-               floatPlaceholder="always"
-               [(ngModel)]="selectedLoadingIconStyle">
-      <md-option *ngFor="let loadingIconStyle of loadingIconStyles"
-                 [value]="loadingIconStyle">
-        {{loadingIconStyle}}
-      </md-option>
-    </md-select>
+    <mat-form-field>
+      <mat-select placeholder="Loading icon style"
+                  floatPlaceholder="always"
+                  [(ngModel)]="selectedLoadingIconStyle">
+        <mat-option *ngFor="let loadingIconStyle of loadingIconStyles"
+                   [value]="loadingIconStyle">
+          {{loadingIconStyle}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </div>
 
   <!-- Feedback message -->
   <div class="setting">
-    <md-select placeholder="Feedback message"
-               floatPlaceholder="always"
-               [disabled]="useCustomFeedbackText"
-               [(ngModel)]="selectedFeedbackTextScheme">
-      <md-option *ngFor="let feedbackTextScheme of feedbackTextSchemes"
-                 [value]="feedbackTextScheme">
-        {{feedbackTextScheme.name}}
-      </md-option>
-    </md-select>
+    <mat-form-field>
+      <mat-select placeholder="Feedback message"
+                  floatPlaceholder="always"
+                  [disabled]="useCustomFeedbackText"
+                  [(ngModel)]="selectedFeedbackTextScheme">
+        <mat-option *ngFor="let feedbackTextScheme of feedbackTextSchemes"
+                    [value]="feedbackTextScheme">
+          {{feedbackTextScheme.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
     <div class="customizeSwitch">
-      <md-slide-toggle [(ngModel)]="useCustomFeedbackText">Customize</md-slide-toggle>
+      <mat-slide-toggle [(ngModel)]="useCustomFeedbackText">Customize</mat-slide-toggle>
     </div>
   </div>
 
   <div class="setting customizableSetting" *ngIf="useCustomFeedbackText">
     <div>
-      <md-input-container class="feedbackText" [floatPlaceholder]="'always'">
-        <input mdInput [(ngModel)]="customFeedbackTextScheme[0]"
+      <mat-input-container class="feedbackText" [floatPlaceholder]="'always'">
+        <input matInput [(ngModel)]="customFeedbackTextScheme[0]"
                (input)="customFeedbackTextScheme = customFeedbackTextScheme.slice();"
                placeholder="Feedback text for a low toxicity"/>
-      </md-input-container>
+      </mat-input-container>
     </div>
 
     <div>
-      <md-input-container class="feedbackText" [floatPlaceholder]="'always'">
-        <input mdInput [(ngModel)]="customFeedbackTextScheme[1]"
+      <mat-input-container class="feedbackText" [floatPlaceholder]="'always'">
+        <input matInput [(ngModel)]="customFeedbackTextScheme[1]"
                (input)="customFeedbackTextScheme = customFeedbackTextScheme.slice();"
                placeholder="Feedback text for a medium toxicity"/>
-      </md-input-container>
+      </mat-input-container>
     </div>
 
     <div>
-      <md-input-container class="feedbackText" [floatPlaceholder]="'always'">
-        <input mdInput [(ngModel)]="customFeedbackTextScheme[2]"
+      <mat-input-container class="feedbackText" [floatPlaceholder]="'always'">
+        <input matInput [(ngModel)]="customFeedbackTextScheme[2]"
                (input)="customFeedbackTextScheme = customFeedbackTextScheme.slice();"
                placeholder="Feedback text for a high toxicity"/>
-      </md-input-container>
+      </mat-input-container>
     </div>
   </div>
 
   <!-- Color theme -->
   <div class="setting">
-    <md-select placeholder="Color theme"
-               floatPlaceholder="always"
-               [(ngModel)]="selectedColorScheme"
-               [disabled]="useCustomColorScheme">
-      <md-option *ngFor="let colorScheme of colorSchemes" [value]="colorScheme">
-        {{colorScheme.name}}
-      </md-option>
-    </md-select>
+    <mat-form-field>
+      <mat-select placeholder="Color theme"
+                  floatPlaceholder="always"
+                  [(ngModel)]="selectedColorScheme"
+                  [disabled]="useCustomColorScheme">
+        <mat-option *ngFor="let colorScheme of colorSchemes" [value]="colorScheme">
+          {{colorScheme.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
     <div class="customizeSwitch">
-      <md-slide-toggle [(ngModel)]="useCustomColorScheme">Customize</md-slide-toggle>
+      <mat-slide-toggle [(ngModel)]="useCustomColorScheme">Customize</mat-slide-toggle>
     </div>
   </div>
 
@@ -136,38 +144,38 @@
            (colorPickerChange)="customColorScheme = customColorScheme.slice()"
            [style.background]="customColorScheme[2]"
            class="colorPicker"/>
-    <button md-raised-button (click)="resetToDefaultColors()">Reset to default colors</button>
+    <button mat-raised-button (click)="resetToDefaultColors()">Reset to default colors</button>
   </div>
 
 
   <!-- Other settings -->
   <div class="setting">
-    <md-slide-toggle [(ngModel)]="showPercentage">Show percentage</md-slide-toggle>
+    <mat-slide-toggle [(ngModel)]="showPercentage">Show percentage</mat-slide-toggle>
   </div>
 
   <div class="setting">
-    <md-slide-toggle [(ngModel)]="showMoreInfoLink">Show more info link</md-slide-toggle>
+    <mat-slide-toggle [(ngModel)]="showMoreInfoLink">Show more info link</mat-slide-toggle>
   </div>
 
   <div class="setting">
-    <md-slide-toggle [(ngModel)]="hideLoadingIconAfterLoad">Hide loading icon after load</md-slide-toggle>
+    <mat-slide-toggle [(ngModel)]="hideLoadingIconAfterLoad">Hide loading icon after load</mat-slide-toggle>
   </div>
 
   <div class="setting">
-    <md-slide-toggle [(ngModel)]="hideLoadingIconForScoresBelowMinThreshold">Hide loading icon for scores below the minimum threshold.</md-slide-toggle>
+    <mat-slide-toggle [(ngModel)]="hideLoadingIconForScoresBelowMinThreshold">Hide loading icon for scores below the minimum threshold.</mat-slide-toggle>
   </div>
 
   <div class="setting">
-    <md-slide-toggle [(ngModel)]="useGapi" (change)="updateApiKey($event)">Use gapi</md-slide-toggle>
-    <md-input-container>
-      <input mdInput [disabled]="!useGapi" [(ngModel)]="apiKey" placeholder="API key"/>
-    </md-input-container>
+    <mat-slide-toggle [(ngModel)]="useGapi" (change)="updateApiKey($event)">Use gapi</mat-slide-toggle>
+    <mat-input-container>
+      <input matInput [disabled]="!useGapi" [(ngModel)]="apiKey" placeholder="API key"/>
+    </mat-input-container>
   </div>
 
   <div class="setting">
-    <md-input-container>
-      <input mdInput [(ngModel)]="userFeedbackPromptText" placeholder="Feedback prompt"/>
-    </md-input-container>
+    <mat-input-container>
+      <input matInput [(ngModel)]="userFeedbackPromptText" placeholder="Feedback prompt"/>
+    </mat-input-container>
   </div>
 </div>
 
