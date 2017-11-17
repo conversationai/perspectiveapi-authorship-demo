@@ -65,36 +65,6 @@
         </mat-select>
       </mat-form-field>
     </div>
-    <!-- Loading icon/widget style. -->
-    <div class="setting">
-      <mat-form-field>
-        <mat-select placeholder="Loading icon style"
-                    floatPlaceholder="always"
-                    [(ngModel)]="selectedLoadingIconStyle">
-          <mat-option *ngFor="let loadingIconStyle of loadingIconStyles"
-                     [value]="loadingIconStyle">
-            {{loadingIconStyle}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-
-    <!-- Feedback message -->
-    <div class="setting">
-      <mat-form-field>
-        <mat-select placeholder="Feedback message"
-                    floatPlaceholder="always"
-                    [disabled]="useCustomFeedbackText"
-                    [(ngModel)]="selectedFeedbackTextScheme">
-          <mat-option *ngFor="let feedbackTextScheme of feedbackTextSchemes"
-                      [value]="feedbackTextScheme">
-            {{feedbackTextScheme.name}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <div class="customizeSwitch">
-        <mat-slide-toggle [(ngModel)]="useCustomFeedbackText">Customize</mat-slide-toggle>
-    </div>
 
     <!-- Loading icon/widget style. -->
     <div class="setting">
