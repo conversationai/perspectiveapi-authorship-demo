@@ -24,6 +24,7 @@ import {
 } from './perspective-status.component';
 import {ActivatedRoute, Params, Router} from '@angular/router';
 import emoji from 'node-emoji';
+import * as _ from 'lodash';
 
 const RAISED_EYEBROW_EMOJI = "🤨 ";
 
@@ -286,7 +287,7 @@ export class CustomizableDemoForm implements OnInit {
 
   onDemoSettingsChanged() {
     let newDemoSettings = this.getDemoSettings();
-    if (JSON.stringify(this.demoSettings) !== JSON.stringify(newDemoSettings)) {
+    if (!_.isEqual(this.demoSettings, newDemoSettings)) {
       console.debug('Updating this.demoSettings', newDemoSettings);
       this.demoSettings = newDemoSettings;
 
