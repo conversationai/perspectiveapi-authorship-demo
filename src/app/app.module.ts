@@ -29,7 +29,7 @@ const appRoutes: Routes = [
     component: CustomizableDemoForm
   },
   {
-    path: 'customize' + '/:uiSettings/:encodedDemoSettings',
+    path: 'customize/:uiSettings/:encodedDemoSettings',
     component: CustomizableDemoForm
   },
   {
@@ -61,9 +61,7 @@ const appRoutes: Routes = [
     MatSelectModule,
     MatSlideToggleModule,
     MatSliderModule,
-    RouterModule.forRoot(
-      appRoutes, {useHash: true}
-    )
+    RouterModule.forRoot(appRoutes, {useHash: true})
   ],
   providers: [PerspectiveApiService, {provide: APP_BASE_HREF, useValue: '/'},],
   bootstrap: [WrapperApp]
