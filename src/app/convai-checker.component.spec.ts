@@ -35,7 +35,7 @@ import {
   XHRBackend
 } from '@angular/http';
 import { By } from '@angular/platform-browser';
-import { PerspectiveStatus, CommentFeedback } from './perspective-status.component';
+import { PerspectiveStatus, CommentFeedback, LoadingIconStyle, Shape } from './perspective-status.component';
 import { ConvaiChecker, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
@@ -1448,6 +1448,147 @@ describe('Convai checker test', () => {
          }
        });
     });
+
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryTexts[callCount], textArea);
+  }));
+
+  it('Test loading icon style setting change',
+     async(() => {
+    let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
+
+    // Configure settings.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+
+    fixture.detectChanges();
+    let checker = fixture.componentInstance.checker;
+    let queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?'
+    ];
+
+    let callCount = 0;
+    let mockResponses = [
+      getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
+      getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+
+    let mockBackend = TestBed.get(MockBackend);
+    mockBackend.connections
+     .subscribe((connection: MockConnection) => {
+       fixture.detectChanges();
+       let circleSquareDiamondWidgetVisible =
+         getIsElementWithIdVisible('circleSquareDiamondWidget');
+       let emojiWidgetVisible =
+         getIsElementWithIdVisible('emojiStatusWidget');
+       if (demoSettings.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+         expect(circleSquareDiamondWidgetVisible).toBe(true);
+         expect(emojiWidgetVisible).toBe(false);
+       } else {
+         expect(circleSquareDiamondWidgetVisible).toBe(false);
+         expect(emojiWidgetVisible).toBe(true);
+       }
+       expect(checker.statusWidget.isLoading).toBe(true);
+       connection.mockRespond(
+         new Response(
+           new ResponseOptions({
+              body: mockResponses[callCount]
+           })
+         )
+       );
+
+       // Wait for async code to complete.
+       fixture.whenStable().then(() => {
+         fixture.detectChanges();
+
+         // Checks that loading has stopped.
+         expect(checker.statusWidget.isLoading).toBe(false);
+         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+         if (demoSettings.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+           let circleSquareDiamondWidgetVisible =
+             getIsElementWithIdVisible('circleSquareDiamondWidget');
+           let emojiWidgetVisible =
+             getIsElementWithIdVisible('emojiStatusWidget');
+           expect(circleSquareDiamondWidgetVisible).toBe(true);
+           expect(emojiWidgetVisible).toBe(false);
+
+           let shape = checker.statusWidget.currentShape;
+           if (callCount === 0) {
+             expect(shape).toEqual(Shape.DIAMOND);
+           } else if (callCount === 1) {
+             expect(shape).toEqual(Shape.SQUARE);
+           } else {
+             expect(shape).toEqual(Shape.CIRCLE);
+           }
+
+           // Change to the emoji style, and verify the loading icon visibility
+           // change.
+           demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+           fixture.componentInstance.setDemoSettings(demoSettings);
+           fixture.detectChanges();
+
+           circleSquareDiamondWidgetVisible =
+             getIsElementWithIdVisible('circleSquareDiamondWidget');
+           emojiWidgetVisible =
+             getIsElementWithIdVisible('emojiStatusWidget');
+
+           expect(circleSquareDiamondWidgetVisible).toBe(false);
+           expect(emojiWidgetVisible).toBe(true);
+         } else if (demoSettings.loadingIconStyle === LoadingIconStyle.EMOJI) {
+           let circleSquareDiamondWidgetVisible =
+             getIsElementWithIdVisible('circleSquareDiamondWidget');
+           let emojiWidgetVisible =
+             getIsElementWithIdVisible('emojiStatusWidget');
+           expect(circleSquareDiamondWidgetVisible).toBe(false);
+           expect(emojiWidgetVisible).toBe(true);
+
+           // Change to the shape style, and verify the loading icon visibility
+           // change.
+           demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+           fixture.componentInstance.setDemoSettings(demoSettings);
+           fixture.detectChanges();
+
+           circleSquareDiamondWidgetVisible =
+             getIsElementWithIdVisible('circleSquareDiamondWidget');
+           emojiWidgetVisible =
+             getIsElementWithIdVisible('emojiStatusWidget');
+
+           expect(circleSquareDiamondWidgetVisible).toBe(true);
+           expect(emojiWidgetVisible).toBe(false);
+
+           /*
+           let shape = checker.statusWidget.currentShape;
+           if (callCount === 0) {
+             expect(shape).toEqual(Shape.DIAMOND);
+           } else if (callCount === 1) {
+             expect(shape).toEqual(Shape.SQUARE);
+           } else {
+             expect(shape).toEqual(Shape.CIRCLE);
+           }
+           */
+         } else {
+           fail('Invalid loadingIconStyle.');
+         }
+
+         if (callCount < 2) {
+           callCount++;
+           // Fire another request.
+           setTextAndFireInputEvent(queryTexts[callCount], textArea);
+         }
+       });
+    });
+
+    expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(true);
+    expect(getIsElementWithIdVisible('emojiStatusWidget')).toBe(false);
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;

@@ -29,7 +29,7 @@ import {
 import * as d3 from 'd3-interpolate';
 import twemoji from 'twemoji';
 
-enum Shape {
+export enum Shape {
   CIRCLE,
   SQUARE,
   DIAMOND,
@@ -137,7 +137,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   public isPlayingShowOrHideLoadingWidgetAnimation: boolean = false;
   public shouldHideStatusWidget: boolean = false;
   public showScore: boolean = true;
-  private currentShape: Shape = Shape.CIRCLE;
+  public currentShape: Shape = Shape.CIRCLE;
   private showingMoreInfo: boolean = false;
   @ViewChild('circleSquareDiamondWidget') private circleSquareDiamondWidget: ElementRef;
   @ViewChild('emojiStatusWidget') private emojiWidget: ElementRef;

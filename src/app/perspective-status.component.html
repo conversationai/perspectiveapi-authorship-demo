@@ -27,6 +27,7 @@
     <div *ngIf="loadingIconStyle === loadingIconStyleConst.EMOJI">
       <button
            #emojiStatusWidget
+           id="emojiStatusWidget"
            class="dot emojiWidget"
            (click)="toggleScore()">
         <img #smileEmoji class="iconEmoji"
