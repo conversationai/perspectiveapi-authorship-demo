@@ -1,6 +1,6 @@
 {
   "name": "@conversationai/perspectiveapi-authorship-demo",
-  "version": "0.4.0",
+  "version": "0.4.3",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
@@ -33,6 +33,7 @@
     "d3-interpolate": "^1.1.4",
     "gsap": "^1.19.1",
     "hammerjs": "^2.0.8",
+    "jasmine": "^2.8.0",
     "js-sha256": "^0.5.0",
     "ngx-color-picker": "^4.3.0",
     "node-emoji": "^1.8.1",
@@ -47,10 +48,10 @@
     "@types/d3-interpolate": "^1.1.5",
     "@types/gapi": "^0.0.31",
     "@types/greensock": "^1.15.32",
-    "@types/jasmine": "2.5.38",
+    "@types/jasmine": "~2.8.2",
     "@types/node": "~6.0.60",
-    "codelyzer": "^4.0.1",
-    "jasmine-core": "~2.5.2",
+    "codelyzer": "~4.0.1",
+    "jasmine-core": "~2.8.0",
     "jasmine-spec-reporter": "~3.2.0",
     "karma": "~1.4.1",
     "karma-chrome-launcher": "~2.0.0",
@@ -60,7 +61,7 @@
     "karma-jasmine-html-reporter": "^0.2.2",
     "protractor": "~5.1.0",
     "ts-node": "~2.0.0",
-    "tslint": "^5.8.0",
-    "typescript": "~2.2.0"
+    "tslint": "~4.5.0",
+    "typescript": "~2.4.0"
   }
 }
