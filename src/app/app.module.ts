@@ -1,6 +1,6 @@
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
-import {APP_BASE_HREF} from '@angular/common';
+import { APP_BASE_HREF } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
@@ -8,13 +8,14 @@ import {
   MatButtonModule,
   MatCheckboxModule,
   MatInputModule,
-  MatSelectModule,
   MatSlideToggleModule,
   MatSliderModule,
 } from '@angular/material';
-import {MatFormFieldModule} from '@angular/material/form-field';
-import {RouterModule, Routes} from '@angular/router';
-import {ColorPickerModule} from 'ngx-color-picker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatSelectModule } from '@angular/material/select';
+import { RouterModule, Routes } from '@angular/router';
+import { ColorPickerModule } from 'ngx-color-picker';
 
 import { PerspectiveStatus } from './perspective-status.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
@@ -54,6 +55,7 @@ const appRoutes: Routes = [
     HttpModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatExpansionModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,

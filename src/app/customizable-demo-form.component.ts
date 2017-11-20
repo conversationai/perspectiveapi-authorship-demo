@@ -32,7 +32,8 @@ const RAISED_EYEBROW_EMOJI = "🤨 ";
 interface UISettings {
   useCustomColorScheme: boolean,
   useCustomFeedbackText: boolean,
-  customizeScoreThresholds: boolean
+  customizeScoreThresholds: boolean,
+  showDemoSettings: boolean
 };
 
 /** Describes a configuration for demo colors. */
@@ -98,6 +99,9 @@ function arraysEqual<T>(array1: T[], array2: T[]): boolean {
   styleUrls: ['./customizable-demo-form.component.css'],
 })
 export class CustomizableDemoForm implements OnInit {
+  /** Whether to show the expanded demo settings. */
+  showDemoSettings = true;
+
   /** Color scheme options. */
   colorSchemes: ColorScheme[] = [
     {name: ColorSchemes.DEFAULT, colors: DEFAULT_COLORS},
@@ -183,6 +187,7 @@ export class CustomizableDemoForm implements OnInit {
   alwaysHideLoadingIcon = false;
 
   demoSettings: DemoSettings|null = null;
+  uiSettings: UISettings|null = null;
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 
@@ -194,6 +199,7 @@ export class CustomizableDemoForm implements OnInit {
         this.useCustomColorScheme = decodedUISettings.useCustomColorScheme;
         this.useCustomFeedbackText = decodedUISettings.useCustomFeedbackText;
         this.customizeScoreThresholds = decodedUISettings.customizeScoreThresholds;
+        this.showDemoSettings = decodedUISettings.showDemoSettings;
       }
       if (params['encodedDemoSettings']) {
         const decodedDemoSettings: DemoSettings = JSON.parse(
@@ -252,6 +258,7 @@ export class CustomizableDemoForm implements OnInit {
       }
     });
     this.demoSettings = this.getDemoSettings();
+    this.uiSettings = this.getUISettings();
     console.debug('Updating this.demoSettings (init)', this.demoSettings);
   }
 
@@ -285,14 +292,18 @@ export class CustomizableDemoForm implements OnInit {
     this.sliderScoreThresholds[2] = (1 + this.sliderScoreThresholds[1]) / 2;
   }
 
-  onDemoSettingsChanged() {
+  onSettingsChanged() {
     let newDemoSettings = this.getDemoSettings();
-    if (!_.isEqual(this.demoSettings, newDemoSettings)) {
+    let newUISettings = this.getUISettings();
+    if (!_.isEqual(this.demoSettings, newDemoSettings)
+        || !_.isEqual(this.uiSettings, newUISettings)) {
       console.debug('Updating this.demoSettings', newDemoSettings);
+      console.debug('Updating this.uiSettings', newUISettings);
       this.demoSettings = newDemoSettings;
+      this.uiSettings = newUISettings;
 
       const encodedUISettings =
-        encodeURIComponent(JSON.stringify(this.getUISettings()));
+        encodeURIComponent(JSON.stringify(this.uiSettings));
       const encodedDemoSettings =
         encodeURIComponent(JSON.stringify(this.demoSettings));
 
@@ -300,8 +311,7 @@ export class CustomizableDemoForm implements OnInit {
         ['/customize', encodedUISettings, encodedDemoSettings]);
     } else {
       console.debug(
-        'Calling onDemoSettingsChanged(), but settings are unchanged',
-        newDemoSettings);
+        'Calling onSettingsChanged(), but settings are unchanged', newDemoSettings);
     }
   }
 
@@ -337,7 +347,8 @@ export class CustomizableDemoForm implements OnInit {
     return {
       useCustomColorScheme: this.useCustomColorScheme,
       useCustomFeedbackText: this.useCustomFeedbackText,
-      customizeScoreThresholds: this.customizeScoreThresholds
+      customizeScoreThresholds: this.customizeScoreThresholds,
+      showDemoSettings: this.showDemoSettings
     };
   }
 }
