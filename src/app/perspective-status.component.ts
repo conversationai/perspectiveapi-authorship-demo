@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import {
+  AfterViewChecked,
   AfterViewInit,
   Component,
   ElementRef,
@@ -81,7 +82,7 @@ const GRAY_LOADING_COLOR = '#cccccc';
   styleUrls: ['./perspective-status.component.css'],
 })
 @Injectable()
-export class PerspectiveStatus implements OnChanges, AfterViewInit {
+export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChecked {
   // TODO(rachelrosen): Instead of all these inputs, we should merge the
   // convai-checker component with this one.
   @Input() indicatorWidth: number = 13;
@@ -160,6 +161,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
   // Promise that should resolve once this.widget has been initialized.
   private widgetReady: Promise<void>;
 
+  /** Variables to store state change flags to use in ngAfterViewChecked. */
+  private loadingIconStyleChanged = false;
+  private scoreThresholdsChanged = false;
+
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
   constructor(private ngZone: NgZone, private elementRef: ElementRef) {
@@ -198,13 +203,15 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
 
     if (changes['loadingIconStyle'] !== undefined) {
       console.debug(changes['loadingIconStyle']);
-      Promise.resolve().then(() => {this.updateWidgetElement();});
+      this.loadingIconStyleChanged = true;
     }
 
     if (changes['gradientColors'] !== undefined) {
       console.debug('Change in gradientColors');
       this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
-      this.getUpdateGradientColorAnimation(0.1).play();
+      if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+        this.getUpdateGradientColorAnimation(0.1).play();
+      }
     }
 
     if (changes['configurationInput'] !== undefined) {
@@ -220,9 +227,39 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit {
       if (this.updateDemoSettingsAnimation) {
         this.updateDemoSettingsAnimation.kill();
       }
+      this.scoreThresholdsChanged = true;
+    }
+  }
 
-      this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
-      this.updateDemoSettingsAnimation.play();
+  /**
+   * Make any animation changes that require ViewChild updates in this lifecycle
+   * callback, to ensure that the ViewChild has been updated.
+   */
+  ngAfterViewChecked() {
+    // TODO(rachelrosen): Queue up all animations from ngOnChanges and put them
+    // in a proper timeline (instead of just chaining promises), so state
+    // doesn't accidentally get messed up. This is not a production concern
+    // because state will not be changing there; it's only a concern for changing
+    // settings with the customizable form.
+    let updatesToDo = Promise.resolve();
+    if (this.scoreThresholdsChanged) {
+      this.scoreThresholdsChanged = false;
+      // Skip the updateWidgetStateAnimation if the loading style also changed,
+      // since the loading style update takes care of the widget state change
+      // animation.
+      if (!this.loadingIconStyleChanged) {
+        updatesToDo.then(() => {
+          this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
+          this.updateDemoSettingsAnimation.play();
+        });
+      }
+    }
+
+    if (this.loadingIconStyleChanged) {
+      this.loadingIconStyleChanged = false;
+      updatesToDo.then(() => {
+        this.updateWidgetElement();
+      });
     }
   }
 
