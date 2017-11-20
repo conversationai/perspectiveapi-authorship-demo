@@ -187,7 +187,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   ngAfterViewInit() {
     this.widgetReady = Promise.resolve().then(() => {
-      this.updateWidgetElement();
+      this.getUpdateWidgetElementAnimation().play();
     });
   }
 
@@ -202,7 +202,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
 
     if (changes['loadingIconStyle'] !== undefined) {
-      console.debug(changes['loadingIconStyle']);
+      console.log('Loading icon style change:', changes['loadingIconStyle']);
       this.loadingIconStyleChanged = true;
     }
 
@@ -236,34 +236,38 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
    * callback, to ensure that the ViewChild has been updated.
    */
   ngAfterViewChecked() {
-    // TODO(rachelrosen): Queue up all animations from ngOnChanges and put them
-    // in a proper timeline (instead of just chaining promises), so state
-    // doesn't accidentally get messed up. This is not a production concern
-    // because state will not be changing there; it's only a concern for changing
-    // settings with the customizable form.
-    let updatesToDo = Promise.resolve();
+    let afterChangesTimeline = new TimelineMax({
+      onStart: () => {
+        this.ngZone.run(() => {
+          console.debug('Started animations in ngAfterViewChecked');
+        });
+      },
+      onComplete: () => {
+        this.ngZone.run(() => {
+          console.debug('Completing animations in ngAfterViewChecked');
+        });
+      }
+    });
     if (this.scoreThresholdsChanged) {
       this.scoreThresholdsChanged = false;
       // Skip the updateWidgetStateAnimation if the loading style also changed,
       // since the loading style update takes care of the widget state change
       // animation.
       if (!this.loadingIconStyleChanged) {
-        updatesToDo.then(() => {
-          this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
-          this.updateDemoSettingsAnimation.play();
-        });
+        this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
+        afterChangesTimeline.add(this.updateDemoSettingsAnimation);
       }
     }
 
     if (this.loadingIconStyleChanged) {
       this.loadingIconStyleChanged = false;
-      updatesToDo.then(() => {
-        this.updateWidgetElement();
-      });
+      afterChangesTimeline.add(this.getUpdateWidgetElementAnimation());
     }
+    afterChangesTimeline.play();
   }
 
-  private updateWidgetElement(): void {
+  private getUpdateWidgetElementAnimation(): TimelineMax {
+    console.debug('Calling getUpdateWidgetElementAnimation');
     if (this.circleSquareDiamondWidget != null) {
       this.widgetElement = this.circleSquareDiamondWidget.nativeElement;
     } else if (this.emojiWidget != null) {
@@ -274,7 +278,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
     let updateWidgetStateTimeline = new TimelineMax({});
     updateWidgetStateTimeline.add(this.getUpdateWidgetStateAnimation());
-    updateWidgetStateTimeline.play();
+    return updateWidgetStateTimeline;
   }
 
   private getShouldHideStatusWidget(loadStart: boolean): boolean {
@@ -981,7 +985,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private getTransitionToSquareAnimation(timeSeconds: number) {
     let squareAnimationTimeline = new TimelineMax({
       onStart: () => {
-        let currentRotation = (this.widgetElement as any)._gsTransform.rotation;
+        let currentRotation = 0;
+        let currentWidgetTransform = (this.widgetElement as any)._gsTransform;
+        if (currentWidgetTransform !== undefined) {
+          currentRotation = currentWidgetTransform.rotation;
+        }
         console.debug('getTransitionToSquare; Current rotation:', currentRotation);
       },
       onComplete: () => {
