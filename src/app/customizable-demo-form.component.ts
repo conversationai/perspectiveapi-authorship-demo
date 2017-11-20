@@ -12,6 +12,7 @@ limitations under the License.
 */
 import {
   Component,
+  OnInit,
 } from '@angular/core';
 import {MatSlideToggleChange, MatSliderChange} from '@angular/material';
 import {DemoSettings} from './convai-checker.component';
@@ -21,9 +22,19 @@ import {
   ScoreThreshold,
   DEFAULT_FEEDBACK_TEXT
 } from './perspective-status.component';
+import {ActivatedRoute, Params, Router} from '@angular/router';
 import emoji from 'node-emoji';
+import * as _ from 'lodash';
 
 const RAISED_EYEBROW_EMOJI = "🤨 ";
+
+/** Settings about the UI state that should be encoded in the URL. */
+interface UISettings {
+  useCustomColorScheme: boolean,
+  useCustomFeedbackText: boolean,
+  customizeScoreThresholds: boolean,
+  showDemoSettings: boolean
+};
 
 /** Describes a configuration for demo colors. */
 interface ColorScheme {
@@ -76,13 +87,21 @@ const EMOJIES: [string, string, string] = [
   emoji.emojify(':cry: :scream: :angry:'),
 ];
 
+function arraysEqual<T>(array1: T[], array2: T[]): boolean {
+  return array1.length === array2.length &&
+    array1.every((element, index) => element === array2[index]);
+}
+
 
 @Component({
   selector: 'customizable-demo-form',
   templateUrl: './customizable-demo-form.component.html',
   styleUrls: ['./customizable-demo-form.component.css'],
 })
-export class CustomizableDemoForm {
+export class CustomizableDemoForm implements OnInit {
+  /** Whether to show the expanded demo settings. */
+  showDemoSettings = true;
+
   /** Color scheme options. */
   colorSchemes: ColorScheme[] = [
     {name: ColorSchemes.DEFAULT, colors: DEFAULT_COLORS},
@@ -164,6 +183,84 @@ export class CustomizableDemoForm {
   // Whether to hide the loading icon when the score is below the minimum
   // threshold to show feedback.
   hideLoadingIconForScoresBelowMinThreshold = false;
+  // Whether to always hide the loading icon.
+  alwaysHideLoadingIcon = false;
+
+  demoSettings: DemoSettings|null = null;
+  uiSettings: UISettings|null = null;
+
+  constructor(private route: ActivatedRoute, private router: Router) {}
+
+  ngOnInit() {
+    this.route.params.subscribe((params: Params) => {
+      if (params['uiSettings']) {
+        const decodedUISettings: UISettings = JSON.parse(
+              decodeURIComponent(params['uiSettings'] as string));
+        this.useCustomColorScheme = decodedUISettings.useCustomColorScheme;
+        this.useCustomFeedbackText = decodedUISettings.useCustomFeedbackText;
+        this.customizeScoreThresholds = decodedUISettings.customizeScoreThresholds;
+        this.showDemoSettings = decodedUISettings.showDemoSettings;
+      }
+      if (params['encodedDemoSettings']) {
+        const decodedDemoSettings: DemoSettings = JSON.parse(
+            decodeURIComponent(params['encodedDemoSettings'] as string));
+        console.debug('I see demo settings in the url:', decodedDemoSettings);
+        this.configuration = decodedDemoSettings.configuration;
+        if (this.useCustomColorScheme) {
+          this.customColorScheme = decodedDemoSettings.gradientColors;
+        } else {
+          // If the color setting wasn't custom, then it must be one of the ones
+          // in our selection list. Iterate over the color schemes in the
+          // selection list and find the one that equals the color scheme passed
+          // in via the URL parameters.
+          for (let i = 0; i < this.colorSchemes.length; i++) {
+            let colorScheme = this.colorSchemes[i];
+            if (arraysEqual(
+              colorScheme.colors, decodedDemoSettings.gradientColors)) {
+              this.selectedColorScheme = this.colorSchemes[i];
+            }
+          }
+        }
+
+        if (this.useCustomFeedbackText) {
+          this.customFeedbackTextScheme = decodedDemoSettings.feedbackText;
+        } else {
+          // If the feedback text setting wasn't custom, then it must be one of
+          // the ones in our selection list. Iterate over the feedback text
+          // schemes in the selection list and find the one that equals the
+          // feedback text passed in via the URL parameters.
+          for (let i = 0; i < this.feedbackTextSchemes.length; i++) {
+            let feedbackTextScheme = this.feedbackTextSchemes[i];
+            if (arraysEqual(feedbackTextScheme.feedbackTextSet,
+                            decodedDemoSettings.feedbackText)) {
+              this.selectedFeedbackTextScheme = this.feedbackTextSchemes[i];
+            }
+          }
+        }
+
+        if (this.customizeScoreThresholds) {
+          this.scoreThresholds = decodedDemoSettings.scoreThresholds;
+        } else {
+          this.sliderScoreThresholds = decodedDemoSettings.scoreThresholds;
+          this.sliderValue = (1 - this.sliderScoreThresholds[1]) * 100;
+        }
+
+        this.showPercentage = decodedDemoSettings.showPercentage;
+        this.showMoreInfoLink = decodedDemoSettings.showMoreInfoLink;
+        this.useGapi = decodedDemoSettings.useGapi;
+        this.apiKey = decodedDemoSettings.apiKey;
+        this.hideLoadingIconAfterLoad = decodedDemoSettings.hideLoadingIconAfterLoad;
+        this.hideLoadingIconForScoresBelowMinThreshold =
+          decodedDemoSettings.hideLoadingIconForScoresBelowMinThreshold;
+        this.userFeedbackPromptText = decodedDemoSettings.userFeedbackPromptText;
+        this.alwaysHideLoadingIcon = decodedDemoSettings.alwaysHideLoadingIcon;
+        this.selectedLoadingIconStyle = decodedDemoSettings.loadingIconStyle;
+      }
+    });
+    this.demoSettings = this.getDemoSettings();
+    this.uiSettings = this.getUISettings();
+    console.debug('Updating this.demoSettings (init)', this.demoSettings);
+  }
 
   /** Resets the custom color scheme UI to use the default color scheme. */
   resetToDefaultColors() {
@@ -195,13 +292,37 @@ export class CustomizableDemoForm {
     this.sliderScoreThresholds[2] = (1 + this.sliderScoreThresholds[1]) / 2;
   }
 
+  onSettingsChanged() {
+    let newDemoSettings = this.getDemoSettings();
+    let newUISettings = this.getUISettings();
+    if (!_.isEqual(this.demoSettings, newDemoSettings)
+        || !_.isEqual(this.uiSettings, newUISettings)) {
+      console.debug('Updating this.demoSettings', newDemoSettings);
+      console.debug('Updating this.uiSettings', newUISettings);
+      this.demoSettings = newDemoSettings;
+      this.uiSettings = newUISettings;
+
+      const encodedUISettings =
+        encodeURIComponent(JSON.stringify(this.uiSettings));
+      const encodedDemoSettings =
+        encodeURIComponent(JSON.stringify(this.demoSettings));
+
+      this.router.navigate(
+        ['/customize', encodedUISettings, encodedDemoSettings]);
+    } else {
+      console.debug(
+        'Calling onSettingsChanged(), but settings are unchanged', newDemoSettings);
+    }
+  }
+
   /**
-   * Use a function to get the demo settings rather than storing it in a member
-   * variable because Angular will only call change detection if the entire
-   * object has changed, and will not listen to sub-properties by default.
+   * Note: This function must be called to update this.demoSettings for Angular
+   * to notice the change, because Angular will only call change detection if
+   * the entire object has changed, and will not listen to sub-properties by
+   * default.
    */
-  getDemoSettings() {
-    return {
+  private getDemoSettings(): DemoSettings {
+    return JSON.parse(JSON.stringify({
       configuration: this.configuration,
       gradientColors: this.useCustomColorScheme ?
         this.customColorScheme : this.selectedColorScheme.colors,
@@ -217,8 +338,19 @@ export class CustomizableDemoForm {
       hideLoadingIconForScoresBelowMinThreshold:
         this.hideLoadingIconForScoresBelowMinThreshold,
       userFeedbackPromptText: this.userFeedbackPromptText,
-      alwaysHideLoadingIcon: false,
+      alwaysHideLoadingIcon: this.alwaysHideLoadingIcon,
       loadingIconStyle: this.selectedLoadingIconStyle
+    }));
+  }
+
+  private getUISettings(): UISettings {
+    return {
+      useCustomColorScheme: this.useCustomColorScheme,
+      useCustomFeedbackText: this.useCustomFeedbackText,
+      customizeScoreThresholds: this.customizeScoreThresholds,
+      showDemoSettings: this.showDemoSettings
     };
   }
 }
+
+
