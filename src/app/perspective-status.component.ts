@@ -269,6 +269,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       }
       // Run in a Promise resolve statement so we don't get an
       // ExpressionChangedAfterItHasBeenCheckedError.
+      // TODO(rachelrosen): We still get an
+      // ExpressionChangedAfterItHasBeenCheckedError when toggling "hide loading
+      // icon after load". Investigate why.
       Promise.resolve().then(() => { afterChangesTimeline.play(); });
     }
   }
