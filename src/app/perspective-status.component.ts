@@ -240,23 +240,23 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       let afterChangesTimeline = new TimelineMax({
         onStart: () => {
           this.ngZone.run(() => {
-            console.log('Started animations in ngAfterViewChecked');
+            console.debug('Started animations in ngAfterViewChecked');
           });
         },
         onComplete: () => {
           this.ngZone.run(() => {
-            console.log('Completing animations in ngAfterViewChecked');
+            console.debug('Completing animations in ngAfterViewChecked');
           });
         }
       });
       if (this.scoreThresholdsChanged) {
-        console.log('Setting scoreThresholdsChanged to false');
+        console.debug('Setting scoreThresholdsChanged to false');
         this.scoreThresholdsChanged = false;
         // Skip the updateWidgetStateAnimation if the loading style also changed,
         // since the loading style update takes care of the widget state change
         // animation.
         if (!this.loadingIconStyleChanged) {
-          console.log('Calling getUpdateWidgetStateAnimation() via scoreThresholds changed');
+          console.debug('Calling getUpdateWidgetStateAnimation() via scoreThresholds changed');
           this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
           afterChangesTimeline.add(this.updateDemoSettingsAnimation);
         }
@@ -264,7 +264,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
       if (this.loadingIconStyleChanged) {
         this.loadingIconStyleChanged = false;
-        console.log('Setting loadingIconStyleChanged to false');
+        console.debug('Setting loadingIconStyleChanged to false');
         afterChangesTimeline.add(this.getUpdateWidgetElementAnimation());
       }
       Promise.resolve().then(() => {afterChangesTimeline.play();});
@@ -282,7 +282,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       this.widgetElement = null;
     }
     let updateWidgetStateTimeline = new TimelineMax({});
-    console.log('Calling getUpdateWidgetStateAnimation() from getUpdateWidgetElementAnimation');
+    console.debug('Calling getUpdateWidgetStateAnimation() from getUpdateWidgetElementAnimation');
     updateWidgetStateTimeline.add(this.getUpdateWidgetStateAnimation());
     return updateWidgetStateTimeline;
   }
@@ -579,12 +579,13 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       console.debug('Update widget state for default style');
       let updateScoreCompletedTimeline = new TimelineMax({
         onComplete: () => {
-          console.log('In Angular zone?', NgZone.isInAngularZone());
+          console.debug('In Angular zone?', NgZone.isInAngularZone());
           this.ngZone.run(() => {
             console.log(this.scoreChangeAnimationCompleted);
-            // TODO: Debug ObjectUnsubscribedError that occurs here.
+            // TODO(rachelrosen): Debug ObjectUnsubscribedError that occurs here.
             // Seems to happen when animation finishes after changing from emoji
-            // to shape.
+            // to shape. This only happens when this component is a child of the
+            // conversationai-website component.
             this.scoreChangeAnimationCompleted.emit();
           });
         }
@@ -802,8 +803,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
                     console.debug('Clearing loadingTimeline');
                     this.isPlayingLoadingAnimation = false;
                     loadingTimeline.clear();
-                    // TODO: Debug ObjectUnsubscribedError that occurs here.
-                    // Happens when animation finishes.
+                    // TODO(rachelrosen): Debug the ObjectUnsubscribedError that
+                    // occurs here. This happens when animation finishes, but
+                    // only when this component is nested in the
+                    // conversationai-website.
                     this.scoreChangeAnimationCompleted.emit();
                     if (this.isLoading) {
                       // If we finish the end loading animation and we're supposed

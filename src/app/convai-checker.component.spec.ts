@@ -274,7 +274,6 @@ describe('Convai checker test', () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
   });
 
-  /*
   it('should recognize inputs from attributes', async(() => {
     let fixture = TestBed.createComponent(
       ConvaiCheckerWithAttributeInputTestComponent);
@@ -1456,7 +1455,6 @@ describe('Convai checker test', () => {
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
   }));
-  */
 
   it('Test circle square diamond change for score thresholds', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
