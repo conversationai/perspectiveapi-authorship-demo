@@ -267,7 +267,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         console.debug('Setting loadingIconStyleChanged to false');
         afterChangesTimeline.add(this.getUpdateWidgetElementAnimation());
       }
-      Promise.resolve().then(() => {afterChangesTimeline.play();});
+      // Run in a Promise resolve statement so we don't get an
+      // ExpressionChangedAfterItHasBeenCheckedError.
+      Promise.resolve().then(() => { afterChangesTimeline.play(); });
     }
   }
 
