@@ -249,30 +249,29 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
           });
         }
       });
-      if (this.scoreThresholdsChanged) {
-        console.debug('Setting scoreThresholdsChanged to false');
-        this.scoreThresholdsChanged = false;
-        // Skip the updateWidgetStateAnimation if the loading style also changed,
-        // since the loading style update takes care of the widget state change
-        // animation.
-        if (!this.loadingIconStyleChanged) {
-          console.debug('Calling getUpdateWidgetStateAnimation() via scoreThresholds changed');
-          this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
-          afterChangesTimeline.add(this.updateDemoSettingsAnimation);
-        }
-      }
-
-      if (this.loadingIconStyleChanged) {
-        this.loadingIconStyleChanged = false;
-        console.debug('Setting loadingIconStyleChanged to false');
-        afterChangesTimeline.add(this.getUpdateWidgetElementAnimation());
-      }
       // Run in a Promise resolve statement so we don't get an
       // ExpressionChangedAfterItHasBeenCheckedError.
-      // TODO(rachelrosen): We still get an
-      // ExpressionChangedAfterItHasBeenCheckedError when toggling "hide loading
-      // icon after load". Investigate why.
-      Promise.resolve().then(() => { afterChangesTimeline.play(); });
+      Promise.resolve().then(() => {
+        if (this.scoreThresholdsChanged) {
+          console.debug('Setting scoreThresholdsChanged to false');
+          this.scoreThresholdsChanged = false;
+          // Skip the updateWidgetStateAnimation if the loading style also changed,
+          // since the loading style update takes care of the widget state change
+          // animation.
+          if (!this.loadingIconStyleChanged) {
+            console.debug('Calling getUpdateWidgetStateAnimation() via scoreThresholds changed');
+            this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
+            afterChangesTimeline.add(this.updateDemoSettingsAnimation);
+          }
+        }
+
+        if (this.loadingIconStyleChanged) {
+          this.loadingIconStyleChanged = false;
+          console.debug('Setting loadingIconStyleChanged to false');
+          afterChangesTimeline.add(this.getUpdateWidgetElementAnimation());
+        }
+        afterChangesTimeline.play();
+      });
     }
   }
 
