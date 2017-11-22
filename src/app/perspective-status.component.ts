@@ -236,34 +236,39 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
    * callback, to ensure that the ViewChild has been updated.
    */
   ngAfterViewChecked() {
-    let afterChangesTimeline = new TimelineMax({
-      onStart: () => {
-        this.ngZone.run(() => {
-          console.debug('Started animations in ngAfterViewChecked');
-        });
-      },
-      onComplete: () => {
-        this.ngZone.run(() => {
-          console.debug('Completing animations in ngAfterViewChecked');
-        });
+    if (this.scoreThresholdsChanged || this.loadingIconStyleChanged) {
+      let afterChangesTimeline = new TimelineMax({
+        onStart: () => {
+          this.ngZone.run(() => {
+            console.log('Started animations in ngAfterViewChecked');
+          });
+        },
+        onComplete: () => {
+          this.ngZone.run(() => {
+            console.log('Completing animations in ngAfterViewChecked');
+          });
+        }
+      });
+      if (this.scoreThresholdsChanged) {
+        console.log('Setting scoreThresholdsChanged to false');
+        this.scoreThresholdsChanged = false;
+        // Skip the updateWidgetStateAnimation if the loading style also changed,
+        // since the loading style update takes care of the widget state change
+        // animation.
+        if (!this.loadingIconStyleChanged) {
+          console.log('Calling getUpdateWidgetStateAnimation() via scoreThresholds changed');
+          this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
+          afterChangesTimeline.add(this.updateDemoSettingsAnimation);
+        }
       }
-    });
-    if (this.scoreThresholdsChanged) {
-      this.scoreThresholdsChanged = false;
-      // Skip the updateWidgetStateAnimation if the loading style also changed,
-      // since the loading style update takes care of the widget state change
-      // animation.
-      if (!this.loadingIconStyleChanged) {
-        this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
-        afterChangesTimeline.add(this.updateDemoSettingsAnimation);
-      }
-    }
 
-    if (this.loadingIconStyleChanged) {
-      this.loadingIconStyleChanged = false;
-      afterChangesTimeline.add(this.getUpdateWidgetElementAnimation());
+      if (this.loadingIconStyleChanged) {
+        this.loadingIconStyleChanged = false;
+        console.log('Setting loadingIconStyleChanged to false');
+        afterChangesTimeline.add(this.getUpdateWidgetElementAnimation());
+      }
+      Promise.resolve().then(() => {afterChangesTimeline.play();});
     }
-    afterChangesTimeline.play();
   }
 
   private getUpdateWidgetElementAnimation(): TimelineMax {
@@ -277,6 +282,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       this.widgetElement = null;
     }
     let updateWidgetStateTimeline = new TimelineMax({});
+    console.log('Calling getUpdateWidgetStateAnimation() from getUpdateWidgetElementAnimation');
     updateWidgetStateTimeline.add(this.getUpdateWidgetStateAnimation());
     return updateWidgetStateTimeline;
   }
@@ -573,7 +579,12 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       console.debug('Update widget state for default style');
       let updateScoreCompletedTimeline = new TimelineMax({
         onComplete: () => {
+          console.log('In Angular zone?', NgZone.isInAngularZone());
           this.ngZone.run(() => {
+            console.log(this.scoreChangeAnimationCompleted);
+            // TODO: Debug ObjectUnsubscribedError that occurs here.
+            // Seems to happen when animation finishes after changing from emoji
+            // to shape.
             this.scoreChangeAnimationCompleted.emit();
           });
         }
@@ -791,6 +802,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
                     console.debug('Clearing loadingTimeline');
                     this.isPlayingLoadingAnimation = false;
                     loadingTimeline.clear();
+                    // TODO: Debug ObjectUnsubscribedError that occurs here.
+                    // Happens when animation finishes.
                     this.scoreChangeAnimationCompleted.emit();
                     if (this.isLoading) {
                       // If we finish the end loading animation and we're supposed
