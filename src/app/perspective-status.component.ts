@@ -259,7 +259,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
           // since the loading style update takes care of the widget state change
           // animation.
           if (!this.loadingIconStyleChanged) {
-            console.debug('Calling getUpdateWidgetStateAnimation() via scoreThresholds changed');
             this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
             afterChangesTimeline.add(this.updateDemoSettingsAnimation);
           }
@@ -276,7 +275,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getUpdateWidgetElementAnimation(): TimelineMax {
-    console.debug('Calling getUpdateWidgetElementAnimation');
     if (this.circleSquareDiamondWidget != null) {
       this.widgetElement = this.circleSquareDiamondWidget.nativeElement;
     } else if (this.emojiWidget != null) {
@@ -286,7 +284,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       this.widgetElement = null;
     }
     let updateWidgetStateTimeline = new TimelineMax({});
-    console.debug('Calling getUpdateWidgetStateAnimation() from getUpdateWidgetElementAnimation');
     updateWidgetStateTimeline.add(this.getUpdateWidgetStateAnimation());
     return updateWidgetStateTimeline;
   }
@@ -583,7 +580,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       console.debug('Update widget state for default style');
       let updateScoreCompletedTimeline = new TimelineMax({
         onComplete: () => {
-          console.debug('In Angular zone?', NgZone.isInAngularZone());
           this.ngZone.run(() => {
             console.log(this.scoreChangeAnimationCompleted);
             // TODO(rachelrosen): Debug ObjectUnsubscribedError that occurs here.
@@ -606,7 +602,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     } else {
       console.error('Calling updateWidgetState for unknown loadingIconStyle: '
                     + this.loadingIconStyle);
-      return null;
+      return new TimelineMax({});
     }
   }
 
