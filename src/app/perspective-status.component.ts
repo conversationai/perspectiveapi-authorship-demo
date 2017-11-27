@@ -589,7 +589,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
             // TODO(rachelrosen): Debug ObjectUnsubscribedError that occurs here.
             // Seems to happen when animation finishes after changing from emoji
             // to shape. This only happens when this component is a child of the
-            // conversationai-website component.
+            // conversationai-website. This error does not reproduce reliably
+            // (it was there one day and gone a few days later with no code
+            // changes) and therefore requires more investigation.
             this.scoreChangeAnimationCompleted.emit();
           });
         }
@@ -808,9 +810,12 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
                     this.isPlayingLoadingAnimation = false;
                     loadingTimeline.clear();
                     // TODO(rachelrosen): Debug the ObjectUnsubscribedError that
-                    // occurs here. This happens when animation finishes, but
-                    // only when this component is nested in the
-                    // conversationai-website.
+                    // sometimes occurs here. This happens when animation finishes,
+                    // but only when this component is nested in the
+                    // conversationai-website. This error does not reproduce
+                    // reliably (was there one day and gone a few days later
+                    // with no code changes) and therefore requires more
+                    // investigation.
                     this.scoreChangeAnimationCompleted.emit();
                     if (this.isLoading) {
                       // If we finish the end loading animation and we're supposed
