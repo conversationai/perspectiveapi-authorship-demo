@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import {
+  AfterViewInit,
   Component,
   ElementRef,
   EventEmitter,
@@ -129,7 +130,7 @@ export const DEFAULT_DEMO_SETTINGS = {
     '(document:input)': '_handleInputEvent($event)',
   },
 })
-export class ConvaiChecker implements OnInit, OnChanges {
+export class ConvaiChecker implements AfterViewInit, OnInit, OnChanges {
   @ViewChild(PerspectiveStatus) statusWidget: PerspectiveStatus;
   @Input() inputId: string;
   @Input() serverUrl: string;
@@ -189,7 +190,11 @@ export class ConvaiChecker implements OnInit, OnChanges {
     if (this.sessionId === null) {
       this.sessionId = Math.round(Date.now() * Math.random()).toString();
       window.localStorage.setItem(LOCAL_STORAGE_SESSION_ID_KEY, this.sessionId);
-    }
+      }
+  }
+
+  onSubmitRecaptcha(token: string) {
+    console.log('Testing recaptcha submit! I see a token: ', token);
   }
 
   ngOnChanges(changes: SimpleChanges) : void {
@@ -201,6 +206,11 @@ export class ConvaiChecker implements OnInit, OnChanges {
         this.analyzeApiService.initGapiClient(this.apiKey);
       }
     }
+  }
+
+  ngAfterViewInit() {
+    (grecaptcha as any).render('test_recaptcha', {callback: this.onSubmitRecaptcha}, true);
+    grecaptcha.execute();
   }
 
   // Public interface for manually checking text and updating the UI.

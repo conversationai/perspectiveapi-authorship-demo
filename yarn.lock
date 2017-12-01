@@ -388,6 +388,10 @@
   version "0.0.31"
   resolved "https://registry.yarnpkg.com/@types/gapi/-/gapi-0.0.31.tgz#c4e02f803827bba5c0ead3b70ce6e4a5859ef65d"
 
+"@types/grecaptcha@^2.0.34":
+  version "2.0.34"
+  resolved "https://registry.yarnpkg.com/@types/grecaptcha/-/grecaptcha-2.0.34.tgz#6f6a3585f0f3b0eac2f46257da9ff7805af1e274"
+
 "@types/greensock@^1.15.32":
   version "1.15.32"
   resolved "https://registry.yarnpkg.com/@types/greensock/-/greensock-1.15.32.tgz#083daac25a9e6f332d5678b1462d6f97a82251f7"
