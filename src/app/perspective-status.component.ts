@@ -36,6 +36,12 @@ export enum Shape {
   DIAMOND,
 };
 
+export enum Emoji {
+  SMILE,
+  NEUTRAL,
+  SAD,
+};
+
 enum Configuration {
   DEMO_SITE,
   EXTERNAL,
@@ -252,23 +258,17 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // Run in a Promise resolve statement so we don't get an
       // ExpressionChangedAfterItHasBeenCheckedError.
       Promise.resolve().then(() => {
-        if (this.scoreThresholdsChanged) {
-          console.debug('Setting scoreThresholdsChanged to false');
-          this.scoreThresholdsChanged = false;
-          // Skip the updateWidgetStateAnimation if the loading style also changed,
-          // since the loading style update takes care of the widget state change
-          // animation.
-          if (!this.loadingIconStyleChanged) {
-            this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
-            afterChangesTimeline.add(this.updateDemoSettingsAnimation);
-          }
-        }
-
         if (this.loadingIconStyleChanged) {
           this.loadingIconStyleChanged = false;
           console.debug('Setting loadingIconStyleChanged to false');
           afterChangesTimeline.add(this.getUpdateWidgetElementAnimation());
+        } else if (this.scoreThresholdsChanged) {
+          console.debug('Setting scoreThresholdsChanged to false');
+          this.scoreThresholdsChanged = false;
+          this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
+          afterChangesTimeline.add(this.updateDemoSettingsAnimation);
         }
+
         afterChangesTimeline.play();
       });
     }

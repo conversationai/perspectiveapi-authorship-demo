@@ -35,7 +35,7 @@ import {
   XHRBackend
 } from '@angular/http';
 import { By } from '@angular/platform-browser';
-import { PerspectiveStatus, CommentFeedback, LoadingIconStyle, Shape } from './perspective-status.component';
+import { PerspectiveStatus, CommentFeedback, Emoji, LoadingIconStyle, Shape } from './perspective-status.component';
 import { ConvaiChecker, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
@@ -154,8 +154,6 @@ class ConvaiCheckerCustomDemoSettingsTestComponent implements OnInit {
   }
 }
 
-
-
 let getIsElementWithIdVisible = function(id: string): boolean {
   let element = document.getElementById(id);
   return element != null && element.offsetWidth > 0 && element.offsetHeight > 0
@@ -231,6 +229,53 @@ function configureFixtureForExternalFeedbackStyleConfiguration(
   let demoSettings = getCopyOfDefaultDemoSettings();
   demoSettings.configuration = 'external';
   fixture.componentInstance.setDemoSettings(demoSettings);
+}
+
+function verifyLoadingWidgetHasShape(checker: ConvaiChecker, expectedShape: Shape) {
+  let shape = checker.statusWidget.currentShape;
+  expect(shape).toEqual(expectedShape);
+}
+
+function verifyLoadingWidgetHasEmoji(checker: ConvaiChecker, expectedEmoji: Emoji) {
+  let smileEmojiVisible = getIsElementWithIdVisible('smileEmoji');
+  let neutralEmojiVisible = getIsElementWithIdVisible('neutralEmoji');
+  let sadEmojiVisible = getIsElementWithIdVisible('sadEmoji');
+  expect(smileEmojiVisible).toBe(expectedEmoji === Emoji.SMILE);
+  expect(neutralEmojiVisible).toBe(expectedEmoji === Emoji.NEUTRAL);
+  expect(sadEmojiVisible).toBe(expectedEmoji === Emoji.SAD);
+}
+
+function verifyCircleSquareDiamondWidgetVisible() {
+  // Checks visibility of the loading icons. The circle/square/diamond
+  // loading icon should be visible, and the emoji one should not.
+  let circleSquareDiamondWidgetVisible =
+   getIsElementWithIdVisible('circleSquareDiamondWidget');
+  let emojiWidgetVisible =
+   getIsElementWithIdVisible('emojiStatusWidget');
+  expect(circleSquareDiamondWidgetVisible).toBe(true);
+  expect(emojiWidgetVisible).toBe(false);
+}
+
+function verifyEmojiWidgetVisible() {
+  // Checks visibility of the loading icons. The emoji loading icon should be
+  // visible, and the circle/square/diamond one should not.
+  let circleSquareDiamondWidgetVisible =
+   getIsElementWithIdVisible('circleSquareDiamondWidget');
+  let emojiWidgetVisible =
+   getIsElementWithIdVisible('emojiStatusWidget');
+  expect(circleSquareDiamondWidgetVisible).toBe(false);
+  expect(emojiWidgetVisible).toBe(true);
+}
+
+function getElementOpactiy(id: string): number {
+  let element = document.getElementById(id);
+  return parseFloat(window.getComputedStyle(element).getPropertyValue("opacity"));
+}
+
+function verifyEmojiIconsInDomWithZeroOpacity() {
+  expect(getElementOpactiy('smileEmoji')).toEqual(0);
+  expect(getElementOpactiy('neutralEmoji')).toEqual(0);
+  expect(getElementOpactiy('sadEmoji')).toEqual(0);
 }
 
 describe('Convai checker test', () => {
@@ -1467,6 +1512,9 @@ describe('Convai checker test', () => {
 
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
+
+    // Set up the mock responses for the series of three requests that will be
+    // made in the test.
     let queryTexts = [
       'Your mother was a hamster',
       'Your father smelled of elderberries',
@@ -1484,17 +1532,8 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        fixture.detectChanges();
-       let circleSquareDiamondWidgetVisible =
-         getIsElementWithIdVisible('circleSquareDiamondWidget');
-       let emojiWidgetVisible =
-         getIsElementWithIdVisible('emojiStatusWidget');
-       if (demoSettings.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
-         expect(circleSquareDiamondWidgetVisible).toBe(true);
-         expect(emojiWidgetVisible).toBe(false);
-       } else {
-         expect(circleSquareDiamondWidgetVisible).toBe(false);
-         expect(emojiWidgetVisible).toBe(true);
-       }
+       // Check the UI state before returning the repsonse.
+       verifyCircleSquareDiamondWidgetVisible();
        expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
@@ -1507,28 +1546,23 @@ describe('Convai checker test', () => {
        // Wait for async code to complete.
        fixture.whenStable().then(() => {
          fixture.detectChanges();
+         // Checks the UI state after the response has been received.
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
          expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
-         // Checks visibility of the loading icons. The circle/square/diamond
-         // loading icon should be visible, and the emoji one should not.
-         let circleSquareDiamondWidgetVisible =
-           getIsElementWithIdVisible('circleSquareDiamondWidget');
-         let emojiWidgetVisible =
-           getIsElementWithIdVisible('emojiStatusWidget');
-         expect(circleSquareDiamondWidgetVisible).toBe(true);
-         expect(emojiWidgetVisible).toBe(false);
-
-         let shape = checker.statusWidget.currentShape;
+         // For each of the mock responses, the thresholds should indicate a
+         // different loading icon shape.
+         let expectedShape: Shape;
          if (callCount === 0) {
-           expect(shape).toEqual(Shape.DIAMOND);
+           expectedShape = Shape.DIAMOND;
          } else if (callCount === 1) {
-           expect(shape).toEqual(Shape.SQUARE);
+           expectedShape = Shape.SQUARE;
          } else {
-           expect(shape).toEqual(Shape.CIRCLE);
+           expectedShape = Shape.CIRCLE;
          }
+         verifyLoadingWidgetHasShape(checker, expectedShape);
 
          if (callCount < 2) {
            callCount++;
@@ -1538,8 +1572,7 @@ describe('Convai checker test', () => {
        });
     });
 
-    expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(true);
-    expect(getIsElementWithIdVisible('emojiStatusWidget')).toBe(false);
+    verifyCircleSquareDiamondWidgetVisible();
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
@@ -1559,6 +1592,9 @@ describe('Convai checker test', () => {
 
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
+
+    // Set up the mock responses for the series of three requests that will be
+    // made in the test.
     let queryTexts = [
       'Your mother was a hamster',
       'Your father smelled of elderberries',
@@ -1576,19 +1612,16 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        fixture.detectChanges();
-       let circleSquareDiamondWidgetVisible =
-         getIsElementWithIdVisible('circleSquareDiamondWidget');
-       let emojiWidgetVisible =
-         getIsElementWithIdVisible('emojiStatusWidget');
-       let smileEmojiVisible = getIsElementWithIdVisible('smileEmoji');
-       let neutralEmojiVisible = getIsElementWithIdVisible('neutralEmoji');
-       let sadEmojiVisible = getIsElementWithIdVisible('sadEmoji');
-       // Emoji widget should be visible, but not individual emoji icons.
-       expect(circleSquareDiamondWidgetVisible).toBe(false);
-       expect(emojiWidgetVisible).toBe(true);
-       //expect(smileEmojiVisible).toBe(false);
-       //expect(neutralEmojiVisible).toBe(false);
-       //expect(sadEmojiVisible).toBe(false);
+       // Check the UI state before returning the repsonse.
+
+       verifyEmojiWidgetVisible();
+
+       // TODO(rachelrosen): Figure out how to "fast-forward" the state of the
+       // animation in the test environment without messing up the other test
+       // state, and then uncomment the code below to check the opacity of the
+       // emoji icons here.
+       // verifyEmojiIconsInDomWithZeroOpacity();
+
        expect(checker.statusWidget.isLoading).toBe(true);
 
        connection.mockRespond(
@@ -1602,35 +1635,25 @@ describe('Convai checker test', () => {
        // Wait for async code to complete.
        fixture.whenStable().then(() => {
          fixture.detectChanges();
+         // Checks the UI state after the response has been received.
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
          expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
-         // Checks the visibility of the emoji icon.
-         let circleSquareDiamondWidgetVisible =
-           getIsElementWithIdVisible('circleSquareDiamondWidget');
-         let emojiWidgetVisible =
-           getIsElementWithIdVisible('emojiStatusWidget');
-         expect(circleSquareDiamondWidgetVisible).toBe(false);
-         expect(emojiWidgetVisible).toBe(true);
+         verifyEmojiWidgetVisible();
 
-         let smileEmojiVisible = getIsElementWithIdVisible('smileEmoji');
-         let neutralEmojiVisible = getIsElementWithIdVisible('neutralEmoji');
-         let sadEmojiVisible = getIsElementWithIdVisible('sadEmoji');
+         // For each of the mock responses, the thresholds should indicate a
+         // different emoji.
+         let expectedEmoji: Emoji;
          if (callCount === 0) {
-           expect(smileEmojiVisible).toBe(false);
-           expect(neutralEmojiVisible).toBe(false);
-           expect(sadEmojiVisible).toBe(true);
+           expectedEmoji = Emoji.SAD;
          } else if (callCount === 1) {
-           expect(smileEmojiVisible).toBe(false);
-           expect(neutralEmojiVisible).toBe(true);
-           expect(sadEmojiVisible).toBe(false);
+           expectedEmoji = Emoji.NEUTRAL;
          } else {
-           expect(smileEmojiVisible).toBe(true);
-           expect(neutralEmojiVisible).toBe(false);
-           expect(sadEmojiVisible).toBe(false);
+           expectedEmoji = Emoji.SMILE;
          }
+         verifyLoadingWidgetHasEmoji(checker, expectedEmoji);
 
          if (callCount < 2) {
            callCount++;
@@ -1640,8 +1663,7 @@ describe('Convai checker test', () => {
        });
     });
 
-    expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
-    expect(getIsElementWithIdVisible('emojiStatusWidget')).toBe(true);
+    verifyEmojiWidgetVisible();
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
@@ -1679,12 +1701,8 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        fixture.detectChanges();
-       let circleSquareDiamondWidgetVisible =
-         getIsElementWithIdVisible('circleSquareDiamondWidget');
-       let emojiWidgetVisible =
-         getIsElementWithIdVisible('emojiStatusWidget');
-       expect(circleSquareDiamondWidgetVisible).toBe(true);
-       expect(emojiWidgetVisible).toBe(false);
+       // Check the UI state before returning the repsonse.
+       verifyCircleSquareDiamondWidgetVisible();
        expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
@@ -1697,26 +1715,25 @@ describe('Convai checker test', () => {
        // Wait for async code to complete.
        fixture.whenStable().then(() => {
          fixture.detectChanges();
+         // Checks the UI state after the response has been received.
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
          expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
-         let circleSquareDiamondWidgetVisible =
-           getIsElementWithIdVisible('circleSquareDiamondWidget');
-         let emojiWidgetVisible =
-           getIsElementWithIdVisible('emojiStatusWidget');
-         expect(circleSquareDiamondWidgetVisible).toBe(true);
-         expect(emojiWidgetVisible).toBe(false);
+         verifyCircleSquareDiamondWidgetVisible();
 
-         let shape = checker.statusWidget.currentShape;
+         // For each of the mock responses, the thresholds should indicate a
+         // different loading icon shape.
+         let expectedShape: Shape;
          if (callCount === 0) {
-           expect(shape).toEqual(Shape.DIAMOND);
+           expectedShape = Shape.DIAMOND;
          } else if (callCount === 1) {
-           expect(shape).toEqual(Shape.SQUARE);
+           expectedShape = Shape.SQUARE;
          } else {
-           expect(shape).toEqual(Shape.CIRCLE);
+           expectedShape = Shape.CIRCLE;
          }
+         verifyLoadingWidgetHasShape(checker, expectedShape);
 
          // Change to the emoji style, and verify the loading icon visibility
          // change.
@@ -1725,30 +1742,19 @@ describe('Convai checker test', () => {
          fixture.whenStable().then(() => {
            fixture.detectChanges();
 
-           circleSquareDiamondWidgetVisible =
-             getIsElementWithIdVisible('circleSquareDiamondWidget');
-           emojiWidgetVisible =
-             getIsElementWithIdVisible('emojiStatusWidget');
+           verifyEmojiWidgetVisible();
 
-           expect(circleSquareDiamondWidgetVisible).toBe(false);
-           expect(emojiWidgetVisible).toBe(true);
-
-           let smileEmojiVisible = getIsElementWithIdVisible('smileEmoji');
-           let neutralEmojiVisible = getIsElementWithIdVisible('neutralEmoji');
-           let sadEmojiVisible = getIsElementWithIdVisible('sadEmoji');
+           // For each of the mock responses, the thresholds should indicate a
+           // different emoji.
+           let expectedEmoji: Emoji;
            if (callCount === 0) {
-             expect(smileEmojiVisible).toBe(false);
-             expect(neutralEmojiVisible).toBe(false);
-             expect(sadEmojiVisible).toBe(true);
+             expectedEmoji = Emoji.SAD;
            } else if (callCount === 1) {
-             expect(smileEmojiVisible).toBe(false);
-             expect(neutralEmojiVisible).toBe(true);
-             expect(sadEmojiVisible).toBe(false);
+             expectedEmoji = Emoji.NEUTRAL;
            } else {
-             expect(smileEmojiVisible).toBe(true);
-             expect(neutralEmojiVisible).toBe(false);
-             expect(sadEmojiVisible).toBe(false);
+             expectedEmoji = Emoji.SMILE;
            }
+           verifyLoadingWidgetHasEmoji(checker, expectedEmoji);
 
            if (callCount < 2) {
              // Set demo settings back to circle/square/diamond.
@@ -1766,8 +1772,7 @@ describe('Convai checker test', () => {
        });
     });
 
-    expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(true);
-    expect(getIsElementWithIdVisible('emojiStatusWidget')).toBe(false);
+    verifyCircleSquareDiamondWidgetVisible();
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
@@ -1805,12 +1810,8 @@ describe('Convai checker test', () => {
     mockBackend.connections
      .subscribe((connection: MockConnection) => {
        fixture.detectChanges();
-       let circleSquareDiamondWidgetVisible =
-         getIsElementWithIdVisible('circleSquareDiamondWidget');
-       let emojiWidgetVisible =
-         getIsElementWithIdVisible('emojiStatusWidget');
-       expect(circleSquareDiamondWidgetVisible).toBe(false);
-       expect(emojiWidgetVisible).toBe(true);
+       // Check the UI state before returning the repsonse.
+       verifyEmojiWidgetVisible();
        expect(checker.statusWidget.isLoading).toBe(true);
        connection.mockRespond(
          new Response(
@@ -1823,34 +1824,25 @@ describe('Convai checker test', () => {
        // Wait for async code to complete.
        fixture.whenStable().then(() => {
          fixture.detectChanges();
+         // Checks the UI state after the response has been received.
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);
          expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
-         let circleSquareDiamondWidgetVisible =
-           getIsElementWithIdVisible('circleSquareDiamondWidget');
-         let emojiWidgetVisible =
-           getIsElementWithIdVisible('emojiStatusWidget');
-         expect(circleSquareDiamondWidgetVisible).toBe(false);
-         expect(emojiWidgetVisible).toBe(true);
+         verifyEmojiWidgetVisible();
 
-         let smileEmojiVisible = getIsElementWithIdVisible('smileEmoji');
-         let neutralEmojiVisible = getIsElementWithIdVisible('neutralEmoji');
-         let sadEmojiVisible = getIsElementWithIdVisible('sadEmoji');
+         // For each of the mock responses, the thresholds should indicate a
+         // different emoji.
+         let expectedEmoji: Emoji;
          if (callCount === 0) {
-           expect(smileEmojiVisible).toBe(false);
-           expect(neutralEmojiVisible).toBe(false);
-           expect(sadEmojiVisible).toBe(true);
+           expectedEmoji = Emoji.SAD;
          } else if (callCount === 1) {
-           expect(smileEmojiVisible).toBe(false);
-           expect(neutralEmojiVisible).toBe(true);
-           expect(sadEmojiVisible).toBe(false);
+           expectedEmoji = Emoji.NEUTRAL;
          } else {
-           expect(smileEmojiVisible).toBe(true);
-           expect(neutralEmojiVisible).toBe(false);
-           expect(sadEmojiVisible).toBe(false);
+           expectedEmoji = Emoji.SMILE;
          }
+         verifyLoadingWidgetHasEmoji(checker, expectedEmoji);
 
          // Change to the shape style, and verify the loading icon visibility
          // change.
@@ -1860,22 +1852,19 @@ describe('Convai checker test', () => {
          fixture.whenStable().then(() => {
            fixture.detectChanges();
 
-           circleSquareDiamondWidgetVisible =
-             getIsElementWithIdVisible('circleSquareDiamondWidget');
-           emojiWidgetVisible =
-             getIsElementWithIdVisible('emojiStatusWidget');
+           verifyCircleSquareDiamondWidgetVisible();
 
-           expect(circleSquareDiamondWidgetVisible).toBe(true);
-           expect(emojiWidgetVisible).toBe(false);
-
-           let shape = checker.statusWidget.currentShape;
+           // For each of the mock responses, the thresholds should indicate a
+           // different loading icon shape.
+           let expectedShape: Shape;
            if (callCount === 0) {
-             expect(shape).toEqual(Shape.DIAMOND);
+             expectedShape = Shape.DIAMOND;
            } else if (callCount === 1) {
-             expect(shape).toEqual(Shape.SQUARE);
+             expectedShape = Shape.SQUARE;
            } else {
-             expect(shape).toEqual(Shape.CIRCLE);
+             expectedShape = Shape.CIRCLE;
            }
+           verifyLoadingWidgetHasShape(checker, expectedShape);
 
            if (callCount < 2) {
              // Set loading icon back to EMOJI style.
@@ -1893,8 +1882,7 @@ describe('Convai checker test', () => {
        });
     });
 
-    expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
-    expect(getIsElementWithIdVisible('emojiStatusWidget')).toBe(true);
+    verifyEmojiWidgetVisible();
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
