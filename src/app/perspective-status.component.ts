@@ -165,6 +165,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private loadingIconStyleChanged = false;
   private scoreThresholdsChanged = false;
 
+  private hideLoadingIconAfterLoadChanged = false;
+  private alwaysHideLoadingIconChanged = false;
+
+  private pendingPostLoadingStateChangeAnimations: TimelineMax;
+
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
   constructor(private ngZone: NgZone, private elementRef: ElementRef) {
@@ -187,7 +192,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   ngAfterViewInit() {
     this.widgetReady = Promise.resolve().then(() => {
-      this.updateWidgetElement();
+      this.getUpdateWidgetElementAnimation().play();
     });
   }
 
@@ -229,6 +234,14 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       }
       this.scoreThresholdsChanged = true;
     }
+
+    if (changes['hideLoadingIconAfterLoad']) {
+      this.hideLoadingIconAfterLoadChanged = true;
+    }
+
+    if (changes['alwaysHideLoadingIcon']) {
+      this.alwaysHideLoadingIconChanged = true;
+    }
   }
 
   /**
@@ -236,6 +249,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
    * callback, to ensure that the ViewChild has been updated.
    */
   ngAfterViewChecked() {
+/*
     // TODO(rachelrosen): Queue up all animations from ngOnChanges and put them
     // in a proper timeline (instead of just chaining promises), so state
     // doesn't accidentally get messed up. This is not a production concern
@@ -248,22 +262,98 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // since the loading style update takes care of the widget state change
       // animation.
       if (!this.loadingIconStyleChanged) {
-        updatesToDo.then(() => {
+        updatesToDo = updatesToDo.then(() => {
           this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
           this.updateDemoSettingsAnimation.play();
         });
       }
     }
 
+    if (this.hideLoadingIconAfterLoadChanged) {
+      console.log('Triggering animation after detecting change in this.hideLoadingIconAfterLoad');
+      console.log('this.hideLoadingIconAfterLoad', this.hideLoadingIconAfterLoad);
+      this.hideLoadingIconAfterLoadChanged = false;
+      if (this.isLoading) {
+        // Do nothing, we don't want to interrupt existing loading animations.
+        this.pendingPostLoadingStateChangeAnimations = new TimelineMax({});
+        this.pendingPostLoadingStateChangeAnimations.add(this.getUpdateWidgetStateAnimation);
+      } else {
+        updatesToDo = updatesToDo.then(() => {
+          this.getUpdateWidgetStateAnimation().play();
+        });
+      }
+    }
+
     if (this.loadingIconStyleChanged) {
+      console.log('Triggering animation for loadingIconStyleChanged');
+      console.log('this.hideLoadingIconAfterLoad', this.hideLoadingIconAfterLoad);
       this.loadingIconStyleChanged = false;
-      updatesToDo.then(() => {
+      updatesToDo = updatesToDo.then(() => {
+        this.getUpdateWidgetStateAnimation().play();
         this.updateWidgetElement();
+      });
+    }
+
+
+    if (this.alwaysHideLoadingIconChanged) {
+      this.alwaysHideLoadingIconChanged = false;
+    }
+*/
+    ///////
+    if (this.scoreThresholdsChanged || this.loadingIconStyleChanged
+        || this.hideLoadingIconAfterLoadChanged) {
+      let afterChangesTimeline = new TimelineMax({
+        onStart: () => {
+          this.ngZone.run(() => {
+            console.debug('Started animations in ngAfterViewChecked');
+          });
+        },
+        onComplete: () => {
+          this.ngZone.run(() => {
+            console.debug('Completing animations in ngAfterViewChecked');
+          });
+        }
+      });
+      // Run in a Promise resolve statement so we don't get an
+      // ExpressionChangedAfterItHasBeenCheckedError.
+      Promise.resolve().then(() => {
+        if (this.hideLoadingIconAfterLoadChanged) {
+          console.log('Triggering animation after detecting change in this.hideLoadingIconAfterLoad');
+          console.log('this.hideLoadingIconAfterLoad', this.hideLoadingIconAfterLoad);
+          this.hideLoadingIconAfterLoadChanged = false;
+          // Call getUpdateWidgetStateAnimation to update the visibility and x
+          // position of all elements.
+          if (this.isLoading) {
+            // Do nothing, we don't want to interrupt existing loading animations.
+            this.pendingPostLoadingStateChangeAnimations = new TimelineMax({});
+            this.pendingPostLoadingStateChangeAnimations.add(this.getUpdateWidgetStateAnimation);
+          } else {
+            afterChangesTimeline.add(this.getUpdateWidgetStateAnimation());
+          }
+        }
+        if (this.loadingIconStyleChanged) {
+          this.loadingIconStyleChanged = false;
+          console.debug('Setting loadingIconStyleChanged to false');
+          let loadingIconStyleChangedTimeline = new TimelineMax({});
+          // Update the widget state first, to make sure we are in the correct
+          // visibility and x positions. TODO: Consider that the ViewChildren
+          // have changed already? Maybe do this in ngOnChanges?
+          loadingIconStyleChangedTimeline.add(this.getUpdateWidgetStateAnimation());
+          loadingIconStyleChangedTimeline.add(this.getUpdateWidgetElementAnimation());
+          afterChangesTimeline.add(loadingIconStyleChangedTimeline);
+        } else if (this.scoreThresholdsChanged) {
+          console.debug('Setting scoreThresholdsChanged to false');
+          this.scoreThresholdsChanged = false;
+          this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
+          afterChangesTimeline.add(this.updateDemoSettingsAnimation);
+        }
+
+        afterChangesTimeline.play();
       });
     }
   }
 
-  private updateWidgetElement(): void {
+  private getUpdateWidgetElementAnimation(): TimelineMax {
     if (this.circleSquareDiamondWidget != null) {
       this.widgetElement = this.circleSquareDiamondWidget.nativeElement;
     } else if (this.emojiWidget != null) {
@@ -274,7 +364,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
     let updateWidgetStateTimeline = new TimelineMax({});
     updateWidgetStateTimeline.add(this.getUpdateWidgetStateAnimation());
-    updateWidgetStateTimeline.play();
+    return updateWidgetStateTimeline;
   }
 
   private getShouldHideStatusWidget(loadStart: boolean): boolean {
