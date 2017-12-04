@@ -1512,6 +1512,8 @@ describe('Convai checker test', () => {
 
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
 
     // Set up the mock responses for the series of three requests that will be
     // made in the test.
@@ -1526,6 +1528,13 @@ describe('Convai checker test', () => {
       getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
       getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
       getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different loading icon shape.
+    let expectedShapes = [
+      Shape.DIAMOND,
+      Shape.SQUARE,
+      Shape.CIRCLE
     ];
 
     let mockBackend = TestBed.get(MockBackend);
@@ -1552,17 +1561,8 @@ describe('Convai checker test', () => {
          expect(checker.statusWidget.isLoading).toBe(false);
          expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
-         // For each of the mock responses, the thresholds should indicate a
-         // different loading icon shape.
-         let expectedShape: Shape;
-         if (callCount === 0) {
-           expectedShape = Shape.DIAMOND;
-         } else if (callCount === 1) {
-           expectedShape = Shape.SQUARE;
-         } else {
-           expectedShape = Shape.CIRCLE;
-         }
-         verifyLoadingWidgetHasShape(checker, expectedShape);
+         verifyCircleSquareDiamondWidgetVisible();
+         verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
 
          if (callCount < 2) {
            callCount++;
@@ -1573,9 +1573,6 @@ describe('Convai checker test', () => {
     });
 
     verifyCircleSquareDiamondWidgetVisible();
-
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
 
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
@@ -1592,6 +1589,8 @@ describe('Convai checker test', () => {
 
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
 
     // Set up the mock responses for the series of three requests that will be
     // made in the test.
@@ -1606,6 +1605,13 @@ describe('Convai checker test', () => {
       getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
       getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
       getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different emoji.
+    let expectedEmojis = [
+      Emoji.SAD,
+      Emoji.NEUTRAL,
+      Emoji.SMILE,
     ];
 
     let mockBackend = TestBed.get(MockBackend);
@@ -1642,18 +1648,7 @@ describe('Convai checker test', () => {
          expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
          verifyEmojiWidgetVisible();
-
-         // For each of the mock responses, the thresholds should indicate a
-         // different emoji.
-         let expectedEmoji: Emoji;
-         if (callCount === 0) {
-           expectedEmoji = Emoji.SAD;
-         } else if (callCount === 1) {
-           expectedEmoji = Emoji.NEUTRAL;
-         } else {
-           expectedEmoji = Emoji.SMILE;
-         }
-         verifyLoadingWidgetHasEmoji(checker, expectedEmoji);
+         verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
 
          if (callCount < 2) {
            callCount++;
@@ -1664,9 +1659,6 @@ describe('Convai checker test', () => {
     });
 
     verifyEmojiWidgetVisible();
-
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
 
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
@@ -1684,6 +1676,9 @@ describe('Convai checker test', () => {
 
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
     let queryTexts = [
       'Your mother was a hamster',
       'Your father smelled of elderberries',
@@ -1695,6 +1690,16 @@ describe('Convai checker test', () => {
       getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
       getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
       getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different loading icon shape.
+    let expectedShapes = [
+      Shape.DIAMOND, Shape.SQUARE, Shape.CIRCLE
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different emoji.
+    let expectedEmojis = [
+      Emoji.SAD, Emoji.NEUTRAL, Emoji.SMILE
     ];
 
     let mockBackend = TestBed.get(MockBackend);
@@ -1722,18 +1727,7 @@ describe('Convai checker test', () => {
          expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
          verifyCircleSquareDiamondWidgetVisible();
-
-         // For each of the mock responses, the thresholds should indicate a
-         // different loading icon shape.
-         let expectedShape: Shape;
-         if (callCount === 0) {
-           expectedShape = Shape.DIAMOND;
-         } else if (callCount === 1) {
-           expectedShape = Shape.SQUARE;
-         } else {
-           expectedShape = Shape.CIRCLE;
-         }
-         verifyLoadingWidgetHasShape(checker, expectedShape);
+         verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
 
          // Change to the emoji style, and verify the loading icon visibility
          // change.
@@ -1743,18 +1737,7 @@ describe('Convai checker test', () => {
            fixture.detectChanges();
 
            verifyEmojiWidgetVisible();
-
-           // For each of the mock responses, the thresholds should indicate a
-           // different emoji.
-           let expectedEmoji: Emoji;
-           if (callCount === 0) {
-             expectedEmoji = Emoji.SAD;
-           } else if (callCount === 1) {
-             expectedEmoji = Emoji.NEUTRAL;
-           } else {
-             expectedEmoji = Emoji.SMILE;
-           }
-           verifyLoadingWidgetHasEmoji(checker, expectedEmoji);
+           verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
 
            if (callCount < 2) {
              // Set demo settings back to circle/square/diamond.
@@ -1774,9 +1757,6 @@ describe('Convai checker test', () => {
 
     verifyCircleSquareDiamondWidgetVisible();
 
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
-
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
   }));
@@ -1793,6 +1773,9 @@ describe('Convai checker test', () => {
 
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
     let queryTexts = [
       'Your mother was a hamster',
       'Your father smelled of elderberries',
@@ -1804,6 +1787,16 @@ describe('Convai checker test', () => {
       getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
       getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
       getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different emoji.
+    let expectedEmojis = [
+      Emoji.SAD, Emoji.NEUTRAL, Emoji.SMILE
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different loading icon shape.
+    let expectedShapes = [
+      Shape.DIAMOND, Shape.SQUARE, Shape.CIRCLE
     ];
 
     let mockBackend = TestBed.get(MockBackend);
@@ -1831,18 +1824,7 @@ describe('Convai checker test', () => {
          expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
          verifyEmojiWidgetVisible();
-
-         // For each of the mock responses, the thresholds should indicate a
-         // different emoji.
-         let expectedEmoji: Emoji;
-         if (callCount === 0) {
-           expectedEmoji = Emoji.SAD;
-         } else if (callCount === 1) {
-           expectedEmoji = Emoji.NEUTRAL;
-         } else {
-           expectedEmoji = Emoji.SMILE;
-         }
-         verifyLoadingWidgetHasEmoji(checker, expectedEmoji);
+         verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
 
          // Change to the shape style, and verify the loading icon visibility
          // change.
@@ -1853,18 +1835,7 @@ describe('Convai checker test', () => {
            fixture.detectChanges();
 
            verifyCircleSquareDiamondWidgetVisible();
-
-           // For each of the mock responses, the thresholds should indicate a
-           // different loading icon shape.
-           let expectedShape: Shape;
-           if (callCount === 0) {
-             expectedShape = Shape.DIAMOND;
-           } else if (callCount === 1) {
-             expectedShape = Shape.SQUARE;
-           } else {
-             expectedShape = Shape.CIRCLE;
-           }
-           verifyLoadingWidgetHasShape(checker, expectedShape);
+           verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
 
            if (callCount < 2) {
              // Set loading icon back to EMOJI style.
@@ -1883,9 +1854,6 @@ describe('Convai checker test', () => {
     });
 
     verifyEmojiWidgetVisible();
-
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
 
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
