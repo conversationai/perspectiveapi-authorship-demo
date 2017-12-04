@@ -172,6 +172,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   private stateChangeAnimations: TimelineMax|null = null;
   private isPlayingStateChangeAnimations = false;
+  private isPlayingPostLoadingStateChangeAnimations = false;
   private currentStateChangeAnimationId: number = 0;
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
@@ -258,33 +259,28 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         || this.hideLoadingIconAfterLoadChanged
         || this.alwaysHideLoadingIconChanged) {
 
-      console.log('New call to ngAfterViewChecked. isPlayingStateChangeAnimations =',
-                  this.isPlayingStateChangeAnimations, 'isLoading =', this.isLoading);
-      // TODO(rachelrosen): Is it possible for isLoading to change in the middle
-      // of the execution of this function?
-
       // Kill any pending state change animations, since those are for an
       // out-of-date state.
       if (this.isPlayingStateChangeAnimations) {
         this.stateChangeAnimations.kill();
-        console.log('Killing animation', this.currentStateChangeAnimationId);
+        console.debug('Killing pending state change animation.');
+      } else if (this.isPlayingPostLoadingStateChangeAnimations) {
+        this.pendingPostLoadingStateChangeAnimations.kill();
+        console.debug('Killing pending post-loading state change animation');
       }
 
-      // Animation id for debugging; delete before submitting.
-      let animationId = Date.now();
-      this.currentStateChangeAnimationId = animationId;
       // Animations to run immediately.
       let afterChangesTimeline = new TimelineMax({
         onStart: () => {
           this.ngZone.run(() => {
             this.isPlayingStateChangeAnimations = true;
-            console.log('Started animations in ngAfterViewChecked', animationId);
+            console.debug('Starting state change animation');
           });
         },
         onComplete: () => {
           this.ngZone.run(() => {
             this.isPlayingStateChangeAnimations = false;
-            console.log('Completing animations in ngAfterViewChecked', animationId);
+            console.debug('Completing state change animation');
           });
         }
       });
@@ -294,14 +290,14 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         this.pendingPostLoadingStateChangeAnimations = new TimelineMax({
           onStart: () => {
             this.ngZone.run(() => {
-              //this.isPlayingStateChangeAnimations = true;
-              console.log('Started postLoadingStateChangeAnimations', animationId);
+              this.isPlayingPostLoadingStateChangeAnimations = true;
+              console.debug('Started postLoadingStateChangeAnimations');
             });
           },
           onComplete: () => {
             this.ngZone.run(() => {
-              //this.isPlayingStateChangeAnimations = false;
-              console.log('Completing postLoadingStateChangeAnimations', animationId);
+              this.isPlayingPostLoadingStateChangeAnimations = false;
+              console.debug('Completing postLoadingStateChangeAnimations');
             });
           }
         });
@@ -315,59 +311,46 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         if (this.hideLoadingIconAfterLoadChanged
             || this.alwaysHideLoadingIconChanged) {
           if (this.hideLoadingIconAfterLoadChanged) {
-            console.log('Triggering animation after detecting change in ' +
-                        'this.hideLoadingIconAfterLoad');
+            console.debug('Setting hideLoadingIconAfterLoadChanged to false');
             this.hideLoadingIconAfterLoadChanged = false;
           }
           if (this.alwaysHideLoadingIconChanged) {
-            console.log('Triggering animation after detecting change in ' +
-                        'this.alwaysHideLoadingIcon');
+            console.debug('Setting alwaysHideLoadingIconChanged to false');
             this.alwaysHideLoadingIconChanged = false;
           }
           // Call getUpdateWidgetStateAnimation to update the visibility and x
           // position of all elements.
-          console.log('getUpdateWidgetStateAnimation from ngAfterViewChecked');
           if (this.isLoading) {
-            console.log('a');
             this.pendingPostLoadingStateChangeAnimations.add(
               this.getUpdateWidgetStateAnimation());
           } else {
-            console.log('b');
             afterChangesTimeline.add(
               this.getUpdateWidgetStateAnimation());
           }
         }
 
         if (this.loadingIconStyleChanged) {
-          console.log('Setting loadingIconStyleChanged to false');
+          console.debug('Setting loadingIconStyleChanged to false');
           this.loadingIconStyleChanged = false;
           let loadingIconStyleChangedTimeline = new TimelineMax({});
-          // Update the widget state first, to make sure we are in the correct
-          // visibility and x positions. TODO: Consider that the ViewChildren
-          // have changed already? Maybe do this in ngOnChanges?
-          //loadingIconStyleChangedTimeline.add(this.getUpdateWidgetStateAnimation());
-
-          console.log('Calling getUpdateWidgetElementAnimation from ngAfterViewChecked');
+          // TODO(rachelrosen): Determine whether this covers all cases
+          // regarding the correct x position of elements, or if more animations
+          // are needed here.
           loadingIconStyleChangedTimeline.add(this.getUpdateWidgetElementAnimation());
           if (this.isLoading) {
-            console.log('c');
             this.pendingPostLoadingStateChangeAnimations.add(
               loadingIconStyleChangedTimeline);
           } else {
-            console.log('d');
             afterChangesTimeline.add(loadingIconStyleChangedTimeline);
           }
         } else if (this.scoreThresholdsChanged) {
           console.debug('Setting scoreThresholdsChanged to false');
-          console.log('getUpdateWidgetStateAnimation from ngAfterViewChecked');
           this.scoreThresholdsChanged = false;
           this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
           if (this.isLoading) {
-            console.log('e');
             this.pendingPostLoadingStateChangeAnimations.add(
               this.updateDemoSettingsAnimation);
           } else {
-            console.log('f');
             afterChangesTimeline.add(this.updateDemoSettingsAnimation);
           }
         }
@@ -388,7 +371,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       this.widgetElement = null;
     }
     let updateWidgetStateTimeline = new TimelineMax({});
-    console.log('getUpdateWidgetStateAnimation from getUpdateWidgetElementAnimation');
     updateWidgetStateTimeline.add(this.getUpdateWidgetStateAnimation());
     return updateWidgetStateTimeline;
   }
@@ -409,21 +391,20 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private getUpdateStatusWidgetVisibilityAnimation(loadStart: boolean): TimelineMax {
     let hide = this.getShouldHideStatusWidget(loadStart);
 
-    console.log('loadStart=', loadStart, ' hide=', hide);
-
-    // Note: This happens when two of these animations are constructed back to
-    // back, before the first has started, or if an animation is killed before
-    // it can complete.
-    let stateInterrupted = false;
+    let forceAnimation = false;
     if (this.isPlayingShowOrHideLoadingWidgetAnimation) {
-      console.warn('Calling getUpdateStatusWidgetVisibility while '
+      // Note: This happens when more than one of these animations are
+      // constructed back to back, before the first has started, or if an
+      // animation is killed before it can complete. In these cases we always
+      // want to return the full desired animation, not the empty one.
+      console.debug('Calling getUpdateStatusWidgetVisibility while '
                     + 'isPlayingShowOrHideLoadingWidgetAnimation = true. ');
-      stateInterrupted = true;
+      forceAnimation = true;
     }
 
     // If nothing has changed, return an empty animation.
-    if (hide === this.shouldHideStatusWidget && !stateInterrupted) {
-      console.log('Returning without update status widget visibility animation.');
+    if (hide === this.shouldHideStatusWidget && !forceAnimation) {
+      console.debug('Returning without update status widget visibility animation.');
       return new TimelineMax({});
     } else {
       console.debug('Getting update status widget visibility animation.');
@@ -604,9 +585,12 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   getUpdateShapeAnimation(score: number): TimelineMax {
     if (this.loadingIconStyle !== LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
-      console.log('Calling getUpdateShapeAnimation(), but the loading icon'
-                  + 'style is not set to circle/square/diamond. Returning an'
-                  + 'empty timeline.');
+      console.debug('Calling getUpdateShapeAnimation(), but the loading icon'
+                    + 'style is not set to circle/square/diamond. Returning an'
+                    + 'empty timeline.');
+      // The loading icon state has been changed; return an empty timeline.
+      // This is not an error and can happen when the loading icon state is
+      // changed via data binding while the loading animation is active.
       return new TimelineMax({});
     }
     let updateShapeAnimationTimeline = new TimelineMax({
@@ -693,24 +677,24 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     let updateScoreCompletedTimeline = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
-          console.log('Starting animation for getUpdateWidgetStateAnimation');
+          console.debug('Starting animation for getUpdateWidgetStateAnimation');
         });
       },
       onComplete: () => {
         this.ngZone.run(() => {
-          console.log('Completing animation for getUpdateWidgetStateAnimation');
+          console.debug('Completing animation for getUpdateWidgetStateAnimation');
           this.scoreChangeAnimationCompleted.emit();
         });
       }
     });
     if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
-      console.log('Update widget state for default style');
+      console.debug('Update widget state for default style');
       updateScoreCompletedTimeline.add(
         this.getUpdateStatusWidgetVisibilityAnimation(false));
       updateScoreCompletedTimeline.add(this.getUpdateShapeAnimation(this.score));
       return updateScoreCompletedTimeline;
     } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
-      console.log('Update widget state for emoji style');
+      console.debug('Update widget state for emoji style');
       updateScoreCompletedTimeline.add(
         this.getUpdateStatusWidgetVisibilityAnimation(false));
       updateScoreCompletedTimeline.add(this.getShowEmojiAnimation());
@@ -763,9 +747,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   getShowEmojiAnimation(): TimelineMax {
     if (this.loadingIconStyle !== LoadingIconStyle.EMOJI) {
-      console.log('Calling getShowEmojiAnimation() but loading icon style is'
+      console.debug('Calling getShowEmojiAnimation() but loading icon style is'
                   + 'not emoji style, returning an empty timeline');
       // The loading icon state has been changed; return an empty timeline.
+      // This is not an error and can happen when the loading icon state is
+      // changed via data binding while the loading animation is active.
       return new TimelineMax({});
     }
     let emojiElementToShow: HTMLElement|null = null;
