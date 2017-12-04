@@ -174,10 +174,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private hideLoadingIconAfterLoadChanged = false;
   private alwaysHideLoadingIconChanged = false;
 
-  private pendingPostLoadingStateChangeAnimations: TimelineMax|null = null;
 
   private stateChangeAnimations: TimelineMax|null = null;
   private isPlayingStateChangeAnimations = false;
+  private pendingPostLoadingStateChangeAnimations: TimelineMax|null = null;
   private isPlayingPostLoadingStateChangeAnimations = false;
   private currentStateChangeAnimationId: number = 0;
 
