@@ -30,10 +30,16 @@ import {
 import * as d3 from 'd3-interpolate';
 import twemoji from 'twemoji';
 
-enum Shape {
+export enum Shape {
   CIRCLE,
   SQUARE,
   DIAMOND,
+};
+
+export enum Emoji {
+  SMILE,
+  NEUTRAL,
+  SAD,
 };
 
 enum Configuration {
@@ -138,7 +144,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   public isPlayingShowOrHideLoadingWidgetAnimation: boolean = false;
   public shouldHideStatusWidget: boolean = false;
   public showScore: boolean = true;
-  private currentShape: Shape = Shape.CIRCLE;
+  public currentShape: Shape = Shape.CIRCLE;
   private showingMoreInfo: boolean = false;
   @ViewChild('circleSquareDiamondWidget') private circleSquareDiamondWidget: ElementRef;
   @ViewChild('emojiStatusWidget') private emojiWidget: ElementRef;
@@ -212,7 +218,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
 
     if (changes['loadingIconStyle'] !== undefined) {
-      console.debug(changes['loadingIconStyle']);
+      console.log('Loading icon style change:', changes['loadingIconStyle']);
       this.loadingIconStyleChanged = true;
     }
 
@@ -266,6 +272,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         console.debug('Killing pending state change animation.');
       } else if (this.isPlayingPostLoadingStateChangeAnimations) {
         this.pendingPostLoadingStateChangeAnimations.kill();
+        this.isPlayingPostLoadingStateChangeAnimations = false;
         console.debug('Killing pending post-loading state change animation');
       }
 
@@ -689,6 +696,20 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     });
     if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
       console.debug('Update widget state for default style');
+      let updateScoreCompletedTimeline = new TimelineMax({
+        onComplete: () => {
+          this.ngZone.run(() => {
+            console.log(this.scoreChangeAnimationCompleted);
+            // TODO(rachelrosen): Debug ObjectUnsubscribedError that occurs here.
+            // Seems to happen when animation finishes after changing from emoji
+            // to shape. This only happens when this component is a child of the
+            // conversationai-website. This error does not reproduce reliably
+            // (it was there one day and gone a few days later with no code
+            // changes) and therefore requires more investigation.
+            this.scoreChangeAnimationCompleted.emit();
+          });
+        }
+      });
       updateScoreCompletedTimeline.add(
         this.getUpdateStatusWidgetVisibilityAnimation(false));
       updateScoreCompletedTimeline.add(this.getUpdateShapeAnimation(this.score));
@@ -702,7 +723,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     } else {
       console.error('Calling updateWidgetState for unknown loadingIconStyle: '
                     + this.loadingIconStyle);
-      return null;
+      return new TimelineMax({});
     }
   }
 
@@ -1136,7 +1157,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private getTransitionToSquareAnimation(timeSeconds: number) {
     let squareAnimationTimeline = new TimelineMax({
       onStart: () => {
-        let currentRotation = (this.widgetElement as any)._gsTransform.rotation;
+        let currentRotation = 0;
+        let currentWidgetTransform = (this.widgetElement as any)._gsTransform;
+        if (currentWidgetTransform !== undefined) {
+          currentRotation = currentWidgetTransform.rotation;
+        }
         console.debug('getTransitionToSquare; Current rotation:', currentRotation);
       },
       onComplete: () => {
