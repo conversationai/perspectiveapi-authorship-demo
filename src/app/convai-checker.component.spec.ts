@@ -35,7 +35,7 @@ import {
   XHRBackend
 } from '@angular/http';
 import { By } from '@angular/platform-browser';
-import { PerspectiveStatus, CommentFeedback } from './perspective-status.component';
+import { PerspectiveStatus, CommentFeedback, Emoji, LoadingIconStyle, Shape } from './perspective-status.component';
 import { ConvaiChecker, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
@@ -154,8 +154,6 @@ class ConvaiCheckerCustomDemoSettingsTestComponent implements OnInit {
   }
 }
 
-
-
 let getIsElementWithIdVisible = function(id: string): boolean {
   let element = document.getElementById(id);
   return element != null && element.offsetWidth > 0 && element.offsetHeight > 0
@@ -233,9 +231,56 @@ function configureFixtureForExternalFeedbackStyleConfiguration(
   fixture.componentInstance.setDemoSettings(demoSettings);
 }
 
+function verifyLoadingWidgetHasShape(checker: ConvaiChecker, expectedShape: Shape) {
+  let shape = checker.statusWidget.currentShape;
+  expect(shape).toEqual(expectedShape);
+}
+
+function verifyLoadingWidgetHasEmoji(checker: ConvaiChecker, expectedEmoji: Emoji) {
+  let smileEmojiVisible = getIsElementWithIdVisible('smileEmoji');
+  let neutralEmojiVisible = getIsElementWithIdVisible('neutralEmoji');
+  let sadEmojiVisible = getIsElementWithIdVisible('sadEmoji');
+  expect(smileEmojiVisible).toBe(expectedEmoji === Emoji.SMILE);
+  expect(neutralEmojiVisible).toBe(expectedEmoji === Emoji.NEUTRAL);
+  expect(sadEmojiVisible).toBe(expectedEmoji === Emoji.SAD);
+}
+
+function verifyCircleSquareDiamondWidgetVisible() {
+  // Checks visibility of the loading icons. The circle/square/diamond
+  // loading icon should be visible, and the emoji one should not.
+  let circleSquareDiamondWidgetVisible =
+   getIsElementWithIdVisible('circleSquareDiamondWidget');
+  let emojiWidgetVisible =
+   getIsElementWithIdVisible('emojiStatusWidget');
+  expect(circleSquareDiamondWidgetVisible).toBe(true);
+  expect(emojiWidgetVisible).toBe(false);
+}
+
+function verifyEmojiWidgetVisible() {
+  // Checks visibility of the loading icons. The emoji loading icon should be
+  // visible, and the circle/square/diamond one should not.
+  let circleSquareDiamondWidgetVisible =
+   getIsElementWithIdVisible('circleSquareDiamondWidget');
+  let emojiWidgetVisible =
+   getIsElementWithIdVisible('emojiStatusWidget');
+  expect(circleSquareDiamondWidgetVisible).toBe(false);
+  expect(emojiWidgetVisible).toBe(true);
+}
+
+function getElementOpactiy(id: string): number {
+  let element = document.getElementById(id);
+  return parseFloat(window.getComputedStyle(element).getPropertyValue("opacity"));
+}
+
+function verifyEmojiIconsInDomWithZeroOpacity() {
+  expect(getElementOpactiy('smileEmoji')).toEqual(0);
+  expect(getElementOpactiy('neutralEmoji')).toEqual(0);
+  expect(getElementOpactiy('sadEmoji')).toEqual(0);
+}
+
 describe('Convai checker test', () => {
   let originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-  let increasedTimeout = 20000;
+  let increasedTimeout = 25000;
 
   /** Set up the test bed */
   beforeEach(async(() => {
@@ -1451,6 +1496,364 @@ describe('Convai checker test', () => {
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryTexts[callCount], textArea);
+  }));
+
+  it('Test circle square diamond change for score thresholds', async(() => {
+    let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
+
+    // Configure settings.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+
+    fixture.detectChanges();
+    let checker = fixture.componentInstance.checker;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    // Set up the mock responses for the series of three requests that will be
+    // made in the test.
+    let queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?'
+    ];
+
+    let callCount = 0;
+    let mockResponses = [
+      getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
+      getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different loading icon shape.
+    let expectedShapes = [
+      Shape.DIAMOND,
+      Shape.SQUARE,
+      Shape.CIRCLE
+    ];
+
+    let mockBackend = TestBed.get(MockBackend);
+    mockBackend.connections
+     .subscribe((connection: MockConnection) => {
+       fixture.detectChanges();
+       // Check the UI state before returning the repsonse.
+       verifyCircleSquareDiamondWidgetVisible();
+       expect(checker.statusWidget.isLoading).toBe(true);
+       connection.mockRespond(
+         new Response(
+           new ResponseOptions({
+              body: mockResponses[callCount]
+           })
+         )
+       );
+
+       // Wait for async code to complete.
+       fixture.whenStable().then(() => {
+         fixture.detectChanges();
+         // Checks the UI state after the response has been received.
+
+         // Checks that loading has stopped.
+         expect(checker.statusWidget.isLoading).toBe(false);
+         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+         verifyCircleSquareDiamondWidgetVisible();
+         verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
+
+         if (callCount < 2) {
+           callCount++;
+           // Fire another request.
+           setTextAndFireInputEvent(queryTexts[callCount], textArea);
+         }
+       });
+    });
+
+    verifyCircleSquareDiamondWidgetVisible();
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryTexts[callCount], textArea);
+  }));
+
+  it('Test emoji change for score thresholds', async(() => {
+    let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
+
+    // Configure settings.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+
+    fixture.detectChanges();
+    let checker = fixture.componentInstance.checker;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    // Set up the mock responses for the series of three requests that will be
+    // made in the test.
+    let queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?'
+    ];
+
+    let callCount = 0;
+    let mockResponses = [
+      getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
+      getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different emoji.
+    let expectedEmojis = [
+      Emoji.SAD,
+      Emoji.NEUTRAL,
+      Emoji.SMILE,
+    ];
+
+    let mockBackend = TestBed.get(MockBackend);
+    mockBackend.connections
+     .subscribe((connection: MockConnection) => {
+       fixture.detectChanges();
+       // Check the UI state before returning the repsonse.
+
+       verifyEmojiWidgetVisible();
+
+       // TODO(rachelrosen): Figure out how to "fast-forward" the state of the
+       // animation in the test environment without messing up the other test
+       // state, and then uncomment the code below to check the opacity of the
+       // emoji icons here.
+       // verifyEmojiIconsInDomWithZeroOpacity();
+
+       expect(checker.statusWidget.isLoading).toBe(true);
+
+       connection.mockRespond(
+         new Response(
+           new ResponseOptions({
+              body: mockResponses[callCount]
+           })
+         )
+       );
+
+       // Wait for async code to complete.
+       fixture.whenStable().then(() => {
+         fixture.detectChanges();
+         // Checks the UI state after the response has been received.
+
+         // Checks that loading has stopped.
+         expect(checker.statusWidget.isLoading).toBe(false);
+         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+         verifyEmojiWidgetVisible();
+         verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
+
+         if (callCount < 2) {
+           callCount++;
+           // Fire another request.
+           setTextAndFireInputEvent(queryTexts[callCount], textArea);
+         }
+       });
+    });
+
+    verifyEmojiWidgetVisible();
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryTexts[callCount], textArea);
+  }));
+
+  it('Test loading icon style setting change. Circle square diamond to emoji',
+     async(() => {
+    let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
+
+    // Configure settings.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+
+    fixture.detectChanges();
+    let checker = fixture.componentInstance.checker;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    let queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?'
+    ];
+
+    let callCount = 0;
+    let mockResponses = [
+      getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
+      getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different loading icon shape.
+    let expectedShapes = [
+      Shape.DIAMOND, Shape.SQUARE, Shape.CIRCLE
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different emoji.
+    let expectedEmojis = [
+      Emoji.SAD, Emoji.NEUTRAL, Emoji.SMILE
+    ];
+
+    let mockBackend = TestBed.get(MockBackend);
+    mockBackend.connections
+     .subscribe((connection: MockConnection) => {
+       fixture.detectChanges();
+       // Check the UI state before returning the repsonse.
+       verifyCircleSquareDiamondWidgetVisible();
+       expect(checker.statusWidget.isLoading).toBe(true);
+       connection.mockRespond(
+         new Response(
+           new ResponseOptions({
+              body: mockResponses[callCount]
+           })
+         )
+       );
+
+       // Wait for async code to complete.
+       fixture.whenStable().then(() => {
+         fixture.detectChanges();
+         // Checks the UI state after the response has been received.
+
+         // Checks that loading has stopped.
+         expect(checker.statusWidget.isLoading).toBe(false);
+         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+         verifyCircleSquareDiamondWidgetVisible();
+         verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
+
+         // Change to the emoji style, and verify the loading icon visibility
+         // change.
+         demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+         fixture.componentInstance.setDemoSettings(demoSettings);
+         fixture.whenStable().then(() => {
+           fixture.detectChanges();
+
+           verifyEmojiWidgetVisible();
+           verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
+
+           if (callCount < 2) {
+             // Set demo settings back to circle/square/diamond.
+             demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+             fixture.componentInstance.setDemoSettings(demoSettings);
+             fixture.detectChanges();
+             fixture.whenStable().then(() => {
+               fixture.detectChanges();
+                 callCount++;
+                 // Fire another request.
+                 setTextAndFireInputEvent(queryTexts[callCount], textArea);
+             });
+           }
+         });
+       });
+    });
+
+    verifyCircleSquareDiamondWidgetVisible();
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryTexts[callCount], textArea);
+  }));
+
+  it('Test loading icon style setting change. Emoji to circle square diamond',
+     async(() => {
+    let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
+
+    // Configure settings.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+
+    fixture.detectChanges();
+    let checker = fixture.componentInstance.checker;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    let queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?'
+    ];
+
+    let callCount = 0;
+    let mockResponses = [
+      getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
+      getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
+      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different emoji.
+    let expectedEmojis = [
+      Emoji.SAD, Emoji.NEUTRAL, Emoji.SMILE
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different loading icon shape.
+    let expectedShapes = [
+      Shape.DIAMOND, Shape.SQUARE, Shape.CIRCLE
+    ];
+
+    let mockBackend = TestBed.get(MockBackend);
+    mockBackend.connections
+     .subscribe((connection: MockConnection) => {
+       fixture.detectChanges();
+       // Check the UI state before returning the repsonse.
+       verifyEmojiWidgetVisible();
+       expect(checker.statusWidget.isLoading).toBe(true);
+       connection.mockRespond(
+         new Response(
+           new ResponseOptions({
+              body: mockResponses[callCount]
+           })
+         )
+       );
+
+       // Wait for async code to complete.
+       fixture.whenStable().then(() => {
+         fixture.detectChanges();
+         // Checks the UI state after the response has been received.
+
+         // Checks that loading has stopped.
+         expect(checker.statusWidget.isLoading).toBe(false);
+         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+         verifyEmojiWidgetVisible();
+         verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
+
+         // Change to the shape style, and verify the loading icon visibility
+         // change.
+         demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+         fixture.componentInstance.setDemoSettings(demoSettings);
+         fixture.detectChanges();
+         fixture.whenStable().then(() => {
+           fixture.detectChanges();
+
+           verifyCircleSquareDiamondWidgetVisible();
+           verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
+
+           if (callCount < 2) {
+             // Set loading icon back to EMOJI style.
+             demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+             fixture.componentInstance.setDemoSettings(demoSettings);
+             fixture.detectChanges();
+             fixture.whenStable().then(() => {
+               fixture.detectChanges();
+                 callCount++;
+                 // Fire another request.
+                 setTextAndFireInputEvent(queryTexts[callCount], textArea);
+             });
+           }
+         });
+       });
+    });
+
+    verifyEmojiWidgetVisible();
 
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
