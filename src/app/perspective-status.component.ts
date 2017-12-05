@@ -171,6 +171,15 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private loadingIconStyleChanged = false;
   private scoreThresholdsChanged = false;
 
+  private hideLoadingIconAfterLoadChanged = false;
+  private alwaysHideLoadingIconChanged = false;
+
+  private stateChangeAnimations: TimelineMax|null = null;
+  private isPlayingStateChangeAnimations = false;
+  private pendingPostLoadingStateChangeAnimations: TimelineMax|null = null;
+  private isPlayingPostLoadingStateChangeAnimations = false;
+  private currentStateChangeAnimationId: number = 0;
+
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
   constructor(private ngZone: NgZone, private elementRef: ElementRef) {
@@ -235,6 +244,14 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       }
       this.scoreThresholdsChanged = true;
     }
+
+    if (changes['hideLoadingIconAfterLoad']) {
+      this.hideLoadingIconAfterLoadChanged = true;
+    }
+
+    if (changes['alwaysHideLoadingIcon']) {
+      this.alwaysHideLoadingIconChanged = true;
+    }
   }
 
   /**
@@ -242,34 +259,110 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
    * callback, to ensure that the ViewChild has been updated.
    */
   ngAfterViewChecked() {
-    if (this.scoreThresholdsChanged || this.loadingIconStyleChanged) {
+    if (this.scoreThresholdsChanged
+        || this.loadingIconStyleChanged
+        || this.hideLoadingIconAfterLoadChanged
+        || this.alwaysHideLoadingIconChanged) {
+
+      // Kill any pending state change animations, since those are for an
+      // out-of-date state.
+      if (this.isPlayingStateChangeAnimations) {
+        this.stateChangeAnimations.kill();
+        console.debug('Killing pending state change animation.');
+      } else if (this.isPlayingPostLoadingStateChangeAnimations) {
+        this.pendingPostLoadingStateChangeAnimations.kill();
+        this.isPlayingPostLoadingStateChangeAnimations = false;
+        console.debug('Killing pending post-loading state change animation');
+      }
+
+      // Animations to run immediately.
       let afterChangesTimeline = new TimelineMax({
         onStart: () => {
           this.ngZone.run(() => {
-            console.debug('Started animations in ngAfterViewChecked');
+            this.isPlayingStateChangeAnimations = true;
+            console.debug('Starting state change animation');
           });
         },
         onComplete: () => {
           this.ngZone.run(() => {
-            console.debug('Completing animations in ngAfterViewChecked');
+            this.isPlayingStateChangeAnimations = false;
+            console.debug('Completing state change animation');
           });
         }
       });
+
+      if (this.isLoading) {
+        // Animations to run after any pending loading finishes.
+        this.pendingPostLoadingStateChangeAnimations = new TimelineMax({
+          onStart: () => {
+            this.ngZone.run(() => {
+              this.isPlayingPostLoadingStateChangeAnimations = true;
+              console.debug('Started postLoadingStateChangeAnimations');
+            });
+          },
+          onComplete: () => {
+            this.ngZone.run(() => {
+              this.isPlayingPostLoadingStateChangeAnimations = false;
+              console.debug('Completing postLoadingStateChangeAnimations');
+            });
+          }
+        });
+      } else {
+        this.pendingPostLoadingStateChangeAnimations = null;
+      }
+
       // Run in a Promise resolve statement so we don't get an
       // ExpressionChangedAfterItHasBeenCheckedError.
       Promise.resolve().then(() => {
+        if (this.hideLoadingIconAfterLoadChanged
+            || this.alwaysHideLoadingIconChanged) {
+          if (this.hideLoadingIconAfterLoadChanged) {
+            console.debug('Setting hideLoadingIconAfterLoadChanged to false');
+            this.hideLoadingIconAfterLoadChanged = false;
+          }
+          if (this.alwaysHideLoadingIconChanged) {
+            console.debug('Setting alwaysHideLoadingIconChanged to false');
+            this.alwaysHideLoadingIconChanged = false;
+          }
+          // Call getUpdateWidgetStateAnimation to update the visibility and x
+          // position of all elements.
+          if (this.isLoading) {
+            this.pendingPostLoadingStateChangeAnimations.add(
+              this.getUpdateWidgetStateAnimation());
+          } else {
+            afterChangesTimeline.add(
+              this.getUpdateWidgetStateAnimation());
+          }
+        }
+
         if (this.loadingIconStyleChanged) {
           console.debug('Setting loadingIconStyleChanged to false');
           this.loadingIconStyleChanged = false;
-          afterChangesTimeline.add(this.getUpdateWidgetElementAnimation());
+          let loadingIconStyleChangedTimeline = new TimelineMax({});
+          // TODO(rachelrosen): Determine whether this covers all cases
+          // regarding the correct x position of elements, or if more animations
+          // are needed here.
+          loadingIconStyleChangedTimeline.add(this.getUpdateWidgetElementAnimation());
+          if (this.isLoading) {
+            this.pendingPostLoadingStateChangeAnimations.add(
+              loadingIconStyleChangedTimeline);
+          } else {
+            afterChangesTimeline.add(loadingIconStyleChangedTimeline);
+          }
         } else if (this.scoreThresholdsChanged) {
           console.debug('Setting scoreThresholdsChanged to false');
           this.scoreThresholdsChanged = false;
           this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
-          afterChangesTimeline.add(this.updateDemoSettingsAnimation);
+          if (this.isLoading) {
+            this.pendingPostLoadingStateChangeAnimations.add(
+              this.updateDemoSettingsAnimation);
+          } else {
+            afterChangesTimeline.add(this.updateDemoSettingsAnimation);
+          }
         }
 
-        afterChangesTimeline.play();
+        this.stateChangeAnimations = afterChangesTimeline;
+        this.stateChangeAnimations.play();
       });
     }
   }
@@ -304,17 +397,19 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private getUpdateStatusWidgetVisibilityAnimation(loadStart: boolean): TimelineMax {
     let hide = this.getShouldHideStatusWidget(loadStart);
 
+    let forceAnimation = false;
     if (this.isPlayingShowOrHideLoadingWidgetAnimation) {
-      // TODO: This doesn't seem to get triggered in the logs; remove it? Might
-      // worth keeping for future debugging though.
-      console.warn('Calling getUpdateStatusWidgetVisibility while '
-                    + 'isPlayingShowOrHideLoadingWidgetAnimation. '
-                    + 'Killing animation');
-      this.updateStatusWidgetVisibilityAnimation.kill();
+      // Note: This happens when more than one of these animations are
+      // constructed back to back, before the first has started, or if an
+      // animation is killed before it can complete. In these cases we always
+      // want to return the full desired animation, not the empty one.
+      console.debug('Calling getUpdateStatusWidgetVisibility while '
+                    + 'isPlayingShowOrHideLoadingWidgetAnimation = true. ');
+      forceAnimation = true;
     }
 
     // If nothing has changed, return an empty animation.
-    if (hide === this.shouldHideStatusWidget) {
+    if (hide === this.shouldHideStatusWidget && !forceAnimation) {
       console.debug('Returning without update status widget visibility animation.');
       return new TimelineMax({});
     } else {
@@ -322,7 +417,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
 
     this.isPlayingShowOrHideLoadingWidgetAnimation = true;
-    this.updateStatusWidgetVisibilityAnimation = new TimelineMax({
+    let updateStatusWidgetVisibilityAnimation = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
           console.debug('Updating status widget visibility to '
@@ -334,16 +429,16 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       },
       onComplete: () => {
         this.ngZone.run(() => {
-          console.debug('Changing status widget visibility complete');
+          console.debug('Changing status widget visibility complete, hide=', hide);
           this.isPlayingShowOrHideLoadingWidgetAnimation = false;
           this.shouldHideStatusWidget = hide;
         });
       },
     });
-    this.updateStatusWidgetVisibilityAnimation.add([
+    updateStatusWidgetVisibilityAnimation.add([
       this.getChangeLoadingIconVisibilityAnimation(hide),
       this.getChangeLoadingIconXValueAnimation(hide)]);
-    return this.updateStatusWidgetVisibilityAnimation;
+    return updateStatusWidgetVisibilityAnimation;
   }
 
   private getChangeLoadingIconVisibilityAnimation(hide: boolean): TweenMax {
@@ -495,6 +590,15 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   getUpdateShapeAnimation(score: number): TimelineMax {
+    if (this.loadingIconStyle !== LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+      console.debug('Calling getUpdateShapeAnimation(), but the loading icon'
+                    + 'style is not set to circle/square/diamond. Returning an'
+                    + 'empty timeline.');
+      // The loading icon state has been changed; return an empty timeline.
+      // This is not an error and can happen when the loading icon state is
+      // changed via data binding while the loading animation is active.
+      return new TimelineMax({});
+    }
     let updateShapeAnimationTimeline = new TimelineMax({
       onStart: () => {
         this.isPlayingUpdateShapeAnimation = true;
@@ -576,6 +680,19 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   getUpdateWidgetStateAnimation(): TimelineMax {
+    let updateScoreCompletedTimeline = new TimelineMax({
+      onStart: () => {
+        this.ngZone.run(() => {
+          console.debug('Starting animation for getUpdateWidgetStateAnimation');
+        });
+      },
+      onComplete: () => {
+        this.ngZone.run(() => {
+          console.debug('Completing animation for getUpdateWidgetStateAnimation');
+          this.scoreChangeAnimationCompleted.emit();
+        });
+      }
+    });
     if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
       console.debug('Update widget state for default style');
       let updateScoreCompletedTimeline = new TimelineMax({
@@ -598,7 +715,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       return updateScoreCompletedTimeline;
     } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
       console.debug('Update widget state for emoji style');
-      return this.getShowEmojiAnimation();
+      updateScoreCompletedTimeline.add(
+        this.getUpdateStatusWidgetVisibilityAnimation(false));
+      updateScoreCompletedTimeline.add(this.getShowEmojiAnimation());
+      return updateScoreCompletedTimeline;
     } else {
       console.error('Calling updateWidgetState for unknown loadingIconStyle: '
                     + this.loadingIconStyle);
@@ -646,6 +766,14 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
 
   getShowEmojiAnimation(): TimelineMax {
+    if (this.loadingIconStyle !== LoadingIconStyle.EMOJI) {
+      console.debug('Calling getShowEmojiAnimation() but loading icon style is'
+                  + 'not emoji style, returning an empty timeline');
+      // The loading icon state has been changed; return an empty timeline.
+      // This is not an error and can happen when the loading icon state is
+      // changed via data binding while the loading animation is active.
+      return new TimelineMax({});
+    }
     let emojiElementToShow: HTMLElement|null = null;
     if (this.score > this.scoreThresholds[2]) {
       emojiElementToShow = this.sadEmoji.nativeElement;
@@ -729,7 +857,113 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     loadingEndTimeline.add(this.getShowEmojiAnimation());
     loadingEndTimeline.add(
       this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, false, 0));
+    if (this.pendingPostLoadingStateChangeAnimations) {
+      loadingEndTimeline.add(this.pendingPostLoadingStateChangeAnimations);
+    }
     return loadingEndTimeline;
+  }
+
+  /**
+   * Loading animations to play before loading starts for
+   * circle/square/diamond-style loading.
+   */
+  getStartAnimationsForCircleSquareDiamondWidgetLoading(): TimelineMax {
+    let startAnimationsTimeline = new TimelineMax({
+      align: 'sequence',
+    });
+
+    // Start animations happen in three groups. Group 0 animations before
+    // group 1, which animates before group 2. The animations within each
+    // group start at the same time.
+    let startAnimationsGroup0: Animation[] = [];
+    let startAnimationsGroup1: Animation[] = [];
+    let startAnimationsGroup2: Animation[] = [];
+
+    // Update visibility of the status widget before starting; it could have
+    // disappeared due to certain settings, and in some of these cases it
+    // needs to reappear before loading animation begins.
+    startAnimationsGroup0.push(
+      this.getUpdateStatusWidgetVisibilityAnimation(true));
+
+    startAnimationsGroup2.push(
+      this.getToGrayScaleAnimation(GRAYSCALE_ANIMATION_TIME_SECONDS));
+    if (this.showScore) {
+      startAnimationsGroup1.push(
+        this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
+
+      startAnimationsGroup2.push(
+        this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
+    }
+    startAnimationsTimeline.add(startAnimationsGroup0);
+    startAnimationsTimeline.add(startAnimationsGroup1);
+    startAnimationsTimeline.add(startAnimationsGroup2);
+    return startAnimationsTimeline;
+  }
+
+  /**
+   * Loading animations to play when loading finishes for
+   * circle/square/diamond-style loading.
+   */
+  getEndAnimationsForCircleSquareDiamondWidgetLoading(
+      loadingTimeline: TimelineMax): TimelineMax {
+    let updateScoreCompletedTimeline = new TimelineMax({
+      onStart: () => {
+        console.debug('Score change animation start');
+      },
+      onComplete: () => {
+        this.ngZone.run(() => {
+          console.debug('Score change animation end');
+          console.debug('Clearing loadingTimeline');
+          this.isPlayingLoadingAnimation = false;
+          loadingTimeline.clear();
+          this.scoreChangeAnimationCompleted.emit();
+          if (this.isLoading) {
+            // If we finish the end loading animation and we're supposed
+            // to be loading again, restart the loading animation!
+            console.debug('Restarting loading from ending animation completion');
+            this.setLoading(true);
+          } else if (this.currentShape !== this.getShapeForScore(this.score)) {
+            // The score has changed between now and when the animation
+            // started (the shape is no longer valid).
+            console.debug(
+              'Load ending animation completed, found an out of date shape');
+            this.notifyScoreChange(this.score);
+          }
+        });
+      }
+    });
+    let scoreCompletedAnimations: Animation[] = [];
+    scoreCompletedAnimations.push(
+      this.getUpdateShapeAnimation(this.score));
+
+    if (this.showScore) {
+      scoreCompletedAnimations.push(
+        this.getFadeDetailsAnimation(
+          FADE_DETAILS_TIME_SECONDS, false, 0));
+    }
+
+    // If we're revealing the status widget, play the reveal animation
+    // before the update shape animation.
+    if (!this.getShouldHideStatusWidget(false)) {
+      updateScoreCompletedTimeline.add(
+        this.getUpdateStatusWidgetVisibilityAnimation(false));
+    }
+
+    updateScoreCompletedTimeline.add(scoreCompletedAnimations);
+
+    // If we're hiding the status widget, play the hide widget
+    // animation after the update shape animation.
+    if (this.getShouldHideStatusWidget(false)) {
+      updateScoreCompletedTimeline.add(
+        this.getUpdateStatusWidgetVisibilityAnimation(false));
+    }
+
+    if (this.pendingPostLoadingStateChangeAnimations) {
+      updateScoreCompletedTimeline.add(
+        this.pendingPostLoadingStateChangeAnimations);
+    }
+
+    return updateScoreCompletedTimeline;
   }
 
   setLoadingForEmojiWidget(loading: boolean): void {
@@ -763,8 +997,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
   }
 
-  // TODO(rachelrosen): Refactor this into separate functions for
-  // before loading/loading/end loading animations.
   setLoadingForDefaultWidget(loading: boolean): void {
     if (loading && !this.isPlayingLoadingAnimation) {
       console.debug('About to create loadingTimeline');
@@ -788,105 +1020,23 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
             if (this.isLoading) {
               // TODO(rachelrosen): Consider the edge case where
               // isPlayingShowOrHideLoadingWidgetAnimation is true here. It's
-              // not ever getting triggered in the existing logsi and might not
+              // not ever getting triggered in the existing logs and might not
               // be possible to hit now, but could become an issue later.
               console.debug('Restarting loading to fade animation.');
               loadingTimeline.seek(FADE_START_LABEL);
             } else {
               console.debug('Loading complete');
               console.debug('hasScore:', this.hasScore);
-              let updateScoreCompletedTimeline = new TimelineMax({
-                onStart: () => {
-                  console.debug('Score change animation start');
-                },
-                onComplete: () => {
-                  this.ngZone.run(() => {
-                    console.debug('Score change animation end');
-                    console.debug('Clearing loadingTimeline');
-                    this.isPlayingLoadingAnimation = false;
-                    loadingTimeline.clear();
-                    // TODO(rachelrosen): Debug the ObjectUnsubscribedError that
-                    // sometimes occurs here. This happens when animation finishes,
-                    // but only when this component is nested in the
-                    // conversationai-website. This error does not reproduce
-                    // reliably (was there one day and gone a few days later
-                    // with no code changes) and therefore requires more
-                    // investigation.
-                    this.scoreChangeAnimationCompleted.emit();
-                    if (this.isLoading) {
-                      // If we finish the end loading animation and we're supposed
-                      // to be loading again, restart the loading animation!
-                      console.debug('Restarting loading from ending animation completion');
-                      this.setLoading(true);
-                    } else if (this.currentShape !== this.getShapeForScore(this.score)) {
-                      // The score has changed between now and when the animation
-                      // started (the shape is no longer valid).
-                      console.debug(
-                        'Load ending animation completed, found an out of date shape');
-                      this.notifyScoreChange(this.score);
-                    }
-                  });
-                }
-              });
-              let scoreCompletedAnimations: Animation[] = [];
-              scoreCompletedAnimations.push(
-                this.getUpdateShapeAnimation(this.score));
-
-              if (this.showScore) {
-                scoreCompletedAnimations.push(
-                  this.getFadeDetailsAnimation(
-                    FADE_DETAILS_TIME_SECONDS, false, 0));
-              }
-
-              // If we're revealing the status widget, play the reveal animation
-              // before the update shape animation.
-              if (!this.getShouldHideStatusWidget(false)) {
-                updateScoreCompletedTimeline.add(
-                  this.getUpdateStatusWidgetVisibilityAnimation(false));
-              }
-
-              updateScoreCompletedTimeline.add(scoreCompletedAnimations);
-
-              // If we're hiding the status widget, play the hide widget
-              // animation after the update shape animation.
-              if (this.getShouldHideStatusWidget(false)) {
-                updateScoreCompletedTimeline.add(
-                  this.getUpdateStatusWidgetVisibilityAnimation(false));
-              }
-
+              let updateScoreCompletedTimeline =
+                this.getEndAnimationsForCircleSquareDiamondWidgetLoading(
+                  loadingTimeline);
               updateScoreCompletedTimeline.play();
             }
           });
         },
       });
-      let startAnimationsTimeline = new TimelineMax({
-        align: 'sequence',
-      });
-
-      // Start animations happen in three groups. Group 0 animations before
-      // group 1, which animates before group 2. The animations within each
-      // group start at the same time.
-      let startAnimationsGroup0: Animation[] = [];
-      let startAnimationsGroup1: Animation[] = [];
-      let startAnimationsGroup2: Animation[] = [];
-
-      // Update visibility of the status widget before starting; it could have
-      // disappeared due to certain settings, and in some of these cases it
-      // needs to reappear before loading animation begins.
-      startAnimationsGroup0.push(this.getUpdateStatusWidgetVisibilityAnimation(true));
-
-      startAnimationsGroup2.push(this.getToGrayScaleAnimation(GRAYSCALE_ANIMATION_TIME_SECONDS));
-      if (this.showScore) {
-        startAnimationsGroup1.push(
-          this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
-
-        startAnimationsGroup2.push(
-          this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
-      }
-      startAnimationsTimeline.add(startAnimationsGroup0);
-      startAnimationsTimeline.add(startAnimationsGroup1);
-      startAnimationsTimeline.add(startAnimationsGroup2);
-
+      let startAnimationsTimeline =
+        this.getStartAnimationsForCircleSquareDiamondWidgetLoading();
       loadingTimeline.add(startAnimationsTimeline, LOADING_START_ANIMATIONS_LABEL);
 
       // Include shrink in and out animation in a separate timeline so an
