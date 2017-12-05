@@ -27,15 +27,16 @@
     <div *ngIf="loadingIconStyle === loadingIconStyleConst.EMOJI">
       <button
            #emojiStatusWidget
+           id="emojiStatusWidget"
            class="dot emojiWidget"
            (click)="toggleScore()">
-        <img #smileEmoji class="iconEmoji"
+        <img #smileEmoji id="smileEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score >= scoreThresholds[1]}"
              src="assets/grinning_face.png">
-        <img #neutralEmoji class="iconEmoji"
+        <img #neutralEmoji id="neutralEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || (score < scoreThresholds[1] || score >= scoreThresholds[2])}"
              src="assets/thinking_face.png">
-        <img #sadEmoji class="iconEmoji"
+        <img #sadEmoji id="sadEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score < scoreThresholds[2]}"
              src="assets/disappointed_face.png">
       </button>
