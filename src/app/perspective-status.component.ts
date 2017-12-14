@@ -217,7 +217,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
 
     if (changes['loadingIconStyle'] !== undefined) {
-      console.log('Loading icon style change:', changes['loadingIconStyle']);
+      console.debug('Loading icon style change:', changes['loadingIconStyle']);
       this.loadingIconStyleChanged = true;
     }
 
@@ -244,6 +244,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         if (scoreThresholdChanges.currentValue[i]
             !== scoreThresholdChanges.previousValue[i]) {
           valuesChanged = true;
+          break;
         }
       }
 
@@ -711,7 +712,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       let updateScoreCompletedTimeline = new TimelineMax({
         onComplete: () => {
           this.ngZone.run(() => {
-            console.log(this.scoreChangeAnimationCompleted);
+            console.debug(this.scoreChangeAnimationCompleted);
             // TODO(rachelrosen): Debug ObjectUnsubscribedError that occurs here.
             // Seems to happen when animation finishes after changing from emoji
             // to shape. This only happens when this component is a child of the
