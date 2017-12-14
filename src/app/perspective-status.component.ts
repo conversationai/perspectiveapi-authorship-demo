@@ -236,13 +236,26 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
     if (changes['scoreThresholds'] !== undefined) {
       console.debug('Change in scoreThresholds');
-      // Kill any prior animations so that the resetting any animation state
-      // will not get overridden by the old animation before the new one can
-      // begin; this can lead to bugs.
-      if (this.updateDemoSettingsAnimation) {
-        this.updateDemoSettingsAnimation.kill();
+      // ngOnChanges will be called for a change in the array reference, not the
+      // array values, so check to make sure they're really different.
+      let valuesChanged = false;
+      let scoreThresholdChanges = changes['scoreThresholds'];
+      for (let i = 0; i < scoreThresholdChanges.previousValue.length; i++) {
+        if (scoreThresholdChanges.currentValue[i]
+            !== scoreThresholdChanges.previousValue[i]) {
+          valuesChanged = true;
+        }
       }
-      this.scoreThresholdsChanged = true;
+
+      if (valuesChanged) {
+        // Kill any prior animations so that the resetting any animation state
+        // will not get overridden by the old animation before the new one can
+        // begin; this can lead to bugs.
+        if (this.updateDemoSettingsAnimation) {
+          this.updateDemoSettingsAnimation.kill();
+        }
+        this.scoreThresholdsChanged = true;
+      }
     }
 
     if (changes['hideLoadingIconAfterLoad']) {
