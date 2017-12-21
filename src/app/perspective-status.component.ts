@@ -224,7 +224,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     if (changes['gradientColors'] !== undefined) {
       console.debug('Change in gradientColors');
       this.updateGradient();
-      //this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
       if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
         this.getUpdateGradientColorAnimation(0.1).play();
       }

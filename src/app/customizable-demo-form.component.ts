@@ -25,7 +25,6 @@ import {
 import {ActivatedRoute, Params, Router} from '@angular/router';
 import emoji from 'node-emoji';
 import * as _ from 'lodash';
-import * as toxicLibsJS from 'toxiclibsjs';
 
 const RAISED_EYEBROW_EMOJI = "🤨 ";
 
