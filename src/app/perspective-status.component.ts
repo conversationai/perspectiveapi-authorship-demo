@@ -197,29 +197,13 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
     this.updateLayerElementContainers();
 
-    this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
-
+    this.updateGradient();
   }
 
   ngAfterViewInit() {
     this.widgetReady = Promise.resolve().then(() => {
       this.getUpdateWidgetElementAnimation().play();
     });
-  }
-
-  updateGradient() {
-    console.debug('Change in gradientColors');
-    let width = 100;
-    const sliderGradient = new toxicLibsJS.color.ColorGradient();
-    sliderGradient.addColorAt(width * this.scoreThresholds[0], toxicLibsJS.color.TColor.newHex(this.gradientColors[0]));
-    sliderGradient.addColorAt(width * this.scoreThresholds[1], toxicLibsJS.color.TColor.newHex(this.gradientColors[1]));
-    sliderGradient.addColorAt(width * this.scoreThresholds[2], toxicLibsJS.color.TColor.newHex(this.gradientColors[2]));
-    console.log(sliderGradient);
-
-    let t = sliderGradient.calcGradient(0, 100).colors
-    let q = t.map((tColor) => tColor.toRGBCSS());
-
-    this.interpolateColors = d3.interpolateRgbBasis(q);
   }
 
   ngOnChanges(changes: SimpleChanges) : void {
@@ -238,6 +222,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
 
     if (changes['gradientColors'] !== undefined) {
+      console.debug('Change in gradientColors');
       this.updateGradient();
       //this.interpolateColors = d3.interpolateRgbBasis(this.gradientColors);
       if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
@@ -382,6 +367,30 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         this.stateChangeAnimations.play();
       });
     }
+  }
+
+  /**
+   * Updates the gradient color function for the shape based on the
+   * scoreThresholds.
+   */
+  updateGradient() {
+    let gradientPointCount = 100;
+    const sliderGradient = new toxicLibsJS.color.ColorGradient();
+    sliderGradient.addColorAt(
+      gradientPointCount * this.scoreThresholds[0],
+      toxicLibsJS.color.TColor.newHex(this.gradientColors[0]));
+    sliderGradient.addColorAt(
+      gradientPointCount * this.scoreThresholds[1],
+      toxicLibsJS.color.TColor.newHex(this.gradientColors[1]));
+    sliderGradient.addColorAt(
+      gradientPointCount * this.scoreThresholds[2],
+      toxicLibsJS.color.TColor.newHex(this.gradientColors[2]));
+
+    let gradientColors =
+      sliderGradient.calcGradient(0, gradientPointCount).colors
+        .map((tColor) => tColor.toRGBCSS());
+
+    this.interpolateColors = d3.interpolateRgbBasis(gradientColors);
   }
 
   private getUpdateWidgetElementAnimation(): TimelineMax {
