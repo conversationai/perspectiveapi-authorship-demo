@@ -217,7 +217,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
 
     if (changes['loadingIconStyle'] !== undefined) {
-      console.log('Loading icon style change:', changes['loadingIconStyle']);
+      console.debug('Loading icon style change:', changes['loadingIconStyle']);
       this.loadingIconStyleChanged = true;
     }
 
@@ -236,13 +236,27 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
     if (changes['scoreThresholds'] !== undefined) {
       console.debug('Change in scoreThresholds');
-      // Kill any prior animations so that the resetting any animation state
-      // will not get overridden by the old animation before the new one can
-      // begin; this can lead to bugs.
-      if (this.updateDemoSettingsAnimation) {
-        this.updateDemoSettingsAnimation.kill();
+      // ngOnChanges will be called for a change in the array reference, not the
+      // array values, so check to make sure they're really different.
+      let valuesChanged = false;
+      let scoreThresholdChanges = changes['scoreThresholds'];
+      for (let i = 0; i < scoreThresholdChanges.previousValue.length; i++) {
+        if (scoreThresholdChanges.currentValue[i]
+            !== scoreThresholdChanges.previousValue[i]) {
+          valuesChanged = true;
+          break;
+        }
       }
-      this.scoreThresholdsChanged = true;
+
+      if (valuesChanged) {
+        // Kill any prior animations so that the resetting any animation state
+        // will not get overridden by the old animation before the new one can
+        // begin; this can lead to bugs.
+        if (this.updateDemoSettingsAnimation) {
+          this.updateDemoSettingsAnimation.kill();
+        }
+        this.scoreThresholdsChanged = true;
+      }
     }
 
     if (changes['hideLoadingIconAfterLoad']) {
@@ -698,7 +712,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       let updateScoreCompletedTimeline = new TimelineMax({
         onComplete: () => {
           this.ngZone.run(() => {
-            console.log(this.scoreChangeAnimationCompleted);
+            console.debug(this.scoreChangeAnimationCompleted);
             // TODO(rachelrosen): Debug ObjectUnsubscribedError that occurs here.
             // Seems to happen when animation finishes after changing from emoji
             // to shape. This only happens when this component is a child of the
