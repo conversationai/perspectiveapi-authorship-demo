@@ -140,11 +140,12 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private showFeedbackQuestion: boolean = false;
   isLoading: boolean = false;
   public isPlayingLoadingAnimation: boolean = false;
-  public isPlayingShowOrHideDetailsAnimation: boolean = false;
+  public isPlayingFadeDetailsAnimation: boolean = false;
   public isPlayingShowOrHideLoadingWidgetAnimation: boolean = false;
   public shouldHideStatusWidget: boolean = false;
   public showScore: boolean = true;
   public currentShape: Shape = Shape.CIRCLE;
+  public currentEmoji: Emoji = Emoji.SMILE;
   private showingMoreInfo: boolean = false;
   @ViewChild('circleSquareDiamondWidget') private circleSquareDiamondWidget: ElementRef;
   @ViewChild('emojiStatusWidget') private emojiWidget: ElementRef;
@@ -655,37 +656,39 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     return updateShapeAnimationTimeline;
   }
 
-  toggleScore(): void {
-    if (this.isPlayingShowOrHideDetailsAnimation) {
-      return;
-    }
-    if (this.showScore) {
-      this.getHideDetailsAnimation().play();
-    } else {
-      this.getShowDetailsAnimation().play();
-    }
-  }
-
   setShowMoreInfo(showMoreInfo: boolean): void {
     this.getTransitionToLayerAnimation(
       showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS).play();
   }
 
-  getAnimationA11yLabel(showScore: boolean,
-                        isPlayingLoadingAnimation: boolean,
-                        isPlayingShowOrHideDetailsAnimation: boolean): string {
+  getAccessibilityDescriptionForEmoji(emoji: Emoji): string {
+    if (emoji === Emoji.SMILE) {
+      return "Smile emoji";
+    } else if (emoji === Emoji.NEUTRAL) {
+      return "Neutral emoji";
+    } else {
+      return "Sad emoji";
+    }
+  }
+
+  getEmojiElementFromEmojiType(emojiType: Emoji): HTMLElement {
+    if (emojiType === Emoji.SMILE) {
+      return this.smileEmoji.nativeElement;
+    } else if (emojiType === Emoji.NEUTRAL) {
+      return this.neutralEmoji.nativeElement;
+    } else {
+      return this.sadEmoji.nativeElement;
+    }
+  };
+
+  getAnimationA11yLabel(loadingIconStyle: string,
+                        isPlayingLoadingAnimation: boolean): string {
     if (isPlayingLoadingAnimation) {
       return "Computing score animation";
-    } else if (isPlayingShowOrHideDetailsAnimation && showScore) {
-        return "Collapsing score view animation";
-    } else if (isPlayingShowOrHideDetailsAnimation && !showScore) {
-        return "Expanding score view animation";
-    } else if (showScore) {
-      return (this.getAccessibilityDescriptionForShape(this.currentShape) +
-              "Select to collapse score view");
+    } else if (loadingIconStyle === LoadingIconStyle.EMOJI) {
+      return this.getAccessibilityDescriptionForEmoji(this.currentEmoji);
     } else {
-      return (this.getAccessibilityDescriptionForShape(this.currentShape) +
-              "Select to expand score view");
+      return this.getAccessibilityDescriptionForShape(this.currentShape);
     }
   }
 
@@ -778,7 +781,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     return TweenMax.to(element, timeSeconds, { opacity: opacity});
   }
 
-
   getShowEmojiAnimation(): TimelineMax {
     if (this.loadingIconStyle !== LoadingIconStyle.EMOJI) {
       console.debug('Calling getShowEmojiAnimation() but loading icon style is'
@@ -788,20 +790,26 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // changed via data binding while the loading animation is active.
       return new TimelineMax({});
     }
-    let emojiElementToShow: HTMLElement|null = null;
+    let emojiType: Emoji|null = null;
     if (this.score > this.scoreThresholds[2]) {
-      emojiElementToShow = this.sadEmoji.nativeElement;
+      emojiType = Emoji.SAD;
     } else if (this.score > this.scoreThresholds[1]) {
-      emojiElementToShow = this.neutralEmoji.nativeElement;
+      emojiType = Emoji.NEUTRAL;
     } else {
-      emojiElementToShow = this.smileEmoji.nativeElement;
+      emojiType = Emoji.SMILE;
     }
+    let emojiElementToShow = this.getEmojiElementFromEmojiType(emojiType);
     let showEmojiTimeline = new TimelineMax({
       onStart:() => {
         this.ngZone.run(() => {
           this.hideEmojiIconsForLoadingAnimation = false;
         });
       },
+      onComplete:() => {
+        this.ngZone.run(() => {
+          this.currentEmoji = emojiType;
+        });
+      }
     });
 
     showEmojiTimeline.add(this.getChangeOpacityAnimation(
@@ -1096,62 +1104,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     });
   }
 
-  private getShowDetailsAnimation() {
-    let timeline = new TimelineMax({
-      paused:true,
-      onStart: () => {
-        this.ngZone.run(() => {
-          this.isPlayingShowOrHideDetailsAnimation = true;
-          this.widgetElement.blur();
-        });
-      },
-      onComplete: () => {
-        this.ngZone.run(() => {
-          this.showScore = true;
-          this.isPlayingShowOrHideDetailsAnimation = false;
-        });
-      },
-    });
-    let staggerAmount = 0;
-    timeline.add([
-      TweenMax.to(this.widgetElement, 0.6, { x: 0 }),
-      TweenMax.to(this.layerTextContainer, 0.4, { opacity: 1, delay: 0.3 }),
-      TweenMax.to(this.layerTextContainer, 0.4, { x: 0, delay: 0.3}),
-      TweenMax.to(this.interactiveLayerControlsContainer, 0.4, { opacity: 1, delay: 0.4}),
-      TweenMax.to(this.interactiveLayerControlsContainer, 0.4, { x: 0, delay: 0.4})
-    ], 0, 'normal', staggerAmount);
-    return timeline;
-  }
-
-  private getHideDetailsAnimation() {
-    let timeline = new TimelineMax({
-      paused:true,
-      onStart: () => {
-        this.ngZone.run(() => {
-          this.isPlayingShowOrHideDetailsAnimation = true;
-          this.widgetElement.blur();
-        });
-      },
-      onComplete: () => {
-        this.ngZone.run(() => {
-          this.showScore = false;
-          this.isPlayingShowOrHideDetailsAnimation = false;
-        });
-      },
-    });
-    timeline.add([
-      TweenMax.to(this.interactiveLayerControlsContainer, 0.4, { opacity: 0}),
-      TweenMax.to(this.interactiveLayerControlsContainer, 0.4, { x: 20}),
-      TweenMax.to(this.layerTextContainer, 0.4, { opacity: 0, delay: 0.1 }),
-      TweenMax.to(this.layerTextContainer, 0.4, { x: 20, delay: 0.1 }),
-      TweenMax.to(this.widgetElement, 0.6, {
-        x: this.container.nativeElement.offsetWidth - this.indicatorWidth - WIDGET_PADDING_PX,
-        delay: 0.2,
-      })
-    ], 0, 'normal', 0);
-    return timeline;
-  }
-
   private getTransitionToCircleAnimation(timeSeconds: number) {
     let circleAnimationTimeline = new TimelineMax({
       align: 'start',
@@ -1402,13 +1354,13 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         this.ngZone.run(() => {
           console.debug('Calling getFadeDetails animation, fadeOut=' + hide
                         + ' and current layer index = ' + this.currentLayerIndex);
-          this.isPlayingShowOrHideDetailsAnimation = true;
+          this.isPlayingFadeDetailsAnimation = true;
         });
       },
       onComplete: () => {
         this.ngZone.run(() => {
           console.debug('Fade details animation complete');
-          this.isPlayingShowOrHideDetailsAnimation = false;
+          this.isPlayingFadeDetailsAnimation = false;
         });
       },
     });
