@@ -660,6 +660,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS).play();
   }
 
+  // TODO(rachelrosen): Add accessibility labeling for the emoji state.
   getAnimationA11yLabel(showScore: boolean,
                         isPlayingLoadingAnimation: boolean): string {
     if (isPlayingLoadingAnimation) {
