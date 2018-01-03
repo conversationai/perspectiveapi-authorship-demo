@@ -16,7 +16,7 @@
            [style.height]="indicatorHeight"
            [hidden]="shouldHideStatusWidget || alwaysHideLoadingIcon"
            [attr.aria-hidden]="shouldHideStatusWidget || isPlayingShowOrHideLoadingWidgetAnimation || alwaysHideLoadingIcon"
-           [attr.aria-label]="getAnimationA11yLabel(showScore, isPlayingLoadingAnimation)"
+           [attr.aria-label]="getAnimationA11yLabel(loadingIconStyle, isPlayingLoadingAnimation)"
            tabindex=0>
       </div>
     </div>
@@ -24,7 +24,9 @@
       <div
            #emojiStatusWidget
            id="emojiStatusWidget"
-           class="dot emojiWidget">
+           class="dot emojiWidget"
+           tabindex=0
+           [attr.aria-label]="getAnimationA11yLabel(loadingIconStyle, isPlayingLoadingAnimation)">
         <img #smileEmoji id="smileEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score >= scoreThresholds[1]}"
              src="assets/grinning_face.png">

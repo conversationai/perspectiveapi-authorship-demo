@@ -145,6 +145,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   public shouldHideStatusWidget: boolean = false;
   public showScore: boolean = true;
   public currentShape: Shape = Shape.CIRCLE;
+  public currentEmoji: Emoji = Emoji.SMILE;
   private showingMoreInfo: boolean = false;
   @ViewChild('circleSquareDiamondWidget') private circleSquareDiamondWidget: ElementRef;
   @ViewChild('emojiStatusWidget') private emojiWidget: ElementRef;
@@ -660,13 +661,32 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS).play();
   }
 
-  // TODO(rachelrosen): Add accessibility labeling for the emoji state.
-  getAnimationA11yLabel(showScore: boolean,
+  getAccessibilityDescriptionForEmoji(emoji: Emoji): string {
+    if (emoji === Emoji.SMILE) {
+      return "Smile emoji";
+    } else if (emoji === Emoji.NEUTRAL) {
+      return "Neutral emoji";
+    } else {
+      return "Sad emoji";
+    }
+  }
+
+  getEmojiElementFromEmojiType(emojiType: Emoji): HTMLElement {
+    if (emojiType === Emoji.SMILE) {
+      return this.smileEmoji.nativeElement;
+    } else if (emojiType === Emoji.NEUTRAL) {
+      return this.neutralEmoji.nativeElement;
+    } else {
+      return this.sadEmoji.nativeElement;
+    }
+  };
+
+  getAnimationA11yLabel(loadingIconStyle: string,
                         isPlayingLoadingAnimation: boolean): string {
     if (isPlayingLoadingAnimation) {
       return "Computing score animation";
-    } else if (showScore) {
-      return this.getAccessibilityDescriptionForShape(this.currentShape);
+    } else if (loadingIconStyle === LoadingIconStyle.EMOJI) {
+      return this.getAccessibilityDescriptionForEmoji(this.currentEmoji);
     } else {
       return this.getAccessibilityDescriptionForShape(this.currentShape);
     }
@@ -761,7 +781,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     return TweenMax.to(element, timeSeconds, { opacity: opacity});
   }
 
-
   getShowEmojiAnimation(): TimelineMax {
     if (this.loadingIconStyle !== LoadingIconStyle.EMOJI) {
       console.debug('Calling getShowEmojiAnimation() but loading icon style is'
@@ -771,20 +790,26 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // changed via data binding while the loading animation is active.
       return new TimelineMax({});
     }
-    let emojiElementToShow: HTMLElement|null = null;
+    let emojiType: Emoji|null = null;
     if (this.score > this.scoreThresholds[2]) {
-      emojiElementToShow = this.sadEmoji.nativeElement;
+      emojiType = Emoji.SAD;
     } else if (this.score > this.scoreThresholds[1]) {
-      emojiElementToShow = this.neutralEmoji.nativeElement;
+      emojiType = Emoji.NEUTRAL;
     } else {
-      emojiElementToShow = this.smileEmoji.nativeElement;
+      emojiType = Emoji.SMILE;
     }
+    let emojiElementToShow = this.getEmojiElementFromEmojiType(emojiType);
     let showEmojiTimeline = new TimelineMax({
       onStart:() => {
         this.ngZone.run(() => {
           this.hideEmojiIconsForLoadingAnimation = false;
         });
       },
+      onComplete:() => {
+        this.ngZone.run(() => {
+          this.currentEmoji = emojiType;
+        });
+      }
     });
 
     showEmojiTimeline.add(this.getChangeOpacityAnimation(
