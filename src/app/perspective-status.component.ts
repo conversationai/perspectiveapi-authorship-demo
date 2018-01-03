@@ -140,7 +140,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private showFeedbackQuestion: boolean = false;
   isLoading: boolean = false;
   public isPlayingLoadingAnimation: boolean = false;
-  public isPlayingShowOrHideDetailsAnimation: boolean = false;
+  public isPlayingFadeDetailsAnimation: boolean = false;
   public isPlayingShowOrHideLoadingWidgetAnimation: boolean = false;
   public shouldHideStatusWidget: boolean = false;
   public showScore: boolean = true;
@@ -655,37 +655,19 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     return updateShapeAnimationTimeline;
   }
 
-  toggleScore(): void {
-    if (this.isPlayingShowOrHideDetailsAnimation) {
-      return;
-    }
-    if (this.showScore) {
-      this.getHideDetailsAnimation().play();
-    } else {
-      this.getShowDetailsAnimation().play();
-    }
-  }
-
   setShowMoreInfo(showMoreInfo: boolean): void {
     this.getTransitionToLayerAnimation(
       showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS).play();
   }
 
   getAnimationA11yLabel(showScore: boolean,
-                        isPlayingLoadingAnimation: boolean,
-                        isPlayingShowOrHideDetailsAnimation: boolean): string {
+                        isPlayingLoadingAnimation: boolean): string {
     if (isPlayingLoadingAnimation) {
       return "Computing score animation";
-    } else if (isPlayingShowOrHideDetailsAnimation && showScore) {
-        return "Collapsing score view animation";
-    } else if (isPlayingShowOrHideDetailsAnimation && !showScore) {
-        return "Expanding score view animation";
     } else if (showScore) {
-      return (this.getAccessibilityDescriptionForShape(this.currentShape) +
-              "Select to collapse score view");
+      return this.getAccessibilityDescriptionForShape(this.currentShape);
     } else {
-      return (this.getAccessibilityDescriptionForShape(this.currentShape) +
-              "Select to expand score view");
+      return this.getAccessibilityDescriptionForShape(this.currentShape);
     }
   }
 
@@ -1096,62 +1078,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     });
   }
 
-  private getShowDetailsAnimation() {
-    let timeline = new TimelineMax({
-      paused:true,
-      onStart: () => {
-        this.ngZone.run(() => {
-          this.isPlayingShowOrHideDetailsAnimation = true;
-          this.widgetElement.blur();
-        });
-      },
-      onComplete: () => {
-        this.ngZone.run(() => {
-          this.showScore = true;
-          this.isPlayingShowOrHideDetailsAnimation = false;
-        });
-      },
-    });
-    let staggerAmount = 0;
-    timeline.add([
-      TweenMax.to(this.widgetElement, 0.6, { x: 0 }),
-      TweenMax.to(this.layerTextContainer, 0.4, { opacity: 1, delay: 0.3 }),
-      TweenMax.to(this.layerTextContainer, 0.4, { x: 0, delay: 0.3}),
-      TweenMax.to(this.interactiveLayerControlsContainer, 0.4, { opacity: 1, delay: 0.4}),
-      TweenMax.to(this.interactiveLayerControlsContainer, 0.4, { x: 0, delay: 0.4})
-    ], 0, 'normal', staggerAmount);
-    return timeline;
-  }
-
-  private getHideDetailsAnimation() {
-    let timeline = new TimelineMax({
-      paused:true,
-      onStart: () => {
-        this.ngZone.run(() => {
-          this.isPlayingShowOrHideDetailsAnimation = true;
-          this.widgetElement.blur();
-        });
-      },
-      onComplete: () => {
-        this.ngZone.run(() => {
-          this.showScore = false;
-          this.isPlayingShowOrHideDetailsAnimation = false;
-        });
-      },
-    });
-    timeline.add([
-      TweenMax.to(this.interactiveLayerControlsContainer, 0.4, { opacity: 0}),
-      TweenMax.to(this.interactiveLayerControlsContainer, 0.4, { x: 20}),
-      TweenMax.to(this.layerTextContainer, 0.4, { opacity: 0, delay: 0.1 }),
-      TweenMax.to(this.layerTextContainer, 0.4, { x: 20, delay: 0.1 }),
-      TweenMax.to(this.widgetElement, 0.6, {
-        x: this.container.nativeElement.offsetWidth - this.indicatorWidth - WIDGET_PADDING_PX,
-        delay: 0.2,
-      })
-    ], 0, 'normal', 0);
-    return timeline;
-  }
-
   private getTransitionToCircleAnimation(timeSeconds: number) {
     let circleAnimationTimeline = new TimelineMax({
       align: 'start',
@@ -1402,13 +1328,13 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         this.ngZone.run(() => {
           console.debug('Calling getFadeDetails animation, fadeOut=' + hide
                         + ' and current layer index = ' + this.currentLayerIndex);
-          this.isPlayingShowOrHideDetailsAnimation = true;
+          this.isPlayingFadeDetailsAnimation = true;
         });
       },
       onComplete: () => {
         this.ngZone.run(() => {
           console.debug('Fade details animation complete');
-          this.isPlayingShowOrHideDetailsAnimation = false;
+          this.isPlayingFadeDetailsAnimation = false;
         });
       },
     });

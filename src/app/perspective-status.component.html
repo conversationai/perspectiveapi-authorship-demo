@@ -8,7 +8,7 @@
   <div id="animationContainer">
     <div *ngIf="loadingIconStyle === loadingIconStyleConst.CIRCLE_SQUARE_DIAMOND"
          id="circleSquareDiamondLoadingIconContainer">
-      <button
+      <div
            #circleSquareDiamondWidget
            id="circleSquareDiamondWidget"
            class="dot"
@@ -16,20 +16,15 @@
            [style.height]="indicatorHeight"
            [hidden]="shouldHideStatusWidget || alwaysHideLoadingIcon"
            [attr.aria-hidden]="shouldHideStatusWidget || isPlayingShowOrHideLoadingWidgetAnimation || alwaysHideLoadingIcon"
-           [disabled]="isPlayingShowOrHideLoadingWidgetAnimation"
-           role="button"
-           [attr.aria-label]=
-              "getAnimationA11yLabel(showScore, isPlayingLoadingAnimation, isPlayingShowOrHideDetailsAnimation)"
-           (click)="toggleScore()"
+           [attr.aria-label]="getAnimationA11yLabel(showScore, isPlayingLoadingAnimation)"
            tabindex=0>
-      </button>
+      </div>
     </div>
     <div *ngIf="loadingIconStyle === loadingIconStyleConst.EMOJI">
-      <button
+      <div
            #emojiStatusWidget
            id="emojiStatusWidget"
-           class="dot emojiWidget"
-           (click)="toggleScore()">
+           class="dot emojiWidget">
         <img #smileEmoji id="smileEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score >= scoreThresholds[1]}"
              src="assets/grinning_face.png">
@@ -39,7 +34,7 @@
         <img #sadEmoji id="sadEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score < scoreThresholds[2]}"
              src="assets/disappointed_face.png">
-      </button>
+      </div>
     </div>
   </div>
 
@@ -59,7 +54,7 @@
                [style.fontSize]="fontSize"
                tabindex=0
                role="status"
-               [attr.aria-hidden]="!showScore || isPlayingLoadingAnimation || isPlayingShowOrHideDetailsAnimation">
+               [attr.aria-hidden]="!showScore || isPlayingLoadingAnimation || isPlayingFadeDetailsAnimation">
             <span id="feedbackText" [innerHTML]="parseEmojis(getFeedbackTextForScore(score))"></span><span *ngIf="showPercentage" id="percentage">({{score.toFixed(2)}})</span><span
                *ngIf="showMoreInfoLink"
                class="link"
