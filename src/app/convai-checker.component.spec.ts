@@ -278,6 +278,143 @@ function verifyEmojiIconsInDomWithZeroOpacity() {
   expect(getElementOpactiy('sadEmoji')).toEqual(0);
 }
 
+function verifyUILayerChangesForDemoConfig(fixture: any, done: Function) {
+  // Note: This test doesn't test error case UI, since that is handled in
+  // other tests.
+  let checker = fixture.componentInstance.checker;
+  let queryText = 'Your mother was a hamster';
+  let checkUrl = 'test-url/check';
+  let suggestScoreUrl = 'test-url/suggest_score';
+  let lastRequestUrl = '';
+  // Set a flag to make sure the check request happens before the suggest
+  // score request in the test, since we call done() in the suggest score
+  // request handling.
+  let checkRequestUICheckFinished = false;
+
+  // Sets up mock responses for the check and suggest score calls.
+  let mockResponses: { [key: string]: Object } = {};
+  mockResponses[checkUrl] = getMockCheckerResponse(checker.getToken(queryText));
+  mockResponses[suggestScoreUrl] = {
+    clientToken: "token"
+  };
+
+  let mockBackend = TestBed.get(MockBackend);
+  mockBackend.connections
+   .subscribe((connection: MockConnection) => {
+     lastRequestUrl = connection.request.url;
+     if (lastRequestUrl === suggestScoreUrl) {
+       fixture.detectChanges();
+       expect(fixture.nativeElement.textContent).not.toContain('Yes');
+       expect(fixture.nativeElement.textContent).not.toContain('No');
+     } else if (lastRequestUrl === checkUrl) {
+       expect(checker.statusWidget.isLoading).toBe(true);
+     }
+     connection.mockRespond(
+       new Response(
+          new ResponseOptions({
+            body: mockResponses[connection.request.url]
+          })
+       )
+     );
+
+     fixture.whenStable().then(() => {
+       fixture.detectChanges();
+       let layer1TextElements = [
+         'perceived as toxic',
+         'SEEM WRONG?'
+       ];
+       let layer1VisibleElementIds = ['layer1', 'seemWrongButtonDemoConfig'];
+       let layer1HiddenElementIds = ['layer2', 'layer3'];
+       let layer2TextElements = [
+         'Is this comment toxic?',
+         'YES',
+         'NO',
+       ];
+       let layer2VisibleElementIds = ['layer2', 'yesButtonDemoConfig', 'noButtonDemoConfig'];
+       let layer2HiddenElementIds = ['layer1', 'layer3'];
+       let layer3TextElements = [
+         'Thanks for your feedback!',
+       ];
+       let layer3VisibleElementIds = ['layer3', 'feedbackThanksDemoConfig'];
+       let layer3HiddenElementIds = ['layer1', 'layer2'];
+
+       if (lastRequestUrl === checkUrl) {
+         // Step 2: Check layer 1 UI.
+         for (let text of layer1TextElements) {
+           expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+         }
+         for (let elementId of layer1VisibleElementIds) {
+           expect(getIsElementWithIdVisible(elementId)).toBe(true);
+         }
+         for (let elementId of layer1HiddenElementIds) {
+           expect(getIsElementWithIdVisible(elementId)).toBe(false);
+         }
+
+         // Step 3: Click the seem wrong button.
+         let seemWrongButton = document.getElementById('seemWrongButtonDemoConfig');
+         sendClickEvent(seemWrongButton);
+
+         fixture.whenStable().then(() => {
+           // Step 4: Check layer 2 UI.
+           fixture.detectChanges();
+           for (let text of layer2TextElements) {
+             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+           }
+           for (let elementId of layer2VisibleElementIds) {
+             expect(getIsElementWithIdVisible(elementId)).toBe(true);
+           }
+           for (let elementId of layer2HiddenElementIds) {
+             expect(getIsElementWithIdVisible(elementId)).toBe(false);
+           }
+
+           checkRequestUICheckFinished = true;
+
+           // Step 5: Send feedback by pressing the yes button to move to layer 3.
+           sendClickEvent(document.getElementById('yesButtonDemoConfig'));
+         });
+       }
+       if (lastRequestUrl === suggestScoreUrl) {
+         // Step 6: Check layer 3 UI.
+         for (let text of layer3TextElements) {
+           expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+         }
+         for (let elementId of layer3VisibleElementIds) {
+           expect(getIsElementWithIdVisible(elementId)).toBe(true);
+         }
+         for (let elementId of layer3HiddenElementIds) {
+           expect(getIsElementWithIdVisible(elementId)).toBe(false);
+         }
+
+         // Step 7: Return to layer 1 and check UI again.
+         let thanksButton = document.getElementById('thanksForFeedbackButtonDemoConfig');
+         sendClickEvent(thanksButton);
+
+         fixture.whenStable().then(() => {
+           fixture.detectChanges();
+           for (let text of layer1TextElements) {
+             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+           }
+           for (let elementId of layer1VisibleElementIds) {
+             expect(getIsElementWithIdVisible(elementId)).toBe(true);
+           }
+           for (let elementId of layer1HiddenElementIds) {
+             expect(getIsElementWithIdVisible(elementId)).toBe(false);
+           }
+
+           expect(checkRequestUICheckFinished).toBe(true);
+           done();
+         });
+       }
+     });
+  });
+
+  let textArea = fixture.debugElement.query(
+    By.css('#' + checker.inputId)).nativeElement;
+
+  // Step 1: Send an input event to trigger the check call.
+  setTextAndFireInputEvent(queryText, textArea);
+}
+
 describe('Convai checker test', () => {
   let originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
   let increasedTimeout = 25000;
@@ -1214,143 +1351,27 @@ describe('Convai checker test', () => {
     setTextAndFireInputEvent(queryText, textArea);
   });
 
-  it('Should handle UI layer changes, demo config', (done: Function) => {
-    // Note: This test doesn't test error case UI, since that is handled in
-    // other tests.
+
+  it('Should handle UI layer changes, demo config, emoji loading icon style',
+     (done: Function) => {
+    let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
+
+    // Configure settings.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+
+    verifyUILayerChangesForDemoConfig(fixture, done);
+  });
+
+
+  it('Should handle UI layer changes, demo config, circle/square/diamond loading',
+     (done: Function) => {
     let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
     fixture.detectChanges();
-    let checker = fixture.componentInstance.checker;
-    let queryText = 'Your mother was a hamster';
-    let checkUrl = 'test-url/check';
-    let suggestScoreUrl = 'test-url/suggest_score';
-    let lastRequestUrl = '';
-    // Set a flag to make sure the check request happens before the suggest
-    // score request in the test, since we call done() in the suggest score
-    // request handling.
-    let checkRequestUICheckFinished = false;
 
-    // Sets up mock responses for the check and suggest score calls.
-    let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] = getMockCheckerResponse(checker.getToken(queryText));
-    mockResponses[suggestScoreUrl] = {
-      clientToken: "token"
-    };
-
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       lastRequestUrl = connection.request.url;
-       if (lastRequestUrl === suggestScoreUrl) {
-         fixture.detectChanges();
-         expect(fixture.nativeElement.textContent).not.toContain('Yes');
-         expect(fixture.nativeElement.textContent).not.toContain('No');
-       } else if (lastRequestUrl === checkUrl) {
-         expect(checker.statusWidget.isLoading).toBe(true);
-       }
-       connection.mockRespond(
-         new Response(
-            new ResponseOptions({
-              body: mockResponses[connection.request.url]
-            })
-         )
-       );
-
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-         let layer1TextElements = [
-           'perceived as toxic',
-           'SEEM WRONG?'
-         ];
-         let layer1VisibleElementIds = ['layer1', 'seemWrongButtonDemoConfig'];
-         let layer1HiddenElementIds = ['layer2', 'layer3'];
-         let layer2TextElements = [
-           'Is this comment toxic?',
-           'YES',
-           'NO',
-         ];
-         let layer2VisibleElementIds = ['layer2', 'yesButtonDemoConfig', 'noButtonDemoConfig'];
-         let layer2HiddenElementIds = ['layer1', 'layer3'];
-         let layer3TextElements = [
-           'Thanks for your feedback!',
-         ];
-         let layer3VisibleElementIds = ['layer3', 'feedbackThanksDemoConfig'];
-         let layer3HiddenElementIds = ['layer1', 'layer2'];
-
-         if (lastRequestUrl === checkUrl) {
-           // Step 2: Check layer 1 UI.
-           for (let text of layer1TextElements) {
-             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-           }
-           for (let elementId of layer1VisibleElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(true);
-           }
-           for (let elementId of layer1HiddenElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(false);
-           }
-
-           // Step 3: Click the seem wrong button.
-           let seemWrongButton = document.getElementById('seemWrongButtonDemoConfig');
-           sendClickEvent(seemWrongButton);
-
-           fixture.whenStable().then(() => {
-             // Step 4: Check layer 2 UI.
-             fixture.detectChanges();
-             for (let text of layer2TextElements) {
-               expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-             }
-             for (let elementId of layer2VisibleElementIds) {
-               expect(getIsElementWithIdVisible(elementId)).toBe(true);
-             }
-             for (let elementId of layer2HiddenElementIds) {
-               expect(getIsElementWithIdVisible(elementId)).toBe(false);
-             }
-
-             checkRequestUICheckFinished = true;
-
-             // Step 5: Send feedback by pressing the yes button to move to layer 3.
-             sendClickEvent(document.getElementById('yesButtonDemoConfig'));
-           });
-         }
-         if (lastRequestUrl === suggestScoreUrl) {
-           // Step 6: Check layer 3 UI.
-           for (let text of layer3TextElements) {
-             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-           }
-           for (let elementId of layer3VisibleElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(true);
-           }
-           for (let elementId of layer3HiddenElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(false);
-           }
-
-           // Step 7: Return to layer 1 and check UI again.
-           let thanksButton = document.getElementById('thanksForFeedbackButtonDemoConfig');
-           sendClickEvent(thanksButton);
-
-           fixture.whenStable().then(() => {
-             fixture.detectChanges();
-             for (let text of layer1TextElements) {
-               expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-             }
-             for (let elementId of layer1VisibleElementIds) {
-               expect(getIsElementWithIdVisible(elementId)).toBe(true);
-             }
-             for (let elementId of layer1HiddenElementIds) {
-               expect(getIsElementWithIdVisible(elementId)).toBe(false);
-             }
-
-             expect(checkRequestUICheckFinished).toBe(true);
-             done();
-           });
-         }
-       });
-    });
-
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
-
-    // Step 1: Send an input event to trigger the check call.
-    setTextAndFireInputEvent(queryText, textArea);
+    verifyUILayerChangesForDemoConfig(fixture, done);
   });
 
   it('Test loading icon visibility with setting hideLoadingIconAfterLoad', async(() => {
