@@ -82,6 +82,7 @@ const EMOJI_MAIN_LOADING_ANIMATION_LABEL = "emojiMainLoadingAnimation";
 const FADE_EMOJI_TIME_SECONDS = 0.5;
 const COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.5;
 const GRAY_LOADING_COLOR = '#cccccc';
+const FIRST_GRADIENT_RATIO = 0.9;
 
 @Component({
   selector: 'perspective-status',
@@ -157,7 +158,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private widgetElement: HTMLElement|null = null;
   private layerTextContainer: HTMLElement;
   private interactiveLayerControlsContainer: HTMLElement;
-  private interpolateColors: Function;
   public layersAnimating: boolean = false;
   private layerHeightPixels: number;
   // Animation being used to update the display settings of the demo. This
@@ -181,6 +181,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private pendingPostLoadingStateChangeAnimations: TimelineMax|null = null;
   private isPlayingPostLoadingStateChangeAnimations = false;
   private currentStateChangeAnimationId: number = 0;
+  private gradientColorScale: string[];
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
@@ -385,27 +386,65 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   /**
-   * Updates the gradient color function for the shape based on the
+   * Updates the gradient color scale for the shape based on the
    * scoreThresholds.
    */
   updateGradient() {
+    // The number of points to use to calculate the gradient.
     let gradientPointCount = 100;
     const sliderGradient = new toxicLibsJS.color.ColorGradient();
-    sliderGradient.addColorAt(
-      gradientPointCount * this.scoreThresholds[0],
-      toxicLibsJS.color.TColor.newHex(this.gradientColors[0]));
-    sliderGradient.addColorAt(
-      gradientPointCount * this.scoreThresholds[1],
-      toxicLibsJS.color.TColor.newHex(this.gradientColors[1]));
-    sliderGradient.addColorAt(
-      gradientPointCount * this.scoreThresholds[2],
-      toxicLibsJS.color.TColor.newHex(this.gradientColors[2]));
 
-    let gradientColors =
+    // Points along a gradient of size |gradientPointCount| at which to add
+    // colors. The first part of the gradient is not linear, and instead moves
+    // from color 1 to color 2 with the ratio FIRST_GRADIENT_RATIO.
+    let gradientPoints = [
+      gradientPointCount * (
+        this.scoreThresholds[0] + FIRST_GRADIENT_RATIO * (
+          this.scoreThresholds[1] - this.scoreThresholds[0])),
+      gradientPointCount * this.scoreThresholds[1],
+      gradientPointCount * this.scoreThresholds[2]
+    ];
+
+    // If two gradient colors are added at the same point (which happens when
+    // scoreThresholds[i] === scoreThresholds[i + 1]), the toxiclibsjs library
+    // does not automatically favor the correct color. Add deltas to the
+    // gradient points that favor the color for the higher threshold at that
+    // point.
+    //
+    // Examples:
+    //   [50, 90, 90] => [50, 89, 90]
+    //   [50, 50, 99] => [49, 50, 99]
+    //   [50, 50, 50] => [48, 49, 50]
+    let gradientPointDeltas: number[] = [];
+    for (let i = gradientPoints.length - 1; i >= 0; i--) {
+      if (gradientPoints[i] >= gradientPoints[i + 1]) {
+        gradientPoints[i] -= (gradientPoints[i] - gradientPoints[i + 1] + 1);
+      }
+    }
+
+    for (let i = 0; i < gradientPoints.length; i++) {
+      // If the gradient point is less than 0, it measn scoresThresholds[i] ===
+      // scoreThresholds[i + 1] === 0, in which case we start at the second
+      // higher indexed gradient color.
+      if (gradientPoints[i] >= 0) {
+        sliderGradient.addColorAt(
+          gradientPoints[i],
+          toxicLibsJS.color.TColor.newHex(this.gradientColors[i]));
+      }
+    }
+
+    this.gradientColorScale =
       sliderGradient.calcGradient(0, gradientPointCount).colors
         .map((tColor) => tColor.toRGBCSS());
+  }
 
-    this.interpolateColors = d3.interpolateRgbBasis(gradientColors);
+  private interpolateColors(score: number): string {
+    let scoreLowerIndex = Math.floor(score * 100);
+    let scoreUpperIndex = Math.ceil(score * 100);
+    let interpolatorFn = d3.interpolateRgb(
+      this.gradientColorScale[scoreLowerIndex],
+      this.gradientColorScale[scoreUpperIndex]);
+    return interpolatorFn(score);
   }
 
   private getUpdateWidgetElementAnimation(): TimelineMax {
