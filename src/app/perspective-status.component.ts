@@ -80,8 +80,12 @@ const WIDGET_PADDING_PX = 4;
 const WIDGET_RIGHT_MARGIN_PX = 10;
 const EMOJI_MAIN_LOADING_ANIMATION_LABEL = "emojiMainLoadingAnimation";
 const FADE_EMOJI_TIME_SECONDS = 0.5;
+const EMOJI_BOUNCE_IN_TIME_SECONDS = 1;
 const COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.5;
-const GRAY_LOADING_COLOR = '#cccccc';
+const QUICK_COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.2;
+const NEUTRAL_GRAY_COLOR = '#cccccc';
+const GRAY_COLOR_CIRCLE_LOADING = "rgba(227,229,230,1)";
+const EMOJI_COLOR = "#ffcc4d";
 
 @Component({
   selector: 'perspective-status',
@@ -487,6 +491,23 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       this.widgetElement, FADE_WIDGET_TIME_SECONDS, { opacity: hide ? 0 : 1})
   }
 
+  private getSetIconToNeutralStateAnimation(): TimelineMax {
+    let timeline = new TimelineMax({});
+
+    if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+      timeline.add(this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
+      timeline.add(this.getTransitionToCircleAnimation(
+        SHAPE_MORPH_TIME_SECONDS, NEUTRAL_GRAY_COLOR));
+    } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
+      timeline.add(this.getHideEmojisAnimation());
+      timeline.add(this.getChangeColorAnimation(
+        QUICK_COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, NEUTRAL_GRAY_COLOR));
+    }
+
+    return timeline;
+  }
+
+
   private getChangeLoadingIconXValueAnimation(hide: boolean): TimelineMax {
     let timeline = new TimelineMax({});
     let translateXAnimations: Animation[] = [];
@@ -586,8 +607,14 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       this.feedbackRequestError = true;
     }
     if (this.configuration === Configuration.DEMO_SITE) {
-      this.getTransitionToLayerAnimation(
-        2, LAYER_TRANSITION_TIME_SECONDS).play();
+      let feedbackCompletedTimeline = new TimelineMax({});
+
+      feedbackCompletedTimeline.add([
+        this.getTransitionToLayerAnimation(2, LAYER_TRANSITION_TIME_SECONDS),
+        this.getSetIconToNeutralStateAnimation()
+      ]);
+
+      feedbackCompletedTimeline.play();
     }
   }
 
@@ -604,7 +631,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   resetLayers() {
     this.resetFeedback();
-    this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS).play();
+    let resetAnimationTimeline = new TimelineMax({});
+    resetAnimationTimeline.add(this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
+    resetAnimationTimeline.add(this.getUpdateWidgetStateAnimation());
+    resetAnimationTimeline.play();
   }
 
   submitFeedback(commentIsToxic: boolean) {
@@ -838,14 +868,20 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       }
     });
 
-    showEmojiTimeline.add(this.getChangeOpacityAnimation(
-      emojiElementToShow, FADE_EMOJI_TIME_SECONDS, 1));
+    // Updates the background color to yellow (it could be gray from being in a
+    // neutral state).
+    const resetBackgroundColorAnimation = this.getChangeColorAnimation(
+      QUICK_COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, EMOJI_COLOR);
+
+    showEmojiTimeline.add(this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
+    showEmojiTimeline.add([
+      resetBackgroundColorAnimation,
+      this.getToFullScaleBounceAnimation(EMOJI_BOUNCE_IN_TIME_SECONDS),
+      this.getChangeOpacityAnimation(emojiElementToShow, FADE_EMOJI_TIME_SECONDS, 1)]);
     return showEmojiTimeline;
   }
 
-  /** Loading animations to play before loading starts for emoji-style loading. */
-  getStartAnimationsForEmojiWidgetLoading(): TimelineMax {
-    let loadingStartTimeline = new TimelineMax({});
+  getHideEmojisAnimation(): TimelineMax {
     let hideEmojiTimeline = new TimelineMax({
       onComplete: () => {
         this.ngZone.run(()=> {
@@ -861,35 +897,39 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       this.getChangeOpacityAnimation(
         this.sadEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0)
     ]);
+    return hideEmojiTimeline;
+  }
+
+  /** Loading animations to play before loading starts for emoji-style loading. */
+  getStartAnimationsForEmojiWidgetLoading(): TimelineMax {
+    let loadingStartTimeline = new TimelineMax({});
+    // Reset to the first layer if we're not already there.
+    if (this.currentLayerIndex !== 0) {
+      loadingStartTimeline.add(
+        this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
+    }
     loadingStartTimeline.add(
       this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
-    loadingStartTimeline.add(hideEmojiTimeline);
+    loadingStartTimeline.add([
+      this.getHideEmojisAnimation(),
+      // Change color of the emoji background back to the yellow color before
+      // the main loading (it could be gray from being in a neutral state).
+      this.getChangeColorAnimation(
+        COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, EMOJI_COLOR)
+    ]);
 
     return loadingStartTimeline;
   }
 
   /** Loopable loading animations to play for emoji-style loading. */
-  getEmojiWidgetLoadingAnimation(): TimelineMax {
-    let loadingTimeline = new TimelineMax({});
-    let changeColorBackAndForthTimeline = new TimelineMax({
-      repeat: 1,
-      yoyo: true,
-      onStart: () => {
-        this.ngZone.run(()=> {
-          console.debug('changeColorBackAndForth animation start');
-        });
-      },
-      onComplete: () => {
-        this.ngZone.run(()=> {
-          console.debug('changeColorBackAndForth animation complete');
-        });
-      }
+  getLoopAnimationForEmojiWidgetLoading(): TimelineMax {
+    let shrinkAndFadeTimeline = new TimelineMax({
+      // Apply ease
+      ease: Power3.easeInOut
     });
-    changeColorBackAndForthTimeline.add(
-      this.getChangeColorAnimation(COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS,
-                                   GRAY_LOADING_COLOR));
-    loadingTimeline.add(changeColorBackAndForthTimeline);
-    return loadingTimeline;
+    shrinkAndFadeTimeline.add(
+      this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, true));
+    return shrinkAndFadeTimeline;
   }
 
   /** Loading animations to play when loading finishes for emoji-style loading. */
@@ -936,8 +976,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     startAnimationsGroup2.push(
       this.getToGrayScaleAnimation(GRAYSCALE_ANIMATION_TIME_SECONDS));
     if (this.showScore) {
-      startAnimationsGroup1.push(
-        this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
+      if (this.currentLayerIndex !== 0) {
+        startAnimationsGroup1.push(
+          this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
+      }
 
       startAnimationsGroup2.push(
         this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
@@ -946,6 +988,20 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     startAnimationsTimeline.add(startAnimationsGroup1);
     startAnimationsTimeline.add(startAnimationsGroup2);
     return startAnimationsTimeline;
+  }
+
+  /**
+   * Main loading animation to play on loop for the circle/square/diamond style
+   * loading.
+   */
+  getLoopAnimationsForCircleSquareDiamondWidgetLoading(): TimelineMax {
+    let shrinkAndFadeTimeline = new TimelineMax({
+      // Apply ease.
+      ease: Power3.easeInOut
+    });
+    shrinkAndFadeTimeline.add(
+      this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, true));
+    return shrinkAndFadeTimeline;
   }
 
   /**
@@ -1039,7 +1095,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       });
 
       loadingTimeline.add(this.getStartAnimationsForEmojiWidgetLoading());
-      loadingTimeline.add(this.getEmojiWidgetLoadingAnimation(),
+      loadingTimeline.add(this.getLoopAnimationForEmojiWidgetLoading(),
                           EMOJI_MAIN_LOADING_ANIMATION_LABEL);
       loadingTimeline.play();
     }
@@ -1087,14 +1143,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         this.getStartAnimationsForCircleSquareDiamondWidgetLoading();
       loadingTimeline.add(startAnimationsTimeline, LOADING_START_ANIMATIONS_LABEL);
 
-      // Include shrink in and out animation in a separate timeline so an
-      // ease can be applied.
-      let shrinkAndFadeTimeline = new TimelineMax({
-        ease: Power3.easeInOut
-      });
-      shrinkAndFadeTimeline.add(
-        this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, true));
-      loadingTimeline.add(shrinkAndFadeTimeline, FADE_START_LABEL);
+      loadingTimeline.add(
+        this.getLoopAnimationsForCircleSquareDiamondWidgetLoading(), FADE_START_LABEL);
       loadingTimeline.play();
     }
   }
@@ -1130,7 +1180,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     });
   }
 
-  private getTransitionToCircleAnimation(timeSeconds: number) {
+  private getTransitionToCircleAnimation(timeSeconds: number, endColor?: string) {
     let circleAnimationTimeline = new TimelineMax({
       align: 'start',
       onStart: () => {
@@ -1139,7 +1189,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       },
     });
     circleAnimationTimeline.add([
-      this.getCircleAnimation(timeSeconds / 6),
+      this.getCircleAnimation(timeSeconds / 6, endColor),
       this.getToFullScaleBounceAnimation(timeSeconds)
     ]);
     return circleAnimationTimeline;
@@ -1301,11 +1351,14 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       layer, timeSeconds,{y: startY, opacity: fadeIn ? 0 : 1}, {y: endY, opacity: fadeIn ? 1 : 0});
   }
 
-  private getCircleAnimation(timeSeconds: number) {
+  private getCircleAnimation(timeSeconds: number, endColor?: string) {
+    if (!endColor) {
+      endColor = this.interpolateColors(this.score);
+    }
     return TweenMax.to(this.widgetElement, timeSeconds, {
       rotation: 0,
       borderRadius: "50%",
-      backgroundColor: this.interpolateColors(this.score),
+      backgroundColor: endColor,
       onStart: () => {
         console.debug('Loading animation: Morphing to circle from '
                      + this.getNameFromShape(
@@ -1353,7 +1406,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   private getToGrayScaleAnimation(timeSeconds: number) {
     return TweenMax.to(this.widgetElement, timeSeconds, {
-      backgroundColor: "rgba(227,229,230,1)",
+      backgroundColor: GRAY_COLOR_CIRCLE_LOADING,
     });
   }
 
