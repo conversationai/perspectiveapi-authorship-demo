@@ -80,6 +80,7 @@ const WIDGET_PADDING_PX = 4;
 const WIDGET_RIGHT_MARGIN_PX = 10;
 const EMOJI_MAIN_LOADING_ANIMATION_LABEL = "emojiMainLoadingAnimation";
 const FADE_EMOJI_TIME_SECONDS = 0.5;
+const EMOJI_BOUNCE_IN_TIME_SECONDS = 1;
 const COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.5;
 const QUICK_COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.2;
 const NEUTRAL_GRAY_COLOR = '#cccccc';
@@ -872,9 +873,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     const resetBackgroundColorAnimation = this.getChangeColorAnimation(
       QUICK_COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, EMOJI_COLOR);
 
-    showEmojiTimeline.add(resetBackgroundColorAnimation);
-    showEmojiTimeline.add(this.getChangeOpacityAnimation(
-      emojiElementToShow, FADE_EMOJI_TIME_SECONDS, 1));
+    showEmojiTimeline.add(this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
+    showEmojiTimeline.add([
+      resetBackgroundColorAnimation,
+      this.getToFullScaleBounceAnimation(EMOJI_BOUNCE_IN_TIME_SECONDS),
+      this.getChangeOpacityAnimation(emojiElementToShow, FADE_EMOJI_TIME_SECONDS, 1)]);
     return showEmojiTimeline;
   }
 
@@ -900,48 +903,33 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   /** Loading animations to play before loading starts for emoji-style loading. */
   getStartAnimationsForEmojiWidgetLoading(): TimelineMax {
     let loadingStartTimeline = new TimelineMax({});
-
-    let preLoadingAnimations: Animation[] = [
-      // Change color of the emoji background back to the yellow color before
-      // loading (it could be gray from being in a neutral state).
-      this.getChangeColorAnimation(
-        COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, EMOJI_COLOR)
-    ];
     // Reset to the first layer if we're not already there.
     if (this.currentLayerIndex !== 0) {
-      preLoadingAnimations.push(
+      loadingStartTimeline.add(
         this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
     }
-    loadingStartTimeline.add(preLoadingAnimations);
     loadingStartTimeline.add(
       this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
-    loadingStartTimeline.add(this.getHideEmojisAnimation());
+    loadingStartTimeline.add([
+      this.getHideEmojisAnimation(),
+      // Change color of the emoji background back to the yellow color before
+      // the main loading (it could be gray from being in a neutral state).
+      this.getChangeColorAnimation(
+        COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, EMOJI_COLOR)
+    ]);
 
     return loadingStartTimeline;
   }
 
   /** Loopable loading animations to play for emoji-style loading. */
-  getEmojiWidgetLoadingAnimation(): TimelineMax {
-    let loadingTimeline = new TimelineMax({});
-    let changeColorBackAndForthTimeline = new TimelineMax({
-      repeat: 1,
-      yoyo: true,
-      onStart: () => {
-        this.ngZone.run(()=> {
-          console.debug('changeColorBackAndForth animation start');
-        });
-      },
-      onComplete: () => {
-        this.ngZone.run(()=> {
-          console.debug('changeColorBackAndForth animation complete');
-        });
-      }
+  getLoopAnimationForEmojiWidgetLoading(): TimelineMax {
+    let shrinkAndFadeTimeline = new TimelineMax({
+      // Apply ease
+      ease: Power3.easeInOut
     });
-    changeColorBackAndForthTimeline.add(
-      this.getChangeColorAnimation(COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS,
-                                   NEUTRAL_GRAY_COLOR));
-    loadingTimeline.add(changeColorBackAndForthTimeline);
-    return loadingTimeline;
+    shrinkAndFadeTimeline.add(
+      this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, true));
+    return shrinkAndFadeTimeline;
   }
 
   /** Loading animations to play when loading finishes for emoji-style loading. */
@@ -1000,6 +988,20 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     startAnimationsTimeline.add(startAnimationsGroup1);
     startAnimationsTimeline.add(startAnimationsGroup2);
     return startAnimationsTimeline;
+  }
+
+  /**
+   * Main loading animation to play on loop for the circle/square/diamond style
+   * loading.
+   */
+  getLoopAnimationsForCircleSquareDiamondWidgetLoading(): TimelineMax {
+    let shrinkAndFadeTimeline = new TimelineMax({
+      // Apply ease.
+      ease: Power3.easeInOut
+    });
+    shrinkAndFadeTimeline.add(
+      this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, true));
+    return shrinkAndFadeTimeline;
   }
 
   /**
@@ -1093,7 +1095,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       });
 
       loadingTimeline.add(this.getStartAnimationsForEmojiWidgetLoading());
-      loadingTimeline.add(this.getEmojiWidgetLoadingAnimation(),
+      loadingTimeline.add(this.getLoopAnimationForEmojiWidgetLoading(),
                           EMOJI_MAIN_LOADING_ANIMATION_LABEL);
       loadingTimeline.play();
     }
@@ -1141,14 +1143,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         this.getStartAnimationsForCircleSquareDiamondWidgetLoading();
       loadingTimeline.add(startAnimationsTimeline, LOADING_START_ANIMATIONS_LABEL);
 
-      // Include shrink in and out animation in a separate timeline so an
-      // ease can be applied.
-      let shrinkAndFadeTimeline = new TimelineMax({
-        ease: Power3.easeInOut
-      });
-      shrinkAndFadeTimeline.add(
-        this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, true));
-      loadingTimeline.add(shrinkAndFadeTimeline, FADE_START_LABEL);
+      loadingTimeline.add(
+        this.getLoopAnimationsForCircleSquareDiamondWidgetLoading(), FADE_START_LABEL);
       loadingTimeline.play();
     }
   }
