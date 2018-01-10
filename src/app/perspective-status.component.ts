@@ -389,24 +389,22 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
   }
 
-  /**
-   * Updates the gradient color scale for the shape based on the
-   * scoreThresholds.
-   */
-  updateGradient() {
-    // The number of points to use to calculate the gradient.
-    let gradientPointCount = 100;
-    const sliderGradient = new toxicLibsJS.color.ColorGradient();
+  getFirstGradientRatio(): number {
+    return FIRST_GRADIENT_RATIO;
+  }
 
+  getAdjustedGradientControlPoints(gradientPointCount: number): number[] {
     // Points along a gradient of size |gradientPointCount| at which to add
     // colors. The first part of the gradient is not linear, and instead moves
     // from color 1 to color 2 with the ratio FIRST_GRADIENT_RATIO.
+    // Use Math.floor because control points have to be integers.
     let gradientPoints = [
-      gradientPointCount * (
-        this.scoreThresholds[0] + FIRST_GRADIENT_RATIO * (
-          this.scoreThresholds[1] - this.scoreThresholds[0])),
-      gradientPointCount * this.scoreThresholds[1],
-      gradientPointCount * this.scoreThresholds[2]
+      Math.floor(
+        gradientPointCount * (
+          this.scoreThresholds[0] + FIRST_GRADIENT_RATIO * (
+            this.scoreThresholds[1] - this.scoreThresholds[0]))),
+      Math.floor(gradientPointCount * this.scoreThresholds[1]),
+      Math.floor(gradientPointCount * this.scoreThresholds[2])
     ];
 
     // If two gradient colors are added at the same point (which happens when
@@ -425,6 +423,19 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         gradientPoints[i] -= (gradientPoints[i] - gradientPoints[i + 1] + 1);
       }
     }
+    return gradientPoints;
+  }
+
+  /**
+   * Updates the gradient color scale for the shape based on the
+   * scoreThresholds.
+   */
+  updateGradient() {
+    // The number of points to use to calculate the gradient.
+    let gradientPointCount = 100;
+
+    let gradientPoints = this.getAdjustedGradientControlPoints(gradientPointCount);
+    const sliderGradient = new toxicLibsJS.color.ColorGradient();
 
     for (let i = 0; i < gradientPoints.length; i++) {
       // If the gradient point is less than 0, it measn scoresThresholds[i] ===
@@ -442,13 +453,22 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         .map((tColor) => tColor.toRGBCSS());
   }
 
-  private interpolateColors(score: number): string {
+  interpolateColors(score: number): string {
     let scoreLowerIndex = Math.floor(score * 100);
     let scoreUpperIndex = Math.ceil(score * 100);
+
+    // Prevent overflow if the score >= 1.
+    if (scoreLowerIndex >= this.gradientColorScale.length) {
+      scoreLowerIndex = this.gradientColorScale.length - 1;
+    }
+    if (scoreUpperIndex >= this.gradientColorScale.length) {
+      scoreUpperIndex = this.gradientColorScale.length - 1;
+    }
+
     let interpolatorFn = d3.interpolateRgb(
       this.gradientColorScale[scoreLowerIndex],
       this.gradientColorScale[scoreUpperIndex]);
-    return interpolatorFn(score);
+    return interpolatorFn((score * 100) - scoreLowerIndex);
   }
 
   private getUpdateWidgetElementAnimation(): TimelineMax {

@@ -40,6 +40,7 @@ import { ConvaiChecker, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-che
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import 'gsap';
+import * as d3 from 'd3-color';
 
 @Component({
   selector: 'checker-no-input-id-specified',
@@ -278,6 +279,7 @@ function verifyEmojiIconsInDomWithZeroOpacity() {
   expect(getElementOpactiy('sadEmoji')).toEqual(0);
 }
 
+// TODO(rachelrosen): Refactor this into smaller functions.
 function verifyUILayerChangesForDemoConfig(fixture: any, done: Function) {
   // Note: This test doesn't test error case UI, since that is handled in
   // other tests.
@@ -413,6 +415,32 @@ function verifyUILayerChangesForDemoConfig(fixture: any, done: Function) {
 
   // Step 1: Send an input event to trigger the check call.
   setTextAndFireInputEvent(queryText, textArea);
+}
+
+// Checks that colors are almost equal within some distance margin in the rgb
+// colorspace to account for floating point calculation errors in the gradient
+// calculation.
+function verifyColorsAlmostEqual(color1: string, color2: string, maxDistance = 1) {
+  let rgb1 = d3.rgb(color1);
+  let rgb2 = d3.rgb(color2);
+  expect(Math.sqrt(Math.pow(rgb1.r - rgb2.r, 2)
+                   + Math.pow(rgb1.g - rgb2.g, 2)
+                   + Math.pow(rgb1.b - rgb2.b, 2)))
+    .toBeLessThanOrEqual(maxDistance);
+}
+
+// Checks that the interpolateColors function provides the correct value at
+// gradient control points.
+function verifyInterpolateColorsForControlPointsAndGradientColors(
+  checker: ConvaiChecker, controlPoints: number[],
+  gradientColorsRgb: string[]) {
+  console.log(controlPoints);
+  console.log(gradientColorsRgb);
+  for (let i = 0; i < controlPoints.length; i++) {
+    verifyColorsAlmostEqual(
+      checker.statusWidget.interpolateColors(controlPoints[i] / 100),
+      gradientColorsRgb[i]);
+  }
 }
 
 describe('Convai checker test', () => {
@@ -1878,5 +1906,187 @@ describe('Convai checker test', () => {
 
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
+  }));
+
+  it('Test gradient colors', async(() => {
+    let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
+    let testGradientColorsRgb = [
+      "rgb(130, 224, 170)",
+      "rgb(136, 78, 160)",
+      "rgb(244, 208, 63)"
+    ];
+    let testGradientColorsHex = [
+      "#82E0AA", // RGB 130, 224, 170
+      "#884EA0", // RGB 136, 78, 160
+      "#F4D03F"  // RGB 244, 208, 63
+    ];
+    // Test different low, mid, and high thresholds.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.gradientColors = testGradientColorsHex;
+    demoSettings.scoreThresholds = [0.2, 0.6, 0.8];
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+
+    let checker = fixture.componentInstance.checker;
+
+    let expectedGradientControlPoints = [Math.floor(20 + (checker.statusWidget.getFirstGradientRatio() * 40)), 60, 80];
+    let actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
+    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
+
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
+                            testGradientColorsRgb[0]);
+    verifyInterpolateColorsForControlPointsAndGradientColors(
+      checker, actualGradientControlPoints, testGradientColorsRgb);
+
+    // TODO(rachelrosen): Figure out why ngOnChanges in PerspectiveStatus
+    // doesn't get called between calls to setDemoSettings in this test (and why
+    // it does in the above tests for 'Test loading icon style setting change'.
+    // When this is fixed, remove calls to updateGradient() in this test.
+
+    // Test different low, mid, and high score thresholds with several decimal
+    // places.
+    demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.gradientColors = testGradientColorsHex;
+    demoSettings.scoreThresholds = [0.23456, 0.6789, 0.89990];
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    checker.statusWidget.updateGradient();
+
+    expectedGradientControlPoints = [
+      Math.floor(23.456 + checker.statusWidget.getFirstGradientRatio() * 44.434), 67, 89];
+    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
+    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
+                            testGradientColorsRgb[0]);
+    verifyInterpolateColorsForControlPointsAndGradientColors(
+      checker, actualGradientControlPoints, testGradientColorsRgb);
+
+    // Test equal low and mid score thresholds.
+    demoSettings.scoreThresholds = [0.5, 0.5, 0.8];
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    checker.statusWidget.updateGradient();
+    fixture.detectChanges();
+
+    expectedGradientControlPoints = [49, 50, 80];
+    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
+    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
+                            testGradientColorsRgb[0]);
+    verifyInterpolateColorsForControlPointsAndGradientColors(
+      checker, actualGradientControlPoints, testGradientColorsRgb);
+
+    // Test equal low and mid score thresholds with several decimal places.
+    demoSettings.scoreThresholds = [0.56789, 0.56789, 0.8];
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    checker.statusWidget.updateGradient();
+    fixture.detectChanges();
+
+    expectedGradientControlPoints = [55, 56, 80];
+    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
+    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
+                            testGradientColorsRgb[0]);
+    verifyInterpolateColorsForControlPointsAndGradientColors(
+      checker, actualGradientControlPoints, testGradientColorsRgb);
+
+    // Test equal mid and high score thresholds.
+    demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.gradientColors = testGradientColorsHex;
+    demoSettings.scoreThresholds = [0.5, 0.75, 0.75];
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    checker.statusWidget.updateGradient();
+
+    expectedGradientControlPoints = [Math.floor(50 + checker.statusWidget.getFirstGradientRatio() * 25), 74, 75];
+    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
+    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
+                            testGradientColorsRgb[0]);
+    verifyInterpolateColorsForControlPointsAndGradientColors(
+      checker, actualGradientControlPoints, testGradientColorsRgb);
+
+    // Test equal mid and high score thresholds with several decimal places.
+    demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.gradientColors = testGradientColorsHex;
+    demoSettings.scoreThresholds = [0.5, 0.7511111, 0.7511111];
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    checker.statusWidget.updateGradient();
+
+    expectedGradientControlPoints = [Math.floor(50 + checker.statusWidget.getFirstGradientRatio() * 25.11111), 74, 75];
+    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
+    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
+                            testGradientColorsRgb[0]);
+    verifyInterpolateColorsForControlPointsAndGradientColors(
+      checker, actualGradientControlPoints, testGradientColorsRgb);
+
+    // Test equal low, mid, and high score thresholds.
+    demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.gradientColors = testGradientColorsHex;
+    demoSettings.scoreThresholds = [0.75, 0.75, 0.75];
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    checker.statusWidget.updateGradient();
+
+    expectedGradientControlPoints = [73, 74, 75];
+    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
+    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
+                            testGradientColorsRgb[0]);
+    verifyInterpolateColorsForControlPointsAndGradientColors(
+      checker, actualGradientControlPoints, testGradientColorsRgb);
+
+    // Test almost equal low, mid, and high score thresholds.
+    demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.gradientColors = testGradientColorsHex;
+    demoSettings.scoreThresholds = [0.751, 0.752, 0.753];
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    checker.statusWidget.updateGradient();
+
+    expectedGradientControlPoints = [73, 74, 75];
+    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
+    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
+                            testGradientColorsRgb[0]);
+    verifyInterpolateColorsForControlPointsAndGradientColors(
+      checker, actualGradientControlPoints, testGradientColorsRgb);
+
+    // Test equal low and mid thresholds of 0.
+    demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.gradientColors = testGradientColorsHex;
+    demoSettings.scoreThresholds = [0.0, 0.0, 0.75];
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    checker.statusWidget.updateGradient();
+
+    expectedGradientControlPoints = [-1, 0, 75];
+    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
+    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
+    // First control point is below zero, so the value at 0 is the second color.
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
+                            testGradientColorsRgb[1]);
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(.75),
+                            testGradientColorsRgb[2]);
+
+    // Test equal low, mid, and high thresholds of 0.
+    demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.gradientColors = testGradientColorsHex;
+    demoSettings.scoreThresholds = [0.0, 0.0, 0.0];
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    checker.statusWidget.updateGradient();
+
+    expectedGradientControlPoints = [-2, -1, 0];
+    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
+    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
+    // First and second control points are below zero, so the value at 0 is the third color.
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
+                            testGradientColorsRgb[2]);
+    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(1),
+                            testGradientColorsRgb[2]);
   }));
 });
