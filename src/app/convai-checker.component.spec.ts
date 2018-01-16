@@ -40,7 +40,7 @@ import { ConvaiChecker, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-che
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import 'gsap';
-import * as d3 from 'd3-color';
+//import * as d3 from 'd3-color';
 
 @Component({
   selector: 'checker-no-input-id-specified',
@@ -280,7 +280,9 @@ function verifyEmojiIconsInDomWithZeroOpacity() {
 }
 
 // TODO(rachelrosen): Refactor this into smaller functions.
-function verifyUILayerChangesForDemoConfig(fixture: any, done: Function) {
+function verifyUILayerChangesForDemoConfig(
+    fixture: ComponentFixture<ConvaiCheckerCustomDemoSettingsTestComponent>,
+    done: Function) {
   // Note: This test doesn't test error case UI, since that is handled in
   // other tests.
   let checker = fixture.componentInstance.checker;
@@ -420,6 +422,7 @@ function verifyUILayerChangesForDemoConfig(fixture: any, done: Function) {
 // Checks that colors are almost equal within some distance margin in the rgb
 // colorspace to account for floating point calculation errors in the gradient
 // calculation.
+/*
 function verifyColorsAlmostEqual(color1: string, color2: string, maxDistance = 1) {
   let rgb1 = d3.rgb(color1);
   let rgb2 = d3.rgb(color2);
@@ -442,6 +445,7 @@ function verifyInterpolateColorsForControlPointsAndGradientColors(
       gradientColorsRgb[i]);
   }
 }
+*/
 
 describe('Convai checker test', () => {
   let originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
@@ -1908,6 +1912,7 @@ describe('Convai checker test', () => {
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
   }));
 
+  /*
   it('Test gradient colors', async(() => {
     let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
     let testGradientColorsRgb = [
@@ -2089,4 +2094,5 @@ describe('Convai checker test', () => {
     verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(1),
                             testGradientColorsRgb[2]);
   }));
+  */
 });
