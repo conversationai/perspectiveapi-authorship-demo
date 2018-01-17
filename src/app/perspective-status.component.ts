@@ -474,6 +474,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     if (this.hideLoadingIconForScoresBelowMinThreshold) {
       shouldHide = shouldHide || loadStart || (this.score < this.scoreThresholds[0]);
     }
+    if (this.alwaysHideLoadingIcon) {
+      shouldHide = true;
+    }
 
     return shouldHide;
   }

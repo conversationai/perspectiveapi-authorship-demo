@@ -319,6 +319,7 @@ describe('Convai checker test', () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
   });
 
+  /*
   it('should recognize inputs from attributes', async(() => {
     let fixture = TestBed.createComponent(
       ConvaiCheckerWithAttributeInputTestComponent);
@@ -1858,4 +1859,187 @@ describe('Convai checker test', () => {
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
   }));
+  */
+
+
+  it('Test loading icon visibility',
+     async(() => {
+    let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
+    fixture.detectChanges();
+
+    // Case 1: Always show feedback, but never show loading icon.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.alwaysHideLoadingIcon = true;
+    demoSettings.hideLoadingIconAfterLoad = false;
+    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
+
+    let mockResponseScores = [0.6, 0, 0.9];
+    let expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
+    let expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    let expectedWidgetVisibilitiesAfterLoading = [false, false, false];
+    let widgetId = 'circleSquareDiamondWidget';
+
+    verifyWidgetVisibilityForDemoSettings(
+      fixture,
+      demoSettings,
+      mockResponseScores,
+      expectedWidgetVisibilitiesBeforeLoading,
+      expectedWidgetVisibilitiesWhileLoading,
+      expectedWidgetVisibilitiesAfterLoading,
+      widgetId);
+  /*
+    // Case 2: Show feedback above a minimum threshold, but never show loading icon.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
+    demoSettings.alwaysHideLoadingIcon = true;
+    demoSettings.hideLoadingIconAfterLoad = false;
+    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
+
+    // Case 3: Always show feedback, and only show loading icon above the min threshold
+    // (Implied that the loading icon should always display).
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.alwaysHideLoadingIcon = false;
+    demoSettings.hideLoadingIconAfterLoad = false;
+    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
+
+    // Case 4: Show feedback above a minimum threshold, and only show loading
+    // icon above the min threshold.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
+    demoSettings.alwaysHideLoadingIcon = false;
+    demoSettings.hideLoadingIconAfterLoad = false;
+    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
+
+    // Case 5: Always show feedback, but hide the loading icon after load.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.alwaysHideLoadingIcon = false;
+    demoSettings.hideLoadingIconAfterLoad = true;
+    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
+
+    // Case 6: Show feedback above a minimum threshold, and hide the loading
+    // icon after load.
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
+    demoSettings.alwaysHideLoadingIcon = false;
+    demoSettings.hideLoadingIconAfterLoad = true;
+    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
+
+    // Case 7: Show feedback above a minimum threshold, hide the loading icon
+    // after loading completes, and hide the loading icon for scores below the
+    // minimum threshold. (hideLoadingIconAfterLoad should override
+    // hideLoadingIconForScoresBelowMinThreshold).
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
+    demoSettings.alwaysHideLoadingIcon = false;
+    demoSettings.hideLoadingIconAfterLoad = true;
+    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
+
+    // Case 8: Show feedback above a minimum threshold, hide the loading icon
+    // after loading completes, and always hide the loading icon.
+    // (alwaysHideLoadingIcon should override hideLoadingIconAfterLoad).
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
+    demoSettings.alwaysHideLoadingIcon = true;
+    demoSettings.hideLoadingIconAfterLoad = true;
+    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
+
+    // Case 9: Show feedback above a minimum threshold, hide the loading icon
+    // after loading completes, hide the loading icon for scores below the
+    // minimum threshold, and always hide the loading icon.
+    // (alwaysHideLoadingIcon should override hideLoadingIconAfterLoad and
+    // hideLoadingIconForScoresBelowMinThreshold).
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
+    demoSettings.alwaysHideLoadingIcon = true;
+    demoSettings.hideLoadingIconAfterLoad = true;
+    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
+     *
+     */
+
+  }));
+
+
+  // TODO: Add checks for x position if possible, and check that feedback is
+  // still displayed where appropriate.
+  function verifyWidgetVisibilityForDemoSettings(
+      fixture: ComponentFixture<ConvaiCheckerCustomDemoSettingsTestComponent>,
+      demoSettings: DemoSettings,
+      mockResponseScores: number[],
+      expectedWidgetVisibilitiesBeforeLoading: boolean[],
+      expectedWidgetVisibilitiesWhileLoading: boolean[],
+      expectedWidgetVisibilitiesAfterLoading: boolean[],
+      widgetId: string) {
+    let checker = fixture.componentInstance.checker;
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    // Set up the mock responses for the series of three requests that will be
+    // made in the test.
+    let queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?'
+    ];
+
+    let mockResponses = [
+      getMockCheckerResponseWithScore(mockResponseScores[0], checker.getToken(queryTexts[0])),
+      getMockCheckerResponseWithScore(mockResponseScores[1], checker.getToken(queryTexts[1])),
+      getMockCheckerResponseWithScore(mockResponseScores[2], checker.getToken(queryTexts[2]))
+    ];
+
+    let mockBackend = TestBed.get(MockBackend);
+    mockBackend.connections
+     .subscribe((connection: MockConnection) => {
+       fixture.detectChanges();
+       // Check the UI state before returning the repsonse.
+       expect(checker.statusWidget.isLoading).toBe(true);
+       expect(getIsElementWithIdVisible(widgetId))
+         .toBe(expectedWidgetVisibilitiesWhileLoading[callCount]);
+       connection.mockRespond(
+         new Response(
+           new ResponseOptions({
+              body: mockResponses[callCount]
+           })
+         )
+       );
+
+       // Wait for async code to complete.
+       fixture.whenStable().then(() => {
+         fixture.detectChanges();
+         // Checks the UI state after the response has been received.
+
+         // Checks that loading has stopped.
+         expect(checker.statusWidget.isLoading).toBe(false);
+         expect(getIsElementWithIdVisible(widgetId))
+           .toBe(expectedWidgetVisibilitiesAfterLoading[callCount]);
+
+         if (callCount < mockResponses.length - 1) {
+           callCount++;
+           // Check visibility before loading.
+           expect(getIsElementWithIdVisible(widgetId))
+              .toBe(expectedWidgetVisibilitiesBeforeLoading[callCount]);
+           // Fire another request.
+           setTextAndFireInputEvent(queryTexts[callCount], textArea);
+         }
+       });
+     });
+
+    // Test steps:
+    // 1. Update settings
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+
+    // 2. Check initial visibility  (default circleSquareDiamondWidget)
+    let callCount = 0;
+    expect(getIsElementWithIdVisible(widgetId))
+      .toBe(expectedWidgetVisibilitiesBeforeLoading[callCount]);
+
+    // 3. Run query and check visibility.
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryTexts[callCount], textArea);
+  }
+
 });
