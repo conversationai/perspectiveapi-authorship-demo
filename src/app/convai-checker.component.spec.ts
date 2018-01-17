@@ -279,8 +279,11 @@ function verifyEmojiIconsInDomWithZeroOpacity() {
   expect(getElementOpactiy('sadEmoji')).toEqual(0);
 }
 
+// Checks that the transitions between UI layers (score information, feedback
+// prompt, and feedback thanks) behave correctly during user interaction with
+// the demo.
 // TODO(rachelrosen): Refactor this into smaller functions.
-function verifyUILayerChangesForDemoConfig(
+function verifyLayerTransitionsWorkForDemoSiteConfig(
     fixture: ComponentFixture<ConvaiCheckerCustomDemoSettingsTestComponent>,
     done: Function) {
   // Note: This test doesn't test error case UI, since that is handled in
@@ -1392,7 +1395,7 @@ describe('Convai checker test', () => {
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
 
-    verifyUILayerChangesForDemoConfig(fixture, done);
+    verifyLayerTransitionsWorkForDemoSiteConfig(fixture, done);
   });
 
 
@@ -1401,7 +1404,7 @@ describe('Convai checker test', () => {
     let fixture = TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
     fixture.detectChanges();
 
-    verifyUILayerChangesForDemoConfig(fixture, done);
+    verifyLayerTransitionsWorkForDemoSiteConfig(fixture, done);
   });
 
   it('Test loading icon visibility with setting hideLoadingIconAfterLoad', async(() => {

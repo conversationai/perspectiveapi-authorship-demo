@@ -454,16 +454,12 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   interpolateColors(score: number): string {
-    let scoreLowerIndex = Math.floor(score * 100);
-    let scoreUpperIndex = Math.ceil(score * 100);
-
-    // Prevent overflow if the score >= 1.
-    if (scoreLowerIndex >= this.gradientColorScale.length) {
-      scoreLowerIndex = this.gradientColorScale.length - 1;
-    }
-    if (scoreUpperIndex >= this.gradientColorScale.length) {
-      scoreUpperIndex = this.gradientColorScale.length - 1;
-    }
+    // Find the two color indices to interpolate between, and prevent overflow
+    // if the score >= 1 by just using the color at the last index.
+    let scoreLowerIndex = Math.min(
+      Math.floor(score * 100), this.gradientColorScale.length - 1);
+    let scoreUpperIndex = Math.min(
+      Math.ceil(score * 100), this.gradientColorScale.length - 1);
 
     let interpolatorFn = d3.interpolateRgb(
       this.gradientColorScale[scoreLowerIndex],
