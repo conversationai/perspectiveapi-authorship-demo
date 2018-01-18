@@ -31,10 +31,11 @@
     "@types/lodash": "^4.14.85",
     "concurrently": "^3.4.0",
     "core-js": "^2.4.1",
+    "d3-color": "^1.0.3",
     "d3-interpolate": "^1.1.4",
     "gsap": "^1.19.1",
     "hammerjs": "^2.0.8",
-    "jasmine": "^2.8.0",
+    "jasmine": "~2.8.0",
     "js-sha256": "^0.5.0",
     "lodash": "^4.17.4",
     "ngx-color-picker": "^4.3.0",
@@ -45,7 +46,7 @@
     "zone.js": "^0.8.5"
   },
   "devDependencies": {
-    "@angular/cli": "^1.0.0",
+    "@angular/cli": "~1.5.5",
     "@angular/compiler-cli": "^5.0.1",
     "@types/d3-interpolate": "^1.1.5",
     "@types/gapi": "^0.0.31",
