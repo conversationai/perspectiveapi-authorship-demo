@@ -162,13 +162,6 @@ let getIsElementWithIdVisible = function(id: string): boolean {
       && getElementOpacity(id) > 0;
 }
 
-let getIsElementWithIdPresentButWithZeroOpacity = function(id: string): boolean {
-  let element = document.getElementById(id);
-  return element != null && element.offsetWidth > 0 && element.offsetHeight > 0
-      && window.getComputedStyle(element).display !== 'none'
-      && parseInt(window.getComputedStyle(element).getPropertyValue("opacity"), 10) === 0;
-}
-
 let getElementXTranslation = function(id: string): number|null {
   let element = document.getElementById(id);
   if (!element) {
