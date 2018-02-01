@@ -490,6 +490,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     if (this.hideLoadingIconForScoresBelowMinThreshold) {
       shouldHide = shouldHide || loadStart || (this.score < this.scoreThresholds[0]);
     }
+    if (this.alwaysHideLoadingIcon) {
+      shouldHide = true;
+    }
 
     return shouldHide;
   }
@@ -712,6 +715,17 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       return Shape.SQUARE;
     } else {
       return Shape.CIRCLE;
+    }
+  }
+
+  // Gets the emoji corresponding to the specified score.
+  getEmojiForScore(score: number): Emoji {
+    if (score > this.scoreThresholds[2]) {
+      return Emoji.SAD;
+    } else if (score > this.scoreThresholds[1]) {
+      return Emoji.NEUTRAL;
+    } else {
+      return Emoji.SMILE;
     }
   }
 
@@ -963,6 +977,12 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       loadingStartTimeline.add(
         this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
     }
+    // Update visibility of the emoji icon before starting; it could have
+    // disappeared due to certain settings, and in some of these cases it
+    // needs to reappear before loading animation begins.
+    loadingStartTimeline.add(
+      this.getUpdateStatusWidgetVisibilityAnimation(true));
+
     loadingStartTimeline.add(
       this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
     loadingStartTimeline.add([
@@ -988,20 +1008,53 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   /** Loading animations to play when loading finishes for emoji-style loading. */
-  getEndAnimationsForEmojiWidgetLoading(): TimelineMax {
+  getEndAnimationsForEmojiWidgetLoading(loadingTimeline: TimelineMax): TimelineMax {
     let loadingEndTimeline = new TimelineMax({
       onComplete: () => {
         this.ngZone.run(()=> {
           console.debug('Setting this.isPlayingLoadingAnimation = false (emoji)');
           this.isPlayingLoadingAnimation = false;
+          loadingTimeline.clear();
+          this.scoreChangeAnimationCompleted.emit();
+          if (this.isLoading) {
+            // If we finish the end loading animation and we're supposed
+            // to be loading again, restart the loading animation!
+            console.debug('Restarting loading from ending animation completion');
+            this.setLoading(true);
+          } else if (this.currentEmoji !== this.getEmojiForScore(this.score)) {
+            // The score has changed between now and when the animation
+            // started (the emoji is no longer valid).
+            console.debug(
+              'Load ending animation completed, found an out of date shape');
+            this.notifyScoreChange(this.score);
+          }
         });
       }
     });
-    loadingEndTimeline.add(this.getShowEmojiAnimation());
-    loadingEndTimeline.add(
+    let scoreCompletedAnimations: Animation[] = [];
+    scoreCompletedAnimations.push(this.getShowEmojiAnimation());
+    scoreCompletedAnimations.push(
       this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, false, 0));
+
+    // If we're revealing the status widget, play the reveal animation
+    // before the update emoji animation.
+    if (!this.getShouldHideStatusWidget(false)) {
+      loadingEndTimeline.add(
+        this.getUpdateStatusWidgetVisibilityAnimation(false));
+    }
+
+    loadingEndTimeline.add(scoreCompletedAnimations);
+
+    // If we're hiding the status widget, play the hide widget
+    // animation after the update emoji animation.
+    if (this.getShouldHideStatusWidget(false)) {
+      loadingEndTimeline.add(
+        this.getUpdateStatusWidgetVisibilityAnimation(false));
+    }
+
     if (this.pendingPostLoadingStateChangeAnimations) {
-      loadingEndTimeline.add(this.pendingPostLoadingStateChangeAnimations);
+      loadingEndTimeline.add(
+        this.pendingPostLoadingStateChangeAnimations);
     }
     return loadingEndTimeline;
   }
@@ -1143,7 +1196,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
               console.debug('Restarting main emoji loading animation');
               loadingTimeline.seek(EMOJI_MAIN_LOADING_ANIMATION_LABEL);
             } else {
-              this.getEndAnimationsForEmojiWidgetLoading().play();
+              this.getEndAnimationsForEmojiWidgetLoading(loadingTimeline).play();
             }
           });
         }
