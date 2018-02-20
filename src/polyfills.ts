@@ -67,3 +67,7 @@ import 'hammerjs/hammer';
  * Needed for: All but Chrome, Firefox, Edge, IE11 and Safari 10
  */
 // import 'intl';  // Run `npm install --save intl`.
+
+// Needed on browsers with native `customElements`.
+// (E.g.: Chrome, Opera)
+import '@webcomponents/custom-elements/src/native-shim';
