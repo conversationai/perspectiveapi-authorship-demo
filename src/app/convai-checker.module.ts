@@ -6,64 +6,35 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import {
   MatButtonModule,
-  MatCheckboxModule,
   MatInputModule,
-  MatSlideToggleModule,
-  MatSliderModule,
 } from '@angular/material';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSelectModule } from '@angular/material/select';
-import { RouterModule, Routes } from '@angular/router';
-import { ColorPickerModule } from 'ngx-color-picker';
 
 import { PerspectiveStatus } from './perspective-status.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { ConvaiChecker } from './convai-checker.component';
-import { CustomizableDemoForm } from './customizable-demo-form.component';
-import { WrapperApp } from './app.component';
-
-const appRoutes: Routes = [
-  {
-    path: 'customize',
-    component: CustomizableDemoForm
-  },
-  {
-    path: 'customize/:uiSettings/:encodedDemoSettings',
-    component: CustomizableDemoForm
-  },
-  {
-    path: '',
-    redirectTo: '/customize',
-    pathMatch: 'full'
-  },
-];
-
 
 @NgModule({
   declarations: [
     ConvaiChecker,
-    CustomizableDemoForm,
     PerspectiveStatus,
-    WrapperApp
+  ],
+  exports: [
+    ConvaiChecker,
+    PerspectiveStatus
   ],
   imports: [
     BrowserAnimationsModule,
     BrowserModule,
-    ColorPickerModule,
     FormsModule,
     HttpModule,
     MatButtonModule,
-    MatCheckboxModule,
-    MatExpansionModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatSlideToggleModule,
-    MatSliderModule,
-    RouterModule.forRoot(appRoutes, {useHash: true})
   ],
   providers: [PerspectiveApiService, {provide: APP_BASE_HREF, useValue: '/'},],
-  bootstrap: [WrapperApp]
+  bootstrap: [ConvaiChecker]
 })
-export class AppModule { }
+export class ConvaiCheckerModule { }
