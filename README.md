@@ -125,6 +125,8 @@ see it, do the following:
 2. Build and run as normal.
 3. Open http://localhost:8080/index_with_elements.html.
 
+TODO(rachelrosen): Document and demo how to add convai-checker webcomponent outside of the angular-cli build using the imported compiled javascript.
+
 ## Notes
 
 This is example code to help experimentation with the Perspective API; it is not an official Google product.
