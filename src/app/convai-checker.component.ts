@@ -55,7 +55,7 @@ export interface DemoSettings {
   gradientColors: string[];
 
   // Optional. API key to use when using the Gapi endpoint. Should be empty or
-  // omittedwhen not using the Gapi endpoint.
+  // omitted when not using the Gapi endpoint.
   apiKey?: string;
 
   // Whether to use the Gapi endpoint.
@@ -135,6 +135,11 @@ export class ConvaiChecker implements OnInit, OnChanges {
   @Input() serverUrl: string;
   @Input() fontSize: number = 12;
   @Input() demoSettings: DemoSettings = DEFAULT_DEMO_SETTINGS;
+  // A JSON string representation of the DemoSettings. Expected to be static
+  // over the course of the component's lifecycle, and should only be used from
+  // a non-Angular context (when convai-checker is being used as a
+  // webcomponent). If working from an Angular context, use |demoSettings|.
+  @Input() demoSettingsJson: string|null = null;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() scoreChanged: EventEmitter<number> = new EventEmitter<number>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
@@ -183,6 +188,10 @@ export class ConvaiChecker implements OnInit, OnChanges {
 
     if (this.apiKey) {
       this.analyzeApiService.initGapiClient(this.apiKey);
+    }
+
+    if (this.demoSettingsJson) {
+      this.demoSettings = JSON.parse(this.demoSettingsJson);
     }
 
     this.sessionId = window.localStorage.getItem(LOCAL_STORAGE_SESSION_ID_KEY);
