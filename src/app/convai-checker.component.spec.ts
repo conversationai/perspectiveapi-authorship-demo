@@ -155,6 +155,45 @@ class ConvaiCheckerCustomDemoSettingsTestComponent implements OnInit {
   }
 }
 
+/** Test component with JSON DemoSettings. */
+@Component({
+  selector: 'checker-json-demo-settings',
+  template: `
+        <convai-checker
+           id="checker"
+           [inputId]="checkerInputId"
+           [serverUrl]="serverUrl"
+           [demoSettingsJson]="demoSettingsJson">
+          Loading...
+        </convai-checker>
+        <textarea id="checkerTextarea"
+                  placeholder="type something here and see how the dot above reacts.">
+        </textarea>`,
+})
+class ConvaiCheckerJsonDemoSettingsTestComponent implements OnInit {
+  @ViewChild(ConvaiChecker) checker: ConvaiChecker;
+  textArea: HTMLTextAreaElement;
+  checkerInputId: string = 'checkerTextarea';
+  serverUrl: string = 'test-url';
+  demoSettingsJson: string = '';
+
+  ngOnInit() {
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0.2, 0.5, 0.8];
+    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+    demoSettings.feedbackText = ['foo', 'bar', 'test'];
+    this.demoSettingsJson = JSON.stringify(demoSettings);
+    this.textArea = document.getElementById('checkerTextarea') as HTMLTextAreaElement;
+  }
+
+  // Allows unit tests access to the custom demo settings specified by this
+  // test class.
+  getDemoSettingsJson() {
+    return this.demoSettingsJson;
+  }
+}
+
+
 let getIsElementWithIdVisible = function(id: string): boolean {
   let element = document.getElementById(id);
   return element != null && element.offsetWidth > 0 && element.offsetHeight > 0
@@ -603,6 +642,7 @@ describe('Convai checker test', () => {
         ConvaiCheckerCustomDemoSettingsTestComponent,
         ConvaiCheckerWithAttributeInputTestComponent,
         ConvaiCheckerCustomDemoSettingsTestComponent,
+        ConvaiCheckerJsonDemoSettingsTestComponent,
         ConvaiChecker
       ],
       // Configure mock HTTP
@@ -2808,5 +2848,15 @@ describe('Convai checker test', () => {
                             testGradientColorsRgb[2]);
     verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(1),
                             testGradientColorsRgb[2]);
+  }));
+
+  it('Test JSON DemoSettings', async(() => {
+    let fixture = TestBed.createComponent(ConvaiCheckerJsonDemoSettingsTestComponent);
+    fixture.detectChanges();
+    let checker = fixture.componentInstance.checker;
+
+    let expectedDemoSettings = JSON.parse(fixture.componentInstance.getDemoSettingsJson());
+    expect(checker.demoSettings).toEqual(expectedDemoSettings);
+    expect(checker.demoSettings).not.toEqual(getCopyOfDefaultDemoSettings());
   }));
 });
