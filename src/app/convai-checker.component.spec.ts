@@ -2857,6 +2857,6 @@ describe('Convai checker test', () => {
 
     let expectedDemoSettings = JSON.parse(fixture.componentInstance.getDemoSettingsJson());
     expect(checker.demoSettings).toEqual(expectedDemoSettings);
-    expect(checker.demoSettings).not.toEqual(getCopyOfDefaultDemoSettings);
+    expect(checker.demoSettings).not.toEqual(getCopyOfDefaultDemoSettings());
   }));
 });
