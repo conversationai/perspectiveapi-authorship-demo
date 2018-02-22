@@ -4,6 +4,10 @@ body {
  font-family: 'Roboto', sans-serif;
 }
 
+#jsonPanel {
+  margin-top: 20px;
+}
+
 .colorPicker {
   display: inline-block;
   width: 40px;

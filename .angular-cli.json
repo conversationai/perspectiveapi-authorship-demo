@@ -11,8 +11,8 @@
         "assets",
         "favicon.ico"
       ],
-      "index": "index_with_elements.html",
-      "main": "main_with_elements.ts",
+      "index": "index.html",
+      "main": "main.ts",
       "polyfills": "polyfills.ts",
       "test": "test.ts",
       "tsconfig": "tsconfig.app.json",
