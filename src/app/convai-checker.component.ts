@@ -61,6 +61,9 @@ export interface DemoSettings {
   // Whether to use the Gapi endpoint.
   useGapi: boolean;
 
+  // Whether to use the plugin endpoint.
+  usePluginEndpoint: boolean;
+
   // Whether to show the model score in the UI.
   showPercentage: boolean;
 
@@ -104,6 +107,7 @@ export const DEFAULT_DEMO_SETTINGS = {
   gradientColors: ["#25C1F9", "#7C4DFF", "#D400F9"],
   apiKey: '',
   useGapi: false,
+  usePluginEndpoint: false,
   showPercentage: true,
   showMoreInfoLink: true,
   feedbackText: [
@@ -140,6 +144,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   // a non-Angular context (when convai-checker is being used as a
   // webcomponent). If working from an Angular context, use |demoSettings|.
   @Input() demoSettingsJson: string|null = null;
+  @Input() pluginEndpointUrl = 'http://perspectiveapi.com';
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() scoreChanged: EventEmitter<number> = new EventEmitter<number>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
@@ -355,7 +360,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
           text,
           this.sessionId,
           this.demoSettings.useGapi /* makeDirectApiCall */,
-          this.serverUrl)
+          this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
         .finally(() => {
           console.log('Request done');
           let newScore = this.getMaxScore(this.analyzeCommentResponse);

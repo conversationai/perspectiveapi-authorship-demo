@@ -170,6 +170,10 @@ export class CustomizableDemoForm implements OnInit {
   // Whether to use gapi to make direct API calls instead of going through the
   // server. Requires an API key.
   useGapi: boolean = false;
+  // Whether to use the endpoint for the plugin.
+  usePluginEndpoint = false;
+  // URL to use for the plugin endpoint (for debugging and local tests).
+  pluginEndpointUrl = '';
   // API key to use when making gapi calls.
   apiKey: string = '';
   // Whether to show the percentage next to the feedback text.
@@ -339,7 +343,8 @@ export class CustomizableDemoForm implements OnInit {
         this.hideLoadingIconForScoresBelowMinThreshold,
       userFeedbackPromptText: this.userFeedbackPromptText,
       alwaysHideLoadingIcon: this.alwaysHideLoadingIcon,
-      loadingIconStyle: this.selectedLoadingIconStyle
+      loadingIconStyle: this.selectedLoadingIconStyle,
+      usePluginEndpoint: this.usePluginEndpoint
     }));
   }
 
