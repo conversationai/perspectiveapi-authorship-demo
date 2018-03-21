@@ -18,14 +18,24 @@ export interface AnalyzeCommentRequest {
   context?: Context;
   languages?: string[];
   requested_attributes: RequestedAttributes;
-  do_not_log?: boolean;
+  do_not_store?: boolean;
   client_token?: string;
   session_id?: string;
+  community_id?: string;
+  span_annotations?: boolean;
 }
 
 export interface RequestedAttributes {
-  // TODO(jetpack): add AttributeParameters at some point.
-  [key: string]: any;
+  [key: string]: AttributeParameters;
+}
+
+export interface AttributeParameters {
+  score_type?: string;
+  score_threshold?: FloatValue;
+}
+
+export interface FloatValue {
+  value: number;
 }
 
 export interface AnalyzeCommentResponse {
@@ -48,6 +58,13 @@ export interface SuggestCommentScoreRequest {
 export interface AnalyzeCommentData {
   comment: string;
   sessionId: string;
+  languages?: string[];
+  doNotStore?: boolean;
+  clientToken?: string;
+  communityId?: string;
+  spanAnnotations?: boolean;
+  parentComment?: string;
+  articleText?: string;
 }
 
 // Holds data needed for building a |SuggestCommentScoreRequest|.
@@ -71,7 +88,13 @@ export interface TextEntry {
 }
 
 export interface Context {
-  entries: TextEntry[];
+  entries?: TextEntry[];
+  article_and_parent_comment?: ArticleAndParentComment;
+}
+
+export interface ArticleAndParentComment {
+  article: TextEntry;
+  parent_comment?: TextEntry;
 }
 
 export interface SpanScores {

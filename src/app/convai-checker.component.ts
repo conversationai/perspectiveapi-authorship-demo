@@ -100,6 +100,9 @@ export interface DemoSettings {
 
   // The string to use to prompt users to submit feedback.
   userFeedbackPromptText: string;
+
+  // An id for the community using the checker.
+  communityId?: string;
 }
 
 export const DEFAULT_DEMO_SETTINGS = {
@@ -359,6 +362,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
       this.analyzeApiService.checkText(
           text,
           this.sessionId,
+          this.demoSettings.communityId,
           this.demoSettings.useGapi /* makeDirectApiCall */,
           this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
         .finally(() => {

@@ -189,6 +189,8 @@ export class CustomizableDemoForm implements OnInit {
   hideLoadingIconForScoresBelowMinThreshold = false;
   // Whether to always hide the loading icon.
   alwaysHideLoadingIcon = false;
+  // The id of the community using the widget.
+  communityId = '';
 
   demoSettings: DemoSettings|null = null;
   uiSettings: UISettings|null = null;
@@ -344,6 +346,7 @@ export class CustomizableDemoForm implements OnInit {
       userFeedbackPromptText: this.userFeedbackPromptText,
       alwaysHideLoadingIcon: this.alwaysHideLoadingIcon,
       loadingIconStyle: this.selectedLoadingIconStyle,
+      communityId: this.communityId,
       usePluginEndpoint: this.usePluginEndpoint
     }));
   }
