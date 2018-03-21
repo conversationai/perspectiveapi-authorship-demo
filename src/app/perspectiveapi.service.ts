@@ -60,8 +60,9 @@ export class PerspectiveApiService {
       })});
   }
 
-  checkText(text: string, sessionId: string, makeDirectApiCall: boolean,
-            serverUrl?: string): Observable<AnalyzeCommentResponse> {
+  checkText(text: string, sessionId: string, communityId: string,
+            makeDirectApiCall: boolean, serverUrl?: string)
+              : Observable<AnalyzeCommentResponse> {
     if (makeDirectApiCall && this.gapiClient === null) {
       console.error('No gapi client found; call initGapiClient with your API'
                     + 'key to make a direct API call. Using server instead');
@@ -77,6 +78,7 @@ export class PerspectiveApiService {
         comment: {text: text},
         requested_attributes: requestedAttributes,
         session_id: sessionId,
+        community_id: communityId
       };
       return Observable.fromPromise(
          this.gapiClient.commentanalyzer.comments.analyze(request))
@@ -93,7 +95,8 @@ export class PerspectiveApiService {
 
       let data: AnalyzeCommentData = {
         comment: text,
-        sessionId: sessionId
+        sessionId: sessionId,
+        communityId: communityId,
       };
       return this.http.post(
         serverUrl + '/check', JSON.stringify(data), {headers})
