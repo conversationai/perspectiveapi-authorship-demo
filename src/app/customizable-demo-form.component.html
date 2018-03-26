@@ -208,6 +208,20 @@
                placeholder="API key"/>
       </mat-input-container>
     </div>
+  
+    <div class="setting">
+      <mat-slide-toggle [(ngModel)]="usePluginEndpoint"
+                       (change)="onSettingsChanged()">Use plugin endpoint
+      </mat-slide-toggle>
+      <mat-input-container>
+        <input matInput
+               [disabled]="!usePluginEndpoint"
+               [(ngModel)]="pluginEndpointUrl"
+               (input)="onSettingsChanged()"
+               placeholder="Plugin server URL"/>
+      </mat-input-container>
+    </div>
+
 
     <div class="setting">
       <mat-input-container>
@@ -234,6 +248,7 @@
 <convai-checker
    [inputId]="'checkerTextarea'"
    [demoSettings]="demoSettings"
+   [pluginEndpointUrl]="pluginEndpointUrl"
    serverUrl="">
   Loading...
 </convai-checker>
