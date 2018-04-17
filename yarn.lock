@@ -175,9 +175,9 @@
   dependencies:
     tslib "^1.7.1"
 
-"@conversationai/perspectiveapi-simple-server@^0.1.2":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@conversationai/perspectiveapi-simple-server/-/perspectiveapi-simple-server-0.1.2.tgz#78b57c91d8187ba47fc8d3dff06d65e12348a582"
+"@conversationai/perspectiveapi-simple-server@^0.1.3":
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@conversationai/perspectiveapi-simple-server/-/perspectiveapi-simple-server-0.1.3.tgz#6eb511f5a745ea7a1a8a479e73366b86bbf897b3"
   dependencies:
     "@google-cloud/debug-agent" "^1.0.0"
     "@google-cloud/logging" "^1.0.0"
@@ -1434,7 +1434,7 @@ commander@2.11.0, commander@^2.9.0:
   version "2.11.0"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.11.0.tgz#157152fd1e7a6c8d98a5b715cf376df928004563"
 
-commander@2.14.x, commander@~2.14.1:
+commander@2.14.x, commander@^2.9.0, commander@~2.14.1:
   version "2.14.1"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.14.1.tgz#2235123e37af8ca3c65df45b026dbd357b01b9aa"
 

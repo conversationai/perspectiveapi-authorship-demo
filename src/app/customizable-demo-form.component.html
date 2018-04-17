@@ -217,6 +217,15 @@
                placeholder="Feedback prompt"/>
       </mat-input-container>
     </div>
+
+    <div class="communityId">
+      <mat-input-container>
+        <input matInput
+               [(ngModel)]="communityId"
+               (input)="onSettingsChanged()"
+               placeholder="Community id"/>
+      </mat-input-container>
+    </div>
   </div>
 </mat-expansion-panel>
 
