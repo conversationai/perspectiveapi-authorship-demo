@@ -54,7 +54,7 @@
     "@types/gapi": "^0.0.31",
     "@types/greensock": "^1.15.32",
     "@types/jasmine": "~2.8.2",
-    "@types/node": "~9.4.7",
+    "@types/node": "~9.8.0",
     "chai": "^4.1.2",
     "codelyzer": "~4.0.1",
     "jasmine-core": "~2.8.0",
