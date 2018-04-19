@@ -182,7 +182,7 @@
                        (change)="onSettingsChanged()">Hide loading icon after load
       </mat-slide-toggle>
     </div>
-  
+
     <div class="setting">
       <mat-slide-toggle [(ngModel)]="alwaysHideLoadingIcon"
         (change)="onSettingsChanged()">Always hide the loading icon.
@@ -240,6 +240,15 @@
                placeholder="Community id"/>
       </mat-input-container>
     </div>
+  </div>
+</mat-expansion-panel>
+
+<mat-expansion-panel id="jsonPanel">
+  <mat-expansion-panel-header>
+    Copy/pasteable JSON Demo Settings
+  </mat-expansion-panel-header>
+  <div>
+    {{demoSettingsJson}}
   </div>
 </mat-expansion-panel>
 

@@ -114,6 +114,19 @@ Before running the tests make sure you are serving the app via `ng serve`.
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
 
+## Using convai-checker as a webcomponent
+
+Angular Elements is a new experimental API that allows exporting Angular
+components as webcomponents. This repo includes a demo of this functionality
+with the convai-checker component. To
+see it, do the following:
+1. Go into `.angular-cli.json` and replace `main.ts` with
+`main_with_elements.ts` under the field "main" and `index.html` with `index_with_elements.html` under the field "index".
+2. Build and run as normal.
+3. Open http://localhost:8080/index_with_elements.html.
+
+TODO(rachelrosen): Document and demo how to add convai-checker webcomponent outside of the angular-cli build using the imported compiled javascript.
+
 ## Notes
 
 This is example code to help experimentation with the Perspective API; it is not an official Google product.

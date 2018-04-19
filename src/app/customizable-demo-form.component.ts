@@ -193,6 +193,7 @@ export class CustomizableDemoForm implements OnInit {
   communityId = '';
 
   demoSettings: DemoSettings|null = null;
+  demoSettingsJson: string = '';
   uiSettings: UISettings|null = null;
 
   constructor(private route: ActivatedRoute, private router: Router) {}
@@ -264,6 +265,7 @@ export class CustomizableDemoForm implements OnInit {
       }
     });
     this.demoSettings = this.getDemoSettings();
+    this.demoSettingsJson = JSON.stringify(this.demoSettings);
     this.uiSettings = this.getUISettings();
     console.debug('Updating this.demoSettings (init)', this.demoSettings);
   }
@@ -306,6 +308,7 @@ export class CustomizableDemoForm implements OnInit {
       console.debug('Updating this.demoSettings', newDemoSettings);
       console.debug('Updating this.uiSettings', newUISettings);
       this.demoSettings = newDemoSettings;
+      this.demoSettingsJson = JSON.stringify(this.demoSettings);
       this.uiSettings = newUISettings;
 
       const encodedUISettings =
