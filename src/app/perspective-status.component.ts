@@ -30,7 +30,7 @@ import {
 import * as d3 from 'd3-interpolate';
 import * as toxicLibsJS from 'toxiclibsjs';
 import {Animation, Elastic, Power3, TimelineMax, TweenMax} from 'gsap';
-//import twemoji from 'twemoji';
+import twemoji from 'twemoji';
 
 export enum Shape {
   CIRCLE,
@@ -636,8 +636,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   // Wrapper for twemoji.parse() to use in data binding. Parses text, replacing
   // any emojis with <img> tags. All other text remains the same.
   parseEmojis(text: string) {
-    return text;
-    //return twemoji.parse(text);
+    return twemoji.parse(text);
   }
 
   getFeedbackTextForScore(score: number): string {
