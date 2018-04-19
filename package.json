@@ -10,7 +10,7 @@
     "setup": "mkdir -p build/config/ && rsync --ignore-existing config/server_config.template.json build/config/server_config.json",
     "build": "npm run build:prod",
     "build:dev": "npm run setup && ng build",
-    "build:prod": "npm run setup && ng build -prod --env=prod",
+    "build:prod": "npm run setup && ng build --env=prod -prod -aot=false -extract-css=false -vc=false",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
