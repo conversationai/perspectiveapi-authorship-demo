@@ -29,6 +29,7 @@ import {
 } from '@angular/core';
 import * as d3 from 'd3-interpolate';
 import * as toxicLibsJS from 'toxiclibsjs';
+import {Animation, Elastic, Power3, TimelineMax, TweenMax} from 'gsap';
 import twemoji from 'twemoji';
 
 export enum Shape {
@@ -1194,7 +1195,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
             console.debug('Completing timeline (emoji)');
             if (this.isLoading) {
               console.debug('Restarting main emoji loading animation');
-              loadingTimeline.seek(EMOJI_MAIN_LOADING_ANIMATION_LABEL);
+              loadingTimeline.seek(EMOJI_MAIN_LOADING_ANIMATION_LABEL, true);
             } else {
               this.getEndAnimationsForEmojiWidgetLoading(loadingTimeline).play();
             }
@@ -1235,7 +1236,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
               // not ever getting triggered in the existing logs and might not
               // be possible to hit now, but could become an issue later.
               console.debug('Restarting loading to fade animation.');
-              loadingTimeline.seek(FADE_START_LABEL);
+              loadingTimeline.seek(FADE_START_LABEL, true);
             } else {
               console.debug('Loading complete');
               console.debug('hasScore:', this.hasScore);
