@@ -372,9 +372,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
           if (this.shouldHideStatusWidget) {
             this.widgetElement.style.transform =
               'matrix(1,0,0,1,' + (-1 * (this.indicatorWidth + WIDGET_PADDING_PX + WIDGET_RIGHT_MARGIN_PX)) + ',0)';
-            if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
-              this.widgetElement.style.opacity = '0';
-            }
           }
           console.debug('Setting loadingIconStyleChanged to false');
           this.loadingIconStyleChanged = false;
