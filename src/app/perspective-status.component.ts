@@ -209,7 +209,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   ngAfterViewInit() {
     this.widgetReady = Promise.resolve().then(() => {
-      this.getUpdateWidgetElementAnimation().play();
+      this.updateWidgetElement();
+      this.getUpdateWidgetStateAnimation().play();
     });
   }
 
@@ -347,25 +348,38 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
             console.debug('Setting alwaysHideLoadingIconChanged to false');
             this.alwaysHideLoadingIconChanged = false;
           }
-          // Call getUpdateWidgetStateAnimation to update the visibility and x
-          // position of all elements.
-          if (this.isLoading) {
-            this.pendingPostLoadingStateChangeAnimations.add(
-              this.getUpdateWidgetStateAnimation());
-          } else {
-            afterChangesTimeline.add(
-              this.getUpdateWidgetStateAnimation());
+
+          // Don't do anything if the loadingIconStyle has also changed, since
+          // that animation will override animations to do here.
+          if (!this.loadingIconStyleChanged) {
+            // Call getUpdateWidgetStateAnimation to update the visibility and x
+            // position of all elements.
+            if (this.isLoading) {
+              this.pendingPostLoadingStateChangeAnimations.add(
+                this.getUpdateWidgetStateAnimation());
+            } else {
+              afterChangesTimeline.add(
+                this.getUpdateWidgetStateAnimation());
+            }
           }
         }
 
         if (this.loadingIconStyleChanged) {
+          this.updateWidgetElement();
+          // If the previous loading icon was already hidden, we should update
+          // the position of the new one to match, so transition animations
+          // work correctly.
+          if (this.shouldHideStatusWidget) {
+            this.widgetElement.style.transform =
+              'matrix(1,0,0,1,' + (-1 * (this.indicatorWidth + WIDGET_PADDING_PX + WIDGET_RIGHT_MARGIN_PX)) + ',0)';
+          }
           console.debug('Setting loadingIconStyleChanged to false');
           this.loadingIconStyleChanged = false;
           let loadingIconStyleChangedTimeline = new TimelineMax({});
           // TODO(rachelrosen): Determine whether this covers all cases
           // regarding the correct x position of elements, or if more animations
           // are needed here.
-          loadingIconStyleChangedTimeline.add(this.getUpdateWidgetElementAnimation());
+          loadingIconStyleChangedTimeline.add(this.getUpdateWidgetStateAnimation());
           if (this.isLoading) {
             this.pendingPostLoadingStateChangeAnimations.add(
               loadingIconStyleChangedTimeline);
@@ -468,7 +482,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     return interpolatorFn((score * 100) - scoreLowerIndex);
   }
 
-  private getUpdateWidgetElementAnimation(): TimelineMax {
+  private updateWidgetElement(): void {
     if (this.circleSquareDiamondWidget != null) {
       this.widgetElement = this.circleSquareDiamondWidget.nativeElement;
     } else if (this.emojiWidget != null) {
@@ -477,9 +491,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       console.error('Widget element is null.');
       this.widgetElement = null;
     }
-    let updateWidgetStateTimeline = new TimelineMax({});
-    updateWidgetStateTimeline.add(this.getUpdateWidgetStateAnimation());
-    return updateWidgetStateTimeline;
   }
 
   private getShouldHideStatusWidget(loadStart: boolean): boolean {
@@ -1412,7 +1423,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getTransitionToLayerAnimation(endLayerIndex: number, timeSeconds: number): Animation {
-    this.layerHeightPixels = 30;//this.layerAnimationHandles[0].offsetHeight;
+    this.layerHeightPixels = this.layerAnimationHandles[this.currentLayerIndex].offsetHeight;
 
     let timeline = new TimelineMax({
       onStart: () => {
