@@ -1,6 +1,6 @@
 {
   "name": "@conversationai/perspectiveapi-authorship-demo",
-  "version": "0.4.11",
+  "version": "0.5.0",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
@@ -14,7 +14,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "packagr": "ng-packagr -p ng-package.json"
+    "packagr": "ng-packagr -p ng-package.json",
+    "publish": "npm publish dist"
   },
   "peerDependencies": {
     "@angular/animations": "^5.2.0",
