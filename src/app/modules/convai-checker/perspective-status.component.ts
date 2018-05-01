@@ -44,7 +44,7 @@ export enum Emoji {
   SAD,
 };
 
-enum Configuration {
+export enum Configuration {
   DEMO_SITE,
   EXTERNAL,
 };

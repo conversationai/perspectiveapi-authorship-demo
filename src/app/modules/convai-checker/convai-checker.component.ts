@@ -33,7 +33,6 @@ import {
   SpanScores,
   SuggestCommentScoreResponse,
 } from './perspectiveapi-types'
-import { sha256 } from 'js-sha256';
 import { Subscription } from 'rxjs/Subscription';
 
 // Import RxJs required methods
@@ -388,10 +387,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
             this.analyzeCommentResponse = null;
           }
         );
-  }
-
-  getToken(text: string): string {
-    return sha256(text);
   }
 
   getMaxScore(response: AnalyzeCommentResponse): number {

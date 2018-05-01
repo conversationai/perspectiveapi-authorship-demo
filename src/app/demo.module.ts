@@ -19,7 +19,7 @@ import { ColorPickerModule } from 'ngx-color-picker';
 
 import { CustomizableDemoForm } from './customizable-demo-form.component';
 import { WrapperApp } from './demo.component';
-import { ConvaiCheckerModule } from './convai-checker.module';
+import { ConvaiCheckerModule } from './modules/convai-checker/convai-checker.module';
 
 const appRoutes: Routes = [
   {
