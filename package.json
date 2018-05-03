@@ -1,6 +1,6 @@
 {
   "name": "@conversationai/perspectiveapi-authorship-demo",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
@@ -14,8 +14,7 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "packagr": "ng-packagr -p ng-package.json",
-    "publish": "npm publish dist"
+    "packagr": "ng-packagr -p ng-package.json"
   },
   "peerDependencies": {
     "@angular/animations": "^5.2.10",
@@ -30,7 +29,9 @@
     "@angular/material": "^5.2.5",
     "@angular/platform-browser": "^5.2.10",
     "@angular/platform-browser-dynamic": "^5.2.10",
-    "@angular/router": "^5.2.10"
+    "@angular/router": "^5.2.10",
+    "gsap": "^1.20.4",
+    "@types/gsap": "^1.19.2"
   },
   "dependencies": {
     "@conversationai/perspectiveapi-simple-server": "^0.1.4",
@@ -43,7 +44,7 @@
     "core-js": "^2.4.1",
     "d3-color": "^1.0.3",
     "d3-interpolate": "^1.1.4",
-    "gsap": "^1.19.1",
+    "gsap": "^1.20.4",
     "hammerjs": "^2.0.8",
     "jasmine": "~2.8.0",
     "lodash": "^4.17.4",

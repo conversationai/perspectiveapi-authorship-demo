@@ -127,6 +127,14 @@ see it, do the following:
 
 TODO(rachelrosen): Document and demo how to add convai-checker webcomponent outside of the angular-cli build using the imported compiled javascript.
 
+## Publishing to npm
+
+To package the library for publication, we use [ng-packagr](https://github.com/dherges/ng-packagr).
+
+Run `yarn run packagr` to build the javascript bundles, which will generate a
+`dist/` directory. Then run `npm publish dist` to publish the contents of that
+directory.
+
 ## Notes
 
 This is example code to help experimentation with the Perspective API; it is not an official Google product.
