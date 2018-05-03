@@ -17,12 +17,5 @@
       "es2016",
       "dom"
     ]
-  },
-  "angularCompilerOptions": {
-    "strictMetadataEmit": true,
-    "skipTemplateCodegen": true,
-    "flatModuleOutFile": "./build/perspectiveapi-authorship-demo.js",
-    "flatModuleId": "perspectiveapi-authorship-demo-lib",
-    "annotateForClosureCompiler": true
   }
 }
