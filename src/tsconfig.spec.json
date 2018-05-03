@@ -13,6 +13,6 @@
   ],
   "include": [
     "**/*.spec.ts",
-    "../node_modules/@types/**/*.d.ts"
+    "../node_modules/@types/gapi/*.d.ts"
   ]
 }
