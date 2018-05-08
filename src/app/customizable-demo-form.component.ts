@@ -15,13 +15,13 @@ import {
   OnInit,
 } from '@angular/core';
 import {MatSlideToggleChange, MatSliderChange} from '@angular/material';
-import {DemoSettings} from './convai-checker.component';
+import {DemoSettings} from './modules/convai-checker/convai-checker.component';
 import {
   ConfigurationInput,
   LoadingIconStyle,
   ScoreThreshold,
   DEFAULT_FEEDBACK_TEXT
-} from './perspective-status.component';
+} from './modules/convai-checker/perspective-status.component';
 import {ActivatedRoute, Params, Router} from '@angular/router';
 import emoji from 'node-emoji';
 import * as _ from 'lodash';
@@ -29,7 +29,7 @@ import * as _ from 'lodash';
 const RAISED_EYEBROW_EMOJI = "🤨 ";
 
 /** Settings about the UI state that should be encoded in the URL. */
-interface UISettings {
+export interface UISettings {
   useCustomColorScheme: boolean,
   useCustomFeedbackText: boolean,
   customizeScoreThresholds: boolean,
@@ -37,7 +37,7 @@ interface UISettings {
 };
 
 /** Describes a configuration for demo colors. */
-interface ColorScheme {
+export interface ColorScheme {
   name: string,
   colors: string[],
 };
@@ -53,7 +53,7 @@ const DEFAULT_COLORS = ["#25C1F9", "#7C4DFF", "#D400F9"];
 const TRAFFIC_LIGHT_COLORS = ["#4CAF50", "#FDD835", "#D50000"];
 
 /** Describes a configuration for feedback text to use in the demo. */
-interface FeedbackTextScheme {
+export interface FeedbackTextScheme {
   name: string,
   feedbackTextSet: [string, string, string],
 };

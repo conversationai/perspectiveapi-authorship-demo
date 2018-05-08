@@ -39,7 +39,6 @@ import { PerspectiveStatus, CommentFeedback, Emoji, LoadingIconStyle, Shape } fr
 import { ConvaiChecker, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
-import 'gsap';
 import * as d3 from 'd3-color';
 
 @Component({
@@ -360,7 +359,7 @@ function verifyLayerTransitionsWorkForDemoSiteConfig(
 
   // Sets up mock responses for the check and suggest score calls.
   let mockResponses: { [key: string]: Object } = {};
-  mockResponses[checkUrl] = getMockCheckerResponse(checker.getToken(queryText));
+  mockResponses[checkUrl] = getMockCheckerResponse(queryText);
   mockResponses[suggestScoreUrl] = {
     clientToken: "token"
   };
@@ -537,12 +536,9 @@ function verifyWidgetVisibilityForDemoSettings(
   ];
 
   let mockResponses = [
-    getMockCheckerResponseWithScore(mockResponseScores[0],
-                                    checker.getToken(queryTexts[0])),
-    getMockCheckerResponseWithScore(mockResponseScores[1],
-                                    checker.getToken(queryTexts[1])),
-    getMockCheckerResponseWithScore(mockResponseScores[2],
-                                    checker.getToken(queryTexts[2]))
+    getMockCheckerResponseWithScore(mockResponseScores[0], queryTexts[0]),
+    getMockCheckerResponseWithScore(mockResponseScores[1], queryTexts[1]),
+    getMockCheckerResponseWithScore(mockResponseScores[2], queryTexts[2])
   ];
 
   let expectedFeedbackText = [
@@ -747,7 +743,7 @@ describe('Convai checker test', () => {
 
     let mockScore = 0.3;
     let mockResponse: AnalyzeCommentResponse =
-      getMockCheckerResponseWithScore(mockScore, checker.getToken(queryText));
+      getMockCheckerResponseWithScore(mockScore, queryText);
 
     let lastEmittedResponse: AnalyzeCommentResponse|null = null;
     let lastEmittedScore: number = -1;
@@ -884,8 +880,7 @@ describe('Convai checker test', () => {
     let checker = fixture.componentInstance.checker;
     let queryText = 'Your mother was a hamster';
 
-    let mockResponse: AnalyzeCommentResponse =
-      getMockCheckerResponse(checker.getToken(queryText));
+    let mockResponse: AnalyzeCommentResponse = getMockCheckerResponse(queryText);
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
@@ -946,8 +941,7 @@ describe('Convai checker test', () => {
 
     // Sets up mock responses for the check and suggest score calls.
     let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] =
-      getMockCheckerResponse(checker.getToken(queryText));
+    mockResponses[checkUrl] = getMockCheckerResponse(queryText);
     mockResponses[suggestScoreUrl] = {
       clientToken: "token"
     };
@@ -1030,8 +1024,7 @@ describe('Convai checker test', () => {
 
     // Sets up mock responses for the check and suggest score calls.
     let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] =
-      getMockCheckerResponse(checker.getToken(queryText));
+    mockResponses[checkUrl] = getMockCheckerResponse(queryText);
     mockResponses[suggestScoreUrl] = {
       clientToken: "token"
     };
@@ -1115,8 +1108,7 @@ describe('Convai checker test', () => {
 
     // Sets up mock responses for the check and suggest score calls.
     let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] =
-      getMockCheckerResponse(checker.getToken(queryText));
+    mockResponses[checkUrl] = getMockCheckerResponse(queryText);
     mockResponses[suggestScoreUrl] = {
       clientToken: "token"
     };
@@ -1205,8 +1197,7 @@ describe('Convai checker test', () => {
 
     // Sets up mock responses for the check and suggest score calls.
     let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] =
-      getMockCheckerResponse(checker.getToken(queryText));
+    mockResponses[checkUrl] = getMockCheckerResponse(queryText);
     mockResponses[suggestScoreUrl] = {
       clientToken: "token"
     };
@@ -1283,8 +1274,7 @@ describe('Convai checker test', () => {
 
     // Sets up mock responses for the check and suggest score calls.
     let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] =
-      getMockCheckerResponse(checker.getToken(queryText));
+    mockResponses[checkUrl] = getMockCheckerResponse(queryText);
 
     let mockBackend = TestBed.get(MockBackend);
     mockBackend.connections
@@ -1353,8 +1343,7 @@ describe('Convai checker test', () => {
     let checker = fixture.componentInstance.checker;
     let queryText = 'Your mother was a hamster';
 
-    let mockResponse: AnalyzeCommentResponse =
-      getMockCheckerResponse(checker.getToken(queryText));
+    let mockResponse: AnalyzeCommentResponse = getMockCheckerResponse(queryText);
 
     // Keeps track of the emitted response.
     let lastEmittedResponse: AnalyzeCommentResponse|null = null;
@@ -1416,7 +1405,7 @@ describe('Convai checker test', () => {
 
     // Sets up mock responses for the check and suggest score calls.
     let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] = getMockCheckerResponse(checker.getToken(queryText));
+    mockResponses[checkUrl] = getMockCheckerResponse(queryText);
     mockResponses[suggestScoreUrl] = {
       clientToken: "token"
     };
@@ -1604,9 +1593,9 @@ describe('Convai checker test', () => {
     ];
 
     let mockResponses = [
-      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[0])),
-      getMockCheckerResponseWithScore(0.5, checker.getToken(queryTexts[1])),
-      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+      getMockCheckerResponseWithScore(0.2, queryTexts[0]),
+      getMockCheckerResponseWithScore(0.5, queryTexts[1]),
+      getMockCheckerResponseWithScore(0.2, queryTexts[2])
     ];
 
     let callCount = 0;
@@ -1676,9 +1665,9 @@ describe('Convai checker test', () => {
 
     let callCount = 0;
     let mockResponses = [
-      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[0])),
-      getMockCheckerResponseWithScore(0.5, checker.getToken(queryTexts[1])),
-      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+      getMockCheckerResponseWithScore(0.2, queryTexts[0]),
+      getMockCheckerResponseWithScore(0.5, queryTexts[1]),
+      getMockCheckerResponseWithScore(0.2, queryTexts[2])
     ];
 
     let mockBackend = TestBed.get(MockBackend);
@@ -1759,9 +1748,9 @@ describe('Convai checker test', () => {
 
     let callCount = 0;
     let mockResponses = [
-      getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
-      getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
-      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+      getMockCheckerResponseWithScore(0.9, queryTexts[0]),
+      getMockCheckerResponseWithScore(0.7, queryTexts[1]),
+      getMockCheckerResponseWithScore(0.2, queryTexts[2])
     ];
     // For each of the mock responses, the thresholds should indicate a
     // different loading icon shape.
@@ -1836,9 +1825,9 @@ describe('Convai checker test', () => {
 
     let callCount = 0;
     let mockResponses = [
-      getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
-      getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
-      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+      getMockCheckerResponseWithScore(0.9, queryTexts[0]),
+      getMockCheckerResponseWithScore(0.7, queryTexts[1]),
+      getMockCheckerResponseWithScore(0.2, queryTexts[2])
     ];
     // For each of the mock responses, the thresholds should indicate a
     // different emoji.
@@ -1921,9 +1910,9 @@ describe('Convai checker test', () => {
 
     let callCount = 0;
     let mockResponses = [
-      getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
-      getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
-      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+      getMockCheckerResponseWithScore(0.9, queryTexts[0]),
+      getMockCheckerResponseWithScore(0.7, queryTexts[1]),
+      getMockCheckerResponseWithScore(0.2, queryTexts[2])
     ];
     // For each of the mock responses, the thresholds should indicate a
     // different loading icon shape.
@@ -2023,9 +2012,9 @@ describe('Convai checker test', () => {
 
     let callCount = 0;
     let mockResponses = [
-      getMockCheckerResponseWithScore(0.9, checker.getToken(queryTexts[0])),
-      getMockCheckerResponseWithScore(0.7, checker.getToken(queryTexts[1])),
-      getMockCheckerResponseWithScore(0.2, checker.getToken(queryTexts[2]))
+      getMockCheckerResponseWithScore(0.9, queryTexts[0]),
+      getMockCheckerResponseWithScore(0.7, queryTexts[1]),
+      getMockCheckerResponseWithScore(0.2, queryTexts[2])
     ];
     // For each of the mock responses, the thresholds should indicate a
     // different emoji.
