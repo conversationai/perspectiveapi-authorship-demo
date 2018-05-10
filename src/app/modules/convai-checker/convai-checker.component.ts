@@ -33,12 +33,8 @@ import {
   SpanScores,
   SuggestCommentScoreResponse,
 } from './perspectiveapi-types'
-import { Subscription } from 'rxjs/Subscription';
-
-// Import RxJs required methods
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/catch';
-import 'rxjs/add/operator/finally';
+import { Subscription } from 'rxjs';
+import { map, finalize } from 'rxjs/operators';
 
 export interface InputEvent {
   target: HTMLInputElement;
@@ -307,11 +303,11 @@ export class ConvaiChecker implements OnInit, OnChanges {
       feedback.commentMarkedAsToxic,
       this.demoSettings.useGapi /* makeDirectApiCall */,
       this.serverUrl
-    ).finally(() => {
+    ).pipe(finalize(() => {
         console.debug('Feedback request done');
         this.statusWidget.hideFeedbackQuestion();
         this.feedbackRequestInProgress = false;
-      })
+      }))
       .subscribe(
         (response: SuggestCommentScoreResponse) => {
           this.statusWidget.feedbackCompleted(true);
@@ -364,13 +360,13 @@ export class ConvaiChecker implements OnInit, OnChanges {
           this.demoSettings.communityId,
           this.demoSettings.useGapi /* makeDirectApiCall */,
           this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
-        .finally(() => {
+        .pipe(finalize(() => {
           console.log('Request done');
           let newScore = this.getMaxScore(this.analyzeCommentResponse);
           this.statusWidget.notifyScoreChange(newScore);
           this.scoreChanged.emit(newScore);
           this.mostRecentRequestSubscription = null;
-        })
+        }))
         .subscribe(
           (response: AnalyzeCommentResponse) => {
             this.analyzeCommentResponse = response;

@@ -8,7 +8,8 @@
       "d3-interpolate": "d3",
       "toxiclibsjs": "toxicLibsJS",
       "twemoji": "twemoji",
-      "gsap": "gsap"
+      "gsap": "gsap",
+      "rxjs" : "rxjs"
     }
   }
 }

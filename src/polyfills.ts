@@ -71,3 +71,7 @@ import 'hammerjs/hammer';
 // Needed on browsers with native `customElements`.
 // (E.g.: Chrome, Opera)
 import '@webcomponents/custom-elements/src/native-shim';
+
+// Add global to window, assigning the value of window itself.
+// See https://github.com/angular/angular-cli/issues/9827#issuecomment-386154063
+(window as any).global = window;
