@@ -74,4 +74,5 @@ import '@webcomponents/custom-elements/src/native-shim';
 
 // Add global to window, assigning the value of window itself.
 // See https://github.com/angular/angular-cli/issues/9827#issuecomment-386154063
+// Needed for the twemoji library.
 (window as any).global = window;
