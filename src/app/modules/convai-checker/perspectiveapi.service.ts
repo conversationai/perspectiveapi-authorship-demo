@@ -15,9 +15,9 @@ limitations under the License.
 */
 import { Injectable } from '@angular/core';
 import { Http, Headers } from '@angular/http';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/fromPromise';
-import 'rxjs/add/operator/map';
+import { Observable, from } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import {
   AnalyzeCommentData,
   AnalyzeCommentRequest,
@@ -80,9 +80,9 @@ export class PerspectiveApiService {
         session_id: sessionId,
         community_id: communityId
       };
-      return Observable.fromPromise(
+      return from(
          this.gapiClient.commentanalyzer.comments.analyze(request))
-         .map(response => response.result);
+         .pipe(map(response => response.result));
     } else {
       if (serverUrl === undefined) {
         serverUrl = '';
@@ -100,7 +100,7 @@ export class PerspectiveApiService {
       };
       return this.http.post(
         serverUrl + '/check', JSON.stringify(data), {headers})
-        .map(response => response.json());
+        .pipe(map(response => response.json()));
     }
   }
 
@@ -123,9 +123,9 @@ export class PerspectiveApiService {
         client_token: sessionId,
       };
       console.debug('Making a direct API call with gapi');
-      return Observable.fromPromise(
+      return from(
          this.gapiClient.commentanalyzer.comments.suggestscore(request))
-         .map(response => response.result);
+         .pipe(map(response => response.result));
     } else {
       if (serverUrl === undefined) {
         serverUrl = '';
@@ -143,7 +143,7 @@ export class PerspectiveApiService {
 
       return this.http.post(
         serverUrl + '/suggest_score', JSON.stringify(data), {headers})
-        .map(response => response.json());
+        .pipe(map(response => response.json()));
     }
   }
 }

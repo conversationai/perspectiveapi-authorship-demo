@@ -29,27 +29,27 @@
       </div>
     </div>
     <div class="setting customizableSetting" *ngIf="customizeScoreThresholds">
-      <mat-input-container shouldPlaceholderFloat="true">
+      <mat-form-field shouldPlaceholderFloat="true">
         <input matInput
                [(ngModel)]="scoreThresholds[0]"
                (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
                type="number"
                placeholder="Min threshold for displaying feedback"/>
-      </mat-input-container>
-      <mat-input-container shouldPlaceholderFloat="true">
+      </mat-form-field>
+      <mat-form-field shouldPlaceholderFloat="true">
         <input matInput
                [(ngModel)]="scoreThresholds[1]"
                (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
                type="number"
                placeholder="Threshold for medium toxicity"/>
-      </mat-input-container>
-      <mat-input-container shouldPlaceholderFloat="true">
+      </mat-form-field>
+      <mat-form-field shouldPlaceholderFloat="true">
         <input matInput
                [(ngModel)]="scoreThresholds[2]"
                (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
                type="number"
                placeholder="Threshold for high toxicity"/>
-      </mat-input-container>
+      </mat-form-field>
     </div>
 
     <!-- Configuration for user suggestions. -->
@@ -102,30 +102,30 @@
 
     <div class="setting customizableSetting" *ngIf="useCustomFeedbackText">
       <div>
-        <mat-input-container class="feedbackText" shouldPlaceholderFloat="true">
+        <mat-form-field class="feedbackText" shouldPlaceholderFloat="true">
           <input matInput
                  [(ngModel)]="customFeedbackTextScheme[0]"
                  (input)="customFeedbackTextScheme = customFeedbackTextScheme.slice(); onSettingsChanged()"
                  placeholder="Feedback text for a low toxicity"/>
-        </mat-input-container>
+        </mat-form-field>
       </div>
 
       <div>
-        <mat-input-container class="feedbackText" shouldPlaceholderFloat="true">
+        <mat-form-field class="feedbackText" shouldPlaceholderFloat="true">
           <input matInput
                  [(ngModel)]="customFeedbackTextScheme[1]"
                  (input)="customFeedbackTextScheme = customFeedbackTextScheme.slice(); onSettingsChanged()"
                  placeholder="Feedback text for a medium toxicity"/>
-        </mat-input-container>
+        </mat-form-field>
       </div>
 
       <div>
-        <mat-input-container class="feedbackText" shouldPlaceholderFloat="true">
+        <mat-form-field class="feedbackText" shouldPlaceholderFloat="true">
           <input matInput
                  [(ngModel)]="customFeedbackTextScheme[2]"
                  (input)="customFeedbackTextScheme = customFeedbackTextScheme.slice(); onSettingsChanged()"
                  placeholder="Feedback text for a high toxicity"/>
-        </mat-input-container>
+        </mat-form-field>
       </div>
     </div>
 
@@ -200,45 +200,45 @@
       <mat-slide-toggle [(ngModel)]="useGapi"
                        (change)="updateApiKey($event); onSettingsChanged()">Use gapi
       </mat-slide-toggle>
-      <mat-input-container>
+      <mat-form-field>
         <input matInput
                [disabled]="!useGapi"
                [(ngModel)]="apiKey"
                (input)="onSettingsChanged()"
                placeholder="API key"/>
-      </mat-input-container>
+      </mat-form-field>
     </div>
   
     <div class="setting">
       <mat-slide-toggle [(ngModel)]="usePluginEndpoint"
                        (change)="onSettingsChanged()">Use plugin endpoint
       </mat-slide-toggle>
-      <mat-input-container>
+      <mat-form-field>
         <input matInput
                [disabled]="!usePluginEndpoint"
                [(ngModel)]="pluginEndpointUrl"
                (input)="onSettingsChanged()"
                placeholder="Plugin server URL"/>
-      </mat-input-container>
+      </mat-form-field>
     </div>
 
 
     <div class="setting">
-      <mat-input-container>
+      <mat-form-field>
         <input matInput
                [(ngModel)]="userFeedbackPromptText"
                (input)="onSettingsChanged()"
                placeholder="Feedback prompt"/>
-      </mat-input-container>
+      </mat-form-field>
     </div>
 
     <div class="communityId">
-      <mat-input-container>
+      <mat-form-field>
         <input matInput
                [(ngModel)]="communityId"
                (input)="onSettingsChanged()"
                placeholder="Community id"/>
-      </mat-input-container>
+      </mat-form-field>
     </div>
   </div>
 </mat-expansion-panel>
