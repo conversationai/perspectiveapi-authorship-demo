@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
-    "serve": "npm run setup && ./node_modules/.bin/concurrently \"npm run start:dev-server\" \"ng serve --proxy proxy.conf.json\"",
+    "serve": "npm run setup && ./node_modules/.bin/concurrently \"npm run start:dev-server\" \"ng serve --proxy-config proxy.conf.json\"",
     "start:dev-server": "NODE_ENV=development node node_modules/@conversationai/perspectiveapi-simple-server/build/server/run_server.js build/config/server_config.json",
     "start:prod-server": "NODE_ENV=production node node_modules/@conversationai/perspectiveapi-simple-server/build/server/run_server.js build/config/server_config.json",
     "setup": "mkdir -p build/config/ && rsync --ignore-existing config/server_config.template.json build/config/server_config.json",

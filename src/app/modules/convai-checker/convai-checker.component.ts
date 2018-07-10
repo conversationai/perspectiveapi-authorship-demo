@@ -189,12 +189,15 @@ export class ConvaiChecker implements OnInit, OnChanges {
       return;
     }
 
-    if (this.apiKey) {
-      this.analyzeApiService.initGapiClient(this.apiKey);
-    }
-
     if (this.demoSettingsJson) {
       this.demoSettings = JSON.parse(this.demoSettingsJson);
+      if (this.demoSettings.apiKey) {
+        this.apiKey = this.demoSettings.apiKey;
+      }
+    }
+
+    if (this.apiKey) {
+      this.analyzeApiService.initGapiClient(this.apiKey);
     }
 
     this.sessionId = window.localStorage.getItem(LOCAL_STORAGE_SESSION_ID_KEY);
