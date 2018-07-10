@@ -142,7 +142,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   // a non-Angular context (when convai-checker is being used as a
   // webcomponent). If working from an Angular context, use |demoSettings|.
   @Input() demoSettingsJson: string|null = null;
-  @Input() pluginEndpointUrl = 'http://perspectiveapi.com';
+  @Input() pluginEndpointUrl = 'http://perspectiveapi.com/plugin';
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() scoreChanged: EventEmitter<number> = new EventEmitter<number>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
@@ -189,12 +189,15 @@ export class ConvaiChecker implements OnInit, OnChanges {
       return;
     }
 
-    if (this.apiKey) {
-      this.analyzeApiService.initGapiClient(this.apiKey);
-    }
-
     if (this.demoSettingsJson) {
       this.demoSettings = JSON.parse(this.demoSettingsJson);
+      if (this.demoSettings.apiKey) {
+        this.apiKey = this.demoSettings.apiKey;
+      }
+    }
+
+    if (this.apiKey) {
+      this.analyzeApiService.initGapiClient(this.apiKey);
     }
 
     this.sessionId = window.localStorage.getItem(LOCAL_STORAGE_SESSION_ID_KEY);
