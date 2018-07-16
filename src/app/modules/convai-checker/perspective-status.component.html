@@ -29,13 +29,13 @@
            [attr.aria-label]="getAnimationA11yLabel(loadingIconStyle, isPlayingLoadingAnimation)">
         <img #smileEmoji id="smileEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score >= scoreThresholds[1]}"
-             src="assets/grinning_face.png">
+             [src]="getImageResourcePath('grinning_face.png')">
         <img #neutralEmoji id="neutralEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || (score < scoreThresholds[1] || score >= scoreThresholds[2])}"
-             src="assets/thinking_face.png">
+             [src]="getImageResourcePath('thinking_face.png')">
         <img #sadEmoji id="sadEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score < scoreThresholds[2]}"
-             src="assets/disappointed_face.png">
+             [src]="getImageResourcePath('disappointed_face.png')">
       </div>
     </div>
   </div>
