@@ -134,6 +134,23 @@ Run `yarn run packagr` to build the javascript bundles, which will generate a
 `dist/` directory. Then run `npm publish dist` to publish the contents of that
 directory.
 
+### Important note
+
+When using this library in another package, in order to access the image assets
+for emoji mode, you must add the assets from this package to the assets in your
+angular.json:
+
+"assets": [
+   {
+     "glob": "*",
+     "input": "node_modules/@conversationai/perspectiveapi-authorship-demo/src/assets",
+     "output": "./assets"
+   }
+]
+
+See https://github.com/angular/angular-cli/issues/3555#issuecomment-285187411
+and https://github.com/angular/angular-cli/pull/4691 for more info.
+
 ## Notes
 
 This is example code to help experimentation with the Perspective API; it is not an official Google product.
