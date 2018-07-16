@@ -405,6 +405,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
   }
 
+  // TODO: Alternative option: Make images into dataurls and put them directly
+  // in the TS.
   getImageResourcePath(imageName): string {
     if (this.hasLocalAssets) {
       return 'assets/' + imageName;
