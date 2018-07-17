@@ -130,10 +130,10 @@ TODO(rachelrosen): Document and demo how to add convai-checker webcomponent outs
 ### Publishing the webcomponent
 
 To publish a new version of the convia-checker webcomponent:
-1. Run `yarn run build:prod`
+1. Run `yarn run packagr`
 2. Concatenate the JavaScript files with `cat build/static/runtime*.js build/static/polyfills*.js build/static/main*.js >build/static/perspective_authorship_widget.js`
 3. Copy the new JavaScript to GCS with `gsutil cp build/static/perspective_authorship_widget.js gs://checker_source/`
-4. Copy asset files (emoji images) to GCS with `gsutil cp src/assets/* gs://checker_source/assets`
+4. Copy asset files (emoji images) to GCS with `gsutil cp src/assest/* gs://checker_source/assets`
 5. Open (https://pantheon.corp.google.com/storage/browser/checker_source) and ensure that perspective_authorship_widget.js and all files in the assets directory have "Public link" checked.  TODO(dborkan): automate this step
 
 ## Publishing to npm
