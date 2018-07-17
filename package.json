@@ -14,7 +14,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "packagr": "ng-packagr -p ng-package.json && cp -r ./src/assets ./dist/src/assets"
+    "packagr": "ng-packagr -p ng-package.json && cp -r ./src/assets ./dist/src/assets",
+    "build-plugin-js": "npm run build:prod && cat build/static/runtime*.js build/static/polyfills*.js build/static/main*.js >build/static/perspective_authorship_widget.js"
   },
   "peerDependencies": {
     "@angular/animations": "6.0.0",
