@@ -172,6 +172,8 @@ export class CustomizableDemoForm implements OnInit {
   useGapi: boolean = false;
   // Whether to use the endpoint for the plugin.
   usePluginEndpoint = false;
+  // URL to use for the plugin endpoint (for debugging and local tests).
+  pluginEndpointUrl = '';
   // API key to use when making gapi calls.
   apiKey: string = '';
   // Whether to show the percentage next to the feedback text.
