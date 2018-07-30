@@ -208,18 +208,11 @@
                placeholder="API key"/>
       </mat-form-field>
     </div>
-  
+
     <div class="setting">
       <mat-slide-toggle [(ngModel)]="usePluginEndpoint"
                        (change)="onSettingsChanged()">Use plugin endpoint
       </mat-slide-toggle>
-      <mat-form-field>
-        <input matInput
-               [disabled]="!usePluginEndpoint"
-               [(ngModel)]="pluginEndpointUrl"
-               (input)="onSettingsChanged()"
-               placeholder="Plugin server URL"/>
-      </mat-form-field>
     </div>
 
 
