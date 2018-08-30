@@ -21,6 +21,7 @@
     [hideLoadingIconForScoresBelowMinThreshold]="demoSettings.hideLoadingIconForScoresBelowMinThreshold"
     [alwaysHideLoadingIcon]="demoSettings.alwaysHideLoadingIcon"
     [loadingIconStyle]="demoSettings.loadingIconStyle"
+    [hasLocalAssets]="!demoSettings.usePluginEndpoint"
     (commentFeedbackSubmitted)="onCommentFeedbackReceived($event)"
     (scoreChangeAnimationCompleted)="handleScoreChangeAnimationCompleted()"
     (modelInfoLinkClicked)="handleModelInfoLinkClicked()">

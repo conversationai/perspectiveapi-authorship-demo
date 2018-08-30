@@ -120,9 +120,8 @@ Angular Elements is a new experimental API that allows exporting Angular
 components as webcomponents. This repo includes a demo of this functionality
 with the convai-checker component. To
 see it, do the following:
-1. Go into `.angular-cli.json` and replace `main.ts` with
-`main_with_elements.ts` under the field "main" and `index.html` with `index_with_elements.html` under the field "index".
-2. Build and run as normal.
+1. Build with the command yarn run build:dev-customElements.
+2. Run yarn run start:dev-server
 3. Open http://localhost:8080/index_with_elements.html.
 
 TODO(rachelrosen): Document and demo how to add convai-checker webcomponent outside of the angular-cli build using the imported compiled javascript.

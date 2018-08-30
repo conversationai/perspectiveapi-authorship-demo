@@ -129,6 +129,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   @Input() hideLoadingIconForScoresBelowMinThreshold: boolean;
   @Input() alwaysHideLoadingIcon: boolean;
   @Input() loadingIconStyle: string;
+  @Input() hasLocalAssets = true;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() commentFeedbackSubmitted: EventEmitter<CommentFeedback> =
@@ -401,6 +402,16 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         this.stateChangeAnimations = afterChangesTimeline;
         this.stateChangeAnimations.play();
       });
+    }
+  }
+
+  // TODO: Alternative option: Make images into dataurls and put them directly
+  // in the TS.
+  getImageResourcePath(imageName): string {
+    if (this.hasLocalAssets) {
+      return 'assets/' + imageName;
+    } else {
+      return 'https://storage.googleapis.com/checker_source/assets/' + imageName;
     }
   }
 
