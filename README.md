@@ -1,5 +1,7 @@
 [![Travis CI](https://travis-ci.org/conversationai/perspectiveapi-authorship-demo.svg?branch=master)](https://travis-ci.org/conversationai/perspectiveapi-authorship-demo) [![npm version](https://badge.fury.io/js/%40conversationai%2Fperspectiveapi-authorship-demo.svg)](https://badge.fury.io/js/%40conversationai%2Fperspectiveapi-authorship-demo)
 
+foo
+
 # An authorship experience demo of the perspective API
 
 This repository contains example code for an authorship experience that provides feedback as you type using the [Perspective API](http://www.perspectiveapi.com/). It is a web app written in
