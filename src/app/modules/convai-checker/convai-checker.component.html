@@ -1,6 +1,11 @@
 <div id="checkerContainer">
   <!-- TODO(rachelrosen): merge perspective-status and convai-checker
-       and move a large portion of the convai-checker code to the perspective-api service. -->
+       and move a large portion of the convai-checker code to the perspective-api service. 
+
+       TODO: We're disabling the "learn more" link for the plugin while we decide what to
+       allow in terms of link customization. Re-enable if we decide we want to allow
+       users to customize the link destination target.
+  -->
   <perspective-status
     [fontSize]="fontSize"
     [indicatorWidth]="13"
@@ -10,7 +15,7 @@
     [feedbackText]="demoSettings.feedbackText"
     [configurationInput]="demoSettings.configuration"
     [showPercentage]="demoSettings.showPercentage"
-    [showMoreInfoLink]="demoSettings.showMoreInfoLink"
+    [showMoreInfoLink]="demoSettings.usePluginEndpoint ? false : demoSettings.showMoreInfoLink"
     [hasScore]="analyzeCommentResponse !== null"
     [canAcceptFeedback]="canAcceptFeedback"
     [feedbackRequestInProgress]="feedbackRequestInProgress"

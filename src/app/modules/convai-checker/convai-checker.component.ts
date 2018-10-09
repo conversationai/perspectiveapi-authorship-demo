@@ -121,6 +121,9 @@ export const DEFAULT_DEMO_SETTINGS = {
   userFeedbackPromptText: 'Seem wrong?'
 };
 
+const GITHUB_PAGE_LINK =
+  'https://github.com/conversationai/perspectiveapi/blob/master/api_reference.md#alpha';
+
 @Component({
   selector: 'convai-checker',
   templateUrl: './convai-checker.component.html',
@@ -292,10 +295,21 @@ export class ConvaiChecker implements OnInit, OnChanges {
     console.debug('Score animation completed! Emitting an event');
   }
 
+  /**
+   * This event callback can get triggered in two ways:
+   *   1) when the user clicks "Learn more"
+   *   2) when the user clicks the "toxic" link for the "Is this toxic?"
+   *      feedback question.
+   */
   handleModelInfoLinkClicked() {
     // Allow the output event to bubble up from the child checker-status
     // component through this component.
     this.modelInfoLinkClicked.emit();
+
+    if (this.demoSettings.usePluginEndpoint) {
+      // Open a link to our github page.
+      window.open(GITHUB_PAGE_LINK, '_blank');
+    }
   }
 
   suggestCommentScore(text: string, feedback: CommentFeedback): void {
