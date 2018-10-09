@@ -1369,6 +1369,8 @@ describe('Convai checker test', () => {
 
        // Wait for async code to complete.
        fixture.whenStable().then(() => {
+         fixture.detectChanges();
+
          // Checks that the response is received and stored.
          expect(checker.analyzeCommentResponse).not.toBe(null);
          expect(checker.analyzeCommentResponse).toEqual(mockResponse);
