@@ -232,12 +232,21 @@
       </mat-form-field>
     </div>
 
-    <div class="communityId">
+    <div class="setting">
       <mat-form-field>
         <input matInput
                [(ngModel)]="communityId"
                (input)="onSettingsChanged()"
                placeholder="Community id"/>
+      </mat-form-field>
+    </div>
+
+    <div class="setting">
+      <mat-form-field>
+        <input matInput
+               [(ngModel)]="modelName"
+               (input)="onSettingsChanged()"
+               placeholder="Model name"/>
       </mat-form-field>
     </div>
   </div>

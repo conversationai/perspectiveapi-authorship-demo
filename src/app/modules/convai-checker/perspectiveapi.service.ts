@@ -71,7 +71,7 @@ export class PerspectiveApiService {
       console.debug('Making a direct API call with gapi');
 
       let requestedAttributes: RequestedAttributes = {};
-      const attribute = data.modelName ? data.modelName : TOXICITY_ATTRIBUTE;
+      const attribute = data.modelName || TOXICITY_ATTRIBUTE;
       requestedAttributes[attribute] = {};
 
       let request: AnalyzeCommentRequest = {
@@ -109,7 +109,7 @@ export class PerspectiveApiService {
     if (makeDirectApiCall) {
       let attributeScores: AttributeScores  = {};
 
-      const attribute = data.modelName ? data.modelName : TOXICITY_ATTRIBUTE;
+      const attribute = data.modelName || TOXICITY_ATTRIBUTE;
       attributeScores[attribute] = {
         summaryScore: { value: data.commentMarkedAsToxic ? 1 : 0 }
       };

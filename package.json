@@ -1,6 +1,6 @@
 {
   "name": "@conversationai/perspectiveapi-authorship-demo",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
@@ -36,7 +36,7 @@
     "@types/gsap": "^1.19.2"
   },
   "dependencies": {
-    "@conversationai/perspectiveapi-simple-server": "^0.1.4",
+    "@conversationai/perspectiveapi-simple-server": "^0.1.5",
     "@types/d3-interpolate": "^1.1.5",
     "@types/gapi": "^0.0.31",
     "@types/gsap": "^1.19.2",
