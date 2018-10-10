@@ -191,6 +191,8 @@ export class CustomizableDemoForm implements OnInit {
   alwaysHideLoadingIcon = false;
   // The id of the community using the widget.
   communityId = '';
+  // The name of the model to use.
+  modelName = '';
 
   demoSettings: DemoSettings|null = null;
   demoSettingsJson: string = '';
@@ -350,7 +352,8 @@ export class CustomizableDemoForm implements OnInit {
       alwaysHideLoadingIcon: this.alwaysHideLoadingIcon,
       loadingIconStyle: this.selectedLoadingIconStyle,
       communityId: this.communityId,
-      usePluginEndpoint: this.usePluginEndpoint
+      usePluginEndpoint: this.usePluginEndpoint,
+      modelName: this.modelName
     }));
   }
 

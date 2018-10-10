@@ -13,6 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+// TODO: These need to constantly be kept in sync with
+// perspectiveapi-simple-server. Look into whether we can import these
+// types/interfaces from perspectiveapi-simple-server instead of having to
+// define them twice.
+
 export interface AnalyzeCommentRequest {
   comment: TextEntry;
   context?: Context;
@@ -65,6 +71,7 @@ export interface AnalyzeCommentData {
   spanAnnotations?: boolean;
   parentComment?: string;
   articleText?: string;
+  modelName?: string;
 }
 
 // Holds data needed for building a |SuggestCommentScoreRequest|.
@@ -72,6 +79,7 @@ export interface SuggestCommentScoreData {
   comment: string;
   sessionId: string;
   commentMarkedAsToxic: boolean;
+  modelName?: string;
 }
 
 export interface AttributeScores {

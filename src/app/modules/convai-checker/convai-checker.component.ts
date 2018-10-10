@@ -29,8 +29,10 @@ import { Injectable } from '@angular/core';
 import { PerspectiveStatus, CommentFeedback, LoadingIconStyle } from './perspective-status.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import {
+  AnalyzeCommentData,
   AnalyzeCommentResponse,
   SpanScores,
+  SuggestCommentScoreData,
   SuggestCommentScoreResponse,
 } from './perspectiveapi-types'
 import { Subscription } from 'rxjs';
@@ -40,6 +42,8 @@ export interface InputEvent {
   target: HTMLInputElement;
 }
 
+// TODO: Make more of these parameters optional, especially the ones we don't
+// want to expose to users in the public launch.
 export interface DemoSettings {
   // Refers to the correction UI style. Current options are "default" or
   // "external" (see perspective-status.ConfigurationInput).
@@ -98,6 +102,10 @@ export interface DemoSettings {
 
   // An id for the community using the checker.
   communityId?: string;
+
+  // The model to use for scoring. If not specified, uses TOXICITY as the
+  // default model.
+  modelName?: string;
 }
 
 export const DEFAULT_DEMO_SETTINGS = {
@@ -314,10 +322,16 @@ export class ConvaiChecker implements OnInit, OnChanges {
 
   suggestCommentScore(text: string, feedback: CommentFeedback): void {
     this.feedbackRequestInProgress = true;
+    const suggestCommentScoreData: SuggestCommentScoreData = {
+      comment: text,
+      sessionId: this.sessionId,
+      commentMarkedAsToxic: feedback.commentMarkedAsToxic
+    };
+    if (this.demoSettings.modelName) {
+      suggestCommentScoreData.modelName = this.demoSettings.modelName;
+    }
     this.analyzeApiService.suggestScore(
-      text,
-      this.sessionId,
-      feedback.commentMarkedAsToxic,
+      suggestCommentScoreData,
       this.demoSettings.useGapi /* makeDirectApiCall */,
       this.serverUrl
     ).pipe(finalize(() => {
@@ -370,11 +384,17 @@ export class ConvaiChecker implements OnInit, OnChanges {
     this.lastRequestedText = text;
     this.checkInProgress = true;
 
+    const analyzeCommentData: AnalyzeCommentData = {
+      comment: text,
+      sessionId: this.sessionId,
+      communityId: this.demoSettings.communityId,
+    };
+    if (this.demoSettings.modelName) {
+      analyzeCommentData.modelName = this.demoSettings.modelName;
+    }
     this.mostRecentRequestSubscription =
       this.analyzeApiService.checkText(
-          text,
-          this.sessionId,
-          this.demoSettings.communityId,
+          analyzeCommentData,
           this.demoSettings.useGapi /* makeDirectApiCall */,
           this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
         .pipe(finalize(() => {
