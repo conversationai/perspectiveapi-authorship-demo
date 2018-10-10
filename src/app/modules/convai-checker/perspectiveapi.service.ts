@@ -60,8 +60,7 @@ export class PerspectiveApiService {
       })});
   }
 
-  checkText(text: string, sessionId: string, communityId: string,
-            makeDirectApiCall: boolean, serverUrl?: string)
+  checkText(data: AnalyzeCommentData, makeDirectApiCall: boolean, serverUrl?: string)
               : Observable<AnalyzeCommentResponse> {
     if (makeDirectApiCall && this.gapiClient === null) {
       console.error('No gapi client found; call initGapiClient with your API'
@@ -72,13 +71,17 @@ export class PerspectiveApiService {
       console.debug('Making a direct API call with gapi');
 
       let requestedAttributes: RequestedAttributes = {};
-      requestedAttributes[TOXICITY_ATTRIBUTE] = {};
+      if (data.modelName) {
+        requestedAttributes[data.modelName] = {};
+      } else {
+        requestedAttributes[TOXICITY_ATTRIBUTE] = {};
+      }
 
       let request: AnalyzeCommentRequest = {
-        comment: {text: text},
+        comment: {text: data.comment},
         requested_attributes: requestedAttributes,
-        session_id: sessionId,
-        community_id: communityId
+        session_id: data.sessionId,
+        community_id: data.communityId
       };
       return from(
          this.gapiClient.commentanalyzer.comments.analyze(request))
@@ -93,19 +96,13 @@ export class PerspectiveApiService {
       let headers = new Headers();
       headers.append('Content-Type', 'application/json');
 
-      let data: AnalyzeCommentData = {
-        comment: text,
-        sessionId: sessionId,
-        communityId: communityId,
-      };
       return this.http.post(
         serverUrl + '/check', JSON.stringify(data), {headers})
         .pipe(map(response => response.json()));
     }
   }
 
-  suggestScore(text: string, sessionId: string, commentMarkedAsToxic: boolean,
-               makeDirectApiCall: boolean, serverUrl?: string)
+  suggestScore(data: SuggestCommentScoreData, makeDirectApiCall: boolean, serverUrl?: string)
       : Observable<SuggestCommentScoreResponse> {
     if (makeDirectApiCall && this.gapiClient === null) {
       console.error('No gapi client found; call initGapiClient with your API'
@@ -114,13 +111,20 @@ export class PerspectiveApiService {
     }
     if (makeDirectApiCall) {
       let attributeScores: AttributeScores  = {};
-      attributeScores[TOXICITY_ATTRIBUTE] = {
-        summaryScore: { value: commentMarkedAsToxic ? 1 : 0 }
-      };
+
+      if (data.modelName) {
+        attributeScores[data.modelName] = {
+          summaryScore: { value: data.commentMarkedAsToxic ? 1 : 0 }
+        };
+      } else {
+        attributeScores[TOXICITY_ATTRIBUTE] = {
+          summaryScore: { value: data.commentMarkedAsToxic ? 1 : 0 }
+        };
+      }
       let request: SuggestCommentScoreRequest = {
-        comment: {text: text},
+        comment: {text: data.comment},
         attribute_scores: attributeScores,
-        client_token: sessionId,
+        client_token: data.sessionId,
       };
       console.debug('Making a direct API call with gapi');
       return from(
@@ -134,12 +138,6 @@ export class PerspectiveApiService {
       }
       let headers = new Headers();
       headers.append('Content-Type', 'application/json');
-
-      let data: SuggestCommentScoreData = {
-        comment: text,
-        sessionId: sessionId,
-        commentMarkedAsToxic: commentMarkedAsToxic
-      };
 
       return this.http.post(
         serverUrl + '/suggest_score', JSON.stringify(data), {headers})

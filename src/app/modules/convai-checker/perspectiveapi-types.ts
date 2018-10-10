@@ -65,6 +65,7 @@ export interface AnalyzeCommentData {
   spanAnnotations?: boolean;
   parentComment?: string;
   articleText?: string;
+  modelName?: string;
 }
 
 // Holds data needed for building a |SuggestCommentScoreRequest|.
@@ -72,6 +73,7 @@ export interface SuggestCommentScoreData {
   comment: string;
   sessionId: string;
   commentMarkedAsToxic: boolean;
+  modelName?: string;
 }
 
 export interface AttributeScores {
