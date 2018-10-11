@@ -293,10 +293,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
 
     console.debug('Updating this.pendingRequest for text: ', text);
 
-    // TODO: this should be done with observable delay, or better yet debounceTime from an observable of check-requests. Not with as setTimeout.
-    // See: https://rxjs-dev.firebaseapp.com/api/operators/delay
-    // See: https://rxjs-dev.firebaseapp.com/api/operators/debounceTime
-    // That way we can directly return pipe and have an observable _checkText.
     return this._checkText(text);
   }
 

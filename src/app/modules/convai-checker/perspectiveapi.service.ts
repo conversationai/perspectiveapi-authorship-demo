@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import { Injectable } from '@angular/core';
-import { Http, Headers } from '@angular/http';
+// import { Http, Headers } from '@angular/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -40,7 +41,7 @@ export class PerspectiveApiService {
 
   private gapiClient: PerspectiveGapiClient = null;
 
-  constructor(private http: Http) {}
+  constructor(private httpClient: HttpClient) {}
 
   initGapiClient(apiKey: string) {
     if (!apiKey) {
@@ -92,15 +93,14 @@ export class PerspectiveApiService {
                       + ' Defaulting to current hosted address');
       }
 
-      let headers = new Headers();
+      let headers = new HttpHeaders();
       headers.append('Content-Type', 'application/json');
 
       // TODO: why are we appending the '/check' string? Nearly always better to
       // do  have this provided as input; appending here will make it much less
       // flexible.
-      return this.http.post(
-        serverUrl + '/check', JSON.stringify(data), {headers})
-        .pipe(map(response => response.json()));
+      return this.httpClient.post(
+        serverUrl + '/check', JSON.stringify(data), {headers});
     }
   }
 
@@ -133,15 +133,14 @@ export class PerspectiveApiService {
         console.error('No server url specified for a non-direct API call.'
                       + ' Defaulting to current hosted address');
       }
-      let headers = new Headers();
+      let headers = new HttpHeaders();
       headers.append('Content-Type', 'application/json');
 
       // TODO: why are we appending the '/suggest_score' string? Nearly always
       // better to do  have this provided as input; appending here will make it
       // much less flexible.
-      return this.http.post(
-        serverUrl + '/suggest_score', JSON.stringify(data), {headers})
-        .pipe(map(response => response.json()));
+      return this.httpClient.post(
+        serverUrl + '/suggest_score', JSON.stringify(data), {headers});
     }
   }
 }
