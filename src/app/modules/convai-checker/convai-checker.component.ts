@@ -264,17 +264,16 @@ export class ConvaiChecker implements OnInit, OnChanges {
   }
 
   private _handlePendingCheckRequest(text: string): Observable<AnalyzeCommentResponse> {
-    // Don't make duplicate requests.
-    if (text === this.lastRequestedText ||
-        text === this.lastPendingRequestedText) {
-      console.debug('Duplicate request text ' + text + '; returning');
-      return;
-    }
+    // // Don't make duplicate requests.
+    // if (text === this.lastRequestedText ||
+    //     text === this.lastPendingRequestedText) {
+    //   console.debug('Duplicate request text ' + text + '; returning');
+    //   return;
+    // }
 
     // Clear any pending requests since data has changed.
     console.debug('Clearing this.pendingRequest');
 
-    // clearTimeout(this.pendingRequest);
     this.analyzeErrorMessage = null;
 
     // Text has been cleared, return to default state.
