@@ -60,8 +60,10 @@ export class PerspectiveApiService {
       })});
   }
 
+  // TODO: this should be a Single observable, not a general observable because
+  // any call to checkText will only give a single result.
   checkText(data: AnalyzeCommentData, makeDirectApiCall: boolean, serverUrl?: string)
-              : Observable<AnalyzeCommentResponse> {
+      : Observable<AnalyzeCommentResponse> {
     if (makeDirectApiCall && this.gapiClient === null) {
       console.error('No gapi client found; call initGapiClient with your API'
                     + 'key to make a direct API call. Using server instead');
@@ -93,6 +95,9 @@ export class PerspectiveApiService {
       let headers = new Headers();
       headers.append('Content-Type', 'application/json');
 
+      // TODO: why are we appending the '/check' string? Nearly always better to
+      // do  have this provided as input; appending here will make it much less
+      // flexible.
       return this.http.post(
         serverUrl + '/check', JSON.stringify(data), {headers})
         .pipe(map(response => response.json()));
@@ -131,6 +136,9 @@ export class PerspectiveApiService {
       let headers = new Headers();
       headers.append('Content-Type', 'application/json');
 
+      // TODO: why are we appending the '/suggest_score' string? Nearly always
+      // better to do  have this provided as input; appending here will make it
+      // much less flexible.
       return this.http.post(
         serverUrl + '/suggest_score', JSON.stringify(data), {headers})
         .pipe(map(response => response.json()));

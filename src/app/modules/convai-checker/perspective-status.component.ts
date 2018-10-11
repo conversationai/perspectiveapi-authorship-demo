@@ -209,6 +209,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   ngAfterViewInit() {
+    // TODO: this is simply putting an event on the stack, and it not actually
+    // chaining anything in a dependable way; therefore it wont have consistent
+    // timing behaviour w.r.t. anything else. This is maybe wrong, and if not
+    // needs some quite careful documentation on what the actual intent here is.
     this.widgetReady = Promise.resolve().then(() => {
       this.updateWidgetElement();
       this.getUpdateWidgetStateAnimation().play();
@@ -682,6 +686,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   feedbackCompleted(success: boolean) {
+    // TODO: probably want something like an observable for when the animation
+    // has finished, and to be returning that, so that we can test for animation
+    // completes, etc.
     if (success) {
       this.feedbackRequestSubmitted = true;
     } else {
@@ -891,6 +898,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
   }
 
+  // TODO: when a score changes, we should return an observable (probably a
+  // Single) for when the animation has completed. That way we can test against
+  // it sensibly, and also make sure timing dependencies can be programmed
+  // against.
   notifyScoreChange(score: number): void {
     console.debug('Setting this.score =', score);
     this.score = score;
@@ -905,6 +916,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
   }
 
+  // TODO: unclear why this needs to be async. Remove, or add a comment to
+  // explain/justify why. If it does need to be async, it should return an
+  // observable to know when its done.
   setLoading(loading: boolean): void {
     this.widgetReady.then(() => {
       console.debug('Calling setLoading(' + loading + ')');

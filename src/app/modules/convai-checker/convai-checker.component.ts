@@ -19,7 +19,6 @@ import {
   EventEmitter,
   Input,
   OnChanges,
-  OnDestroy,
   OnInit,
   Output,
   SimpleChanges,
@@ -35,8 +34,9 @@ import {
   SuggestCommentScoreData,
   SuggestCommentScoreResponse,
 } from './perspectiveapi-types'
-import { Subscription } from 'rxjs';
-import { map, finalize } from 'rxjs/operators';
+import * as rxjs from 'rxjs';
+import { Subscription, Observable, Subject } from 'rxjs';
+import { finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 export interface InputEvent {
   target: HTMLInputElement;
@@ -108,6 +108,10 @@ export interface DemoSettings {
   modelName?: string;
 }
 
+
+const REQUEST_LIMIT_MS = 500;
+const LOCAL_STORAGE_SESSION_ID_KEY = 'sessionId';
+
 export const DEFAULT_DEMO_SETTINGS = {
   configuration: 'default',
   gradientColors: ["#25C1F9", "#7C4DFF", "#D400F9"],
@@ -162,10 +166,11 @@ export class ConvaiChecker implements OnInit, OnChanges {
   analyzeCommentResponse: AnalyzeCommentResponse|null = null;
   private checkInProgress: boolean;
   private mostRecentRequestSubscription: Subscription;
-  // Number is the return type of window.setTimeout(), which is used to update
-  // the pending request when the user is continuously typing, to not send too
-  // many requests that will be ignored.
-  private pendingRequest: number;
+  // This is the Observable Subject for strings that are being requested to
+  // be checked.
+  private checkInProgress$: Subject<string>;
+  // This is the observable for requests to the API giving back responses.
+  private pendingRequest$: Observable<AnalyzeCommentResponse>;
   private lastRequestedText: string;
   private lastPendingRequestedText: string;
   private inputListener: EventListener;
@@ -191,6 +196,10 @@ export class ConvaiChecker implements OnInit, OnChanges {
     // Default to '' to use same server as whatever's serving the webapp.
     this.serverUrl =
       this.elementRef.nativeElement.getAttribute('serverUrl') || '';
+
+    this.checkInProgress$ = new Subject<string>();
+    this.checkInProgress$.pipe(debounceTime(REQUEST_LIMIT_MS))
+      .pipe(distinctUntilChanged())
   };
 
   ngOnInit() {
@@ -229,12 +238,18 @@ export class ConvaiChecker implements OnInit, OnChanges {
     }
   }
 
-  // Public interface for manually checking text and updating the UI.
-  // Note that this does NOT change the contents of the text box. This
-  // is intended to be used for handling programmatic changes to the
-  // input box not caused by a user typing.
-  public checkText(text: string) {
-    this._handlePendingCheckRequest(text);
+  // Public interface for manually checking text and updating the UI. Note that
+  // this does NOT change the contents of the text box. This is intended to be
+  // used for handling programmatic changes to the input box not caused by a
+  // user typing.
+  //
+  // TODO: consider Null results are used for when no input (the empty string,
+  // or a null string) is provided.
+  //
+  // TODO: condider use Single observable instead of general observable. Only
+  // a single value gets given back.
+  public checkText(text: string): Observable<AnalyzeCommentResponse> {
+    return this._handlePendingCheckRequest(text);
   }
 
   // Listens to input events from elements outside the component, and forwards
@@ -248,7 +263,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
     }
   }
 
-  private _handlePendingCheckRequest(text: string) {
+  private _handlePendingCheckRequest(text: string): Observable<AnalyzeCommentResponse> {
     // Don't make duplicate requests.
     if (text === this.lastRequestedText ||
         text === this.lastPendingRequestedText) {
@@ -258,7 +273,8 @@ export class ConvaiChecker implements OnInit, OnChanges {
 
     // Clear any pending requests since data has changed.
     console.debug('Clearing this.pendingRequest');
-    clearTimeout(this.pendingRequest);
+
+    // clearTimeout(this.pendingRequest);
     this.analyzeErrorMessage = null;
 
     // Text has been cleared, return to default state.
@@ -269,24 +285,24 @@ export class ConvaiChecker implements OnInit, OnChanges {
       this.scoreChanged.emit(0);
       this.canAcceptFeedback = false;
       this.statusWidget.resetFeedback();
-      return;
+      this.pendingRequest$ = rxjs.empty();
+      return this.pendingRequest$;
     }
 
     this.lastPendingRequestedText = text;
     this.statusWidget.setLoading(true);
 
-    // Use window.setTimeout() instead of just setTimeout() because
-    // Typescript gets confused about the typings when compiling for
-    // a development environment vs a testing environment (the former sees
-    // NodeJS.Timer while the latter sees number). Using window.setTimeout
-    // makes it consistently type number.
     console.debug('Updating this.pendingRequest for text: ', text);
-    this.pendingRequest = window.setTimeout(() => {
-      this._checkText(text);
-    }, REQUEST_LIMIT_MS);
 
+    // TODO: this should be done with observable delay, or better yet debounceTime from an observable of check-requests. Not with as setTimeout.
+    // See: https://rxjs-dev.firebaseapp.com/api/operators/delay
+    // See: https://rxjs-dev.firebaseapp.com/api/operators/debounceTime
+    // That way we can directly return pipe and have an observable _checkText.
+    return this._checkText(text);
   }
 
+  // TODO: better to take the text in here than use the implicit value. That way
+  // you avoid having to have as many copies ofthe same data.
   onCommentFeedbackReceived(feedback: CommentFeedback) {
     if (this.analyzeCommentResponse === null) {
       // Don't send feedback for an empty input box.
@@ -320,8 +336,10 @@ export class ConvaiChecker implements OnInit, OnChanges {
     }
   }
 
-  suggestCommentScore(text: string, feedback: CommentFeedback): void {
+  suggestCommentScore(text: string, feedback: CommentFeedback)
+      : Promise<SuggestCommentScoreResponse> {
     this.feedbackRequestInProgress = true;
+
     const suggestCommentScoreData: SuggestCommentScoreData = {
       comment: text,
       sessionId: this.sessionId,
@@ -330,7 +348,8 @@ export class ConvaiChecker implements OnInit, OnChanges {
     if (this.demoSettings.modelName) {
       suggestCommentScoreData.modelName = this.demoSettings.modelName;
     }
-    this.analyzeApiService.suggestScore(
+
+    const suggestScore$ = this.analyzeApiService.suggestScore(
       suggestCommentScoreData,
       this.demoSettings.useGapi /* makeDirectApiCall */,
       this.serverUrl
@@ -338,17 +357,19 @@ export class ConvaiChecker implements OnInit, OnChanges {
         console.debug('Feedback request done');
         this.statusWidget.hideFeedbackQuestion();
         this.feedbackRequestInProgress = false;
-      }))
-      .subscribe(
-        (response: SuggestCommentScoreResponse) => {
-          this.statusWidget.feedbackCompleted(true);
-          console.log(response);
-        },
-        (error: Error) => {
-          console.error('Error', error);
-          this.statusWidget.feedbackCompleted(false);
-        }
-      );
+      }));
+    suggestScore$.subscribe(
+      (response: SuggestCommentScoreResponse) => {
+        this.statusWidget.feedbackCompleted(true);
+        console.log(response);
+      },
+      (error: Error) => {
+        console.error('Error', error);
+        this.statusWidget.feedbackCompleted(false);
+      }
+    );
+    // TODO: would be better for trhis to be a Single observable.
+    return suggestScore$.toPromise();
   }
 
   private _getErrorMessage(error: any): string {
@@ -371,7 +392,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
     return msg;
   }
 
-  private _checkText(text: string) {
+  private _checkText(text: string): Observable<AnalyzeCommentResponse> {
     // Cancel listening to callbacks of previous requests.
     if (this.mostRecentRequestSubscription) {
       this.mostRecentRequestSubscription.unsubscribe();
@@ -392,34 +413,48 @@ export class ConvaiChecker implements OnInit, OnChanges {
     if (this.demoSettings.modelName) {
       analyzeCommentData.modelName = this.demoSettings.modelName;
     }
-    this.mostRecentRequestSubscription =
-      this.analyzeApiService.checkText(
-          analyzeCommentData,
-          this.demoSettings.useGapi /* makeDirectApiCall */,
-          this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
-        .pipe(finalize(() => {
-          console.log('Request done');
-          let newScore = this.getMaxScore(this.analyzeCommentResponse);
-          this.statusWidget.notifyScoreChange(newScore);
-          this.scoreChanged.emit(newScore);
-          this.mostRecentRequestSubscription = null;
-        }))
-        .subscribe(
-          (response: AnalyzeCommentResponse) => {
-            this.analyzeCommentResponse = response;
-            this.analyzeCommentResponseChanged.emit(this.analyzeCommentResponse);
-            console.log(this.analyzeCommentResponse);
-            this.checkInProgress = false;
-            this.canAcceptFeedback = true;
-          },
-          (error) => {
-            console.error('Error', error);
-            this.checkInProgress = false;
-            this.canAcceptFeedback = false;
-            this.analyzeErrorMessage = this._getErrorMessage(error);
-            this.analyzeCommentResponse = null;
-          }
-        );
+
+    const checkText$ = this.analyzeApiService.checkText(
+        analyzeCommentData,
+        this.demoSettings.useGapi /* makeDirectApiCall */,
+        this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
+      .pipe(finalize(() => {
+        console.log('Request done');
+        // TODO: Add a comment to explain why/how this.analyzeCommentResponse is set
+        // to the new value. That seems to happen later in the subscribe.
+        let newScore = this.getMaxScore(this.analyzeCommentResponse);
+        // TODO: notifyScoreChange's behaviour is async: we should either make
+        // it sync, or chain it so that the piped result completes AFTER
+        // notifyScoreChange has compkleted.
+        this.statusWidget.notifyScoreChange(newScore);
+        this.scoreChanged.emit(newScore);
+        this.mostRecentRequestSubscription = null;
+      }));
+
+    this.mostRecentRequestSubscription = checkText$.subscribe(
+      (response: AnalyzeCommentResponse) => {
+        // TODO: this seems to be an important part of the completion of the
+        // behaviour for checking text, so it should be done in the pipe, not
+        // in the subscription result. That way the resulting observable
+        // happens when we want it to: when everything that should have
+        // hapened for the new result, has happened, and then we can test
+        // reliably.
+        this.analyzeCommentResponse = response;
+        this.analyzeCommentResponseChanged.emit(this.analyzeCommentResponse);
+        console.log(this.analyzeCommentResponse);
+        this.checkInProgress = false;
+        this.canAcceptFeedback = true;
+      },
+      (error) => {
+        console.error('Error', error);
+        this.checkInProgress = false;
+        this.canAcceptFeedback = false;
+        this.analyzeErrorMessage = this._getErrorMessage(error);
+        this.analyzeCommentResponse = null;
+      }
+    );
+
+    return checkText$;
   }
 
   getMaxScore(response: AnalyzeCommentResponse): number {
@@ -452,6 +487,3 @@ export class ConvaiChecker implements OnInit, OnChanges {
     return max;
   };
 }
-
-const REQUEST_LIMIT_MS = 500;
-const LOCAL_STORAGE_SESSION_ID_KEY = 'sessionId';
