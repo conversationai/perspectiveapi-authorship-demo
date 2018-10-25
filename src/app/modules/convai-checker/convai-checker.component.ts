@@ -109,7 +109,7 @@ export interface DemoSettings {
 }
 
 
-const REQUEST_LIMIT_MS = 500;
+export const REQUEST_LIMIT_MS = 500;
 const LOCAL_STORAGE_SESSION_ID_KEY = 'sessionId';
 
 export const DEFAULT_DEMO_SETTINGS = {
@@ -166,11 +166,10 @@ export class ConvaiChecker implements OnInit, OnChanges {
   analyzeCommentResponse: AnalyzeCommentResponse|null = null;
   private checkInProgress: boolean;
   private mostRecentRequestSubscription: Subscription;
-  // This is the Observable Subject for strings that are being requested to
-  // be checked.
-  private checkInProgress$: Subject<string>;
-  // This is the observable for requests to the API giving back responses.
-  private pendingRequest$: Observable<AnalyzeCommentResponse>;
+  // Number is the return type of window.setTimeout(), which is used to update
+  // the pending request when the user is continuously typing, to not send too
+  // many requests that will be ignored.
+  private pendingRequest: number;
   private lastRequestedText: string;
   private lastPendingRequestedText: string;
   private inputListener: EventListener;
@@ -196,10 +195,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
     // Default to '' to use same server as whatever's serving the webapp.
     this.serverUrl =
       this.elementRef.nativeElement.getAttribute('serverUrl') || '';
-
-    this.checkInProgress$ = new Subject<string>();
-    this.checkInProgress$.pipe(debounceTime(REQUEST_LIMIT_MS))
-      .pipe(distinctUntilChanged())
   };
 
   ngOnInit() {
@@ -242,13 +237,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   // this does NOT change the contents of the text box. This is intended to be
   // used for handling programmatic changes to the input box not caused by a
   // user typing.
-  //
-  // TODO: consider Null results are used for when no input (the empty string,
-  // or a null string) is provided.
-  //
-  // TODO: condider use Single observable instead of general observable. Only
-  // a single value gets given back.
-  public checkText(text: string): Observable<AnalyzeCommentResponse> {
+  public checkText(text: string) {
     return this._handlePendingCheckRequest(text);
   }
 
@@ -263,17 +252,17 @@ export class ConvaiChecker implements OnInit, OnChanges {
     }
   }
 
-  private _handlePendingCheckRequest(text: string): Observable<AnalyzeCommentResponse> {
-    // // Don't make duplicate requests.
-    // if (text === this.lastRequestedText ||
-    //     text === this.lastPendingRequestedText) {
-    //   console.debug('Duplicate request text ' + text + '; returning');
-    //   return;
-    // }
+  private _handlePendingCheckRequest(text: string) {
+    // Don't make duplicate requests.
+    if (text === this.lastRequestedText ||
+        text === this.lastPendingRequestedText) {
+      console.debug('Duplicate request text ' + text + '; returning');
+      return;
+    }
 
     // Clear any pending requests since data has changed.
     console.debug('Clearing this.pendingRequest');
-
+    clearTimeout(this.pendingRequest);
     this.analyzeErrorMessage = null;
 
     // Text has been cleared, return to default state.
@@ -284,16 +273,22 @@ export class ConvaiChecker implements OnInit, OnChanges {
       this.scoreChanged.emit(0);
       this.canAcceptFeedback = false;
       this.statusWidget.resetFeedback();
-      this.pendingRequest$ = rxjs.empty();
-      return this.pendingRequest$;
+      return;
     }
 
     this.lastPendingRequestedText = text;
     this.statusWidget.setLoading(true);
 
+    // Use window.setTimeout() instead of just setTimeout() because
+    // Typescript gets confused about the typings when compiling for
+    // a development environment vs a testing environment (the former sees
+    // NodeJS.Timer while the latter sees number). Using window.setTimeout
+    // makes it consistently type number.
     console.debug('Updating this.pendingRequest for text: ', text);
-
-    return this._checkText(text);
+    this.pendingRequest = window.setTimeout(() => {
+      console.log('Calling _checkText from within callback');
+      this._checkText(text);
+    }, REQUEST_LIMIT_MS);
   }
 
   // TODO: better to take the text in here than use the implicit value. That way
@@ -332,7 +327,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   }
 
   suggestCommentScore(text: string, feedback: CommentFeedback)
-      : Promise<SuggestCommentScoreResponse> {
+      : void {
     this.feedbackRequestInProgress = true;
 
     const suggestCommentScoreData: SuggestCommentScoreData = {
@@ -344,7 +339,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
       suggestCommentScoreData.modelName = this.demoSettings.modelName;
     }
 
-    const suggestScore$ = this.analyzeApiService.suggestScore(
+    this.analyzeApiService.suggestScore(
       suggestCommentScoreData,
       this.demoSettings.useGapi /* makeDirectApiCall */,
       this.serverUrl
@@ -352,8 +347,8 @@ export class ConvaiChecker implements OnInit, OnChanges {
         console.debug('Feedback request done');
         this.statusWidget.hideFeedbackQuestion();
         this.feedbackRequestInProgress = false;
-      }));
-    suggestScore$.subscribe(
+      }))
+      .subscribe(
       (response: SuggestCommentScoreResponse) => {
         this.statusWidget.feedbackCompleted(true);
         console.log(response);
@@ -363,8 +358,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
         this.statusWidget.feedbackCompleted(false);
       }
     );
-    // TODO: would be better for trhis to be a Single observable.
-    return suggestScore$.toPromise();
   }
 
   private _getErrorMessage(error: any): string {
@@ -387,7 +380,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
     return msg;
   }
 
-  private _checkText(text: string): Observable<AnalyzeCommentResponse> {
+  private _checkText(text: string) {
     // Cancel listening to callbacks of previous requests.
     if (this.mostRecentRequestSubscription) {
       this.mostRecentRequestSubscription.unsubscribe();
@@ -409,7 +402,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
       analyzeCommentData.modelName = this.demoSettings.modelName;
     }
 
-    const checkText$ = this.analyzeApiService.checkText(
+    this.analyzeApiService.checkText(
         analyzeCommentData,
         this.demoSettings.useGapi /* makeDirectApiCall */,
         this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
@@ -424,10 +417,8 @@ export class ConvaiChecker implements OnInit, OnChanges {
         this.statusWidget.notifyScoreChange(newScore);
         this.scoreChanged.emit(newScore);
         this.mostRecentRequestSubscription = null;
-      }));
-
-    this.mostRecentRequestSubscription = checkText$.subscribe(
-      (response: AnalyzeCommentResponse) => {
+      }))
+      .subscribe((response: AnalyzeCommentResponse) => {
         // TODO: this seems to be an important part of the completion of the
         // behaviour for checking text, so it should be done in the pipe, not
         // in the subscription result. That way the resulting observable
@@ -448,8 +439,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
         this.analyzeCommentResponse = null;
       }
     );
-
-    return checkText$;
   }
 
   getMaxScore(response: AnalyzeCommentResponse): number {
