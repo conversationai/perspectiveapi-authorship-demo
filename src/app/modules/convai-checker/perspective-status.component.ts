@@ -634,12 +634,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getConfigurationFromInputString(inputString: string): Configuration {
-    if (inputString === ConfigurationInput.EXTERNAL) {
-      return Configuration.EXTERNAL;
-    } else {
-      // Demo site is the default.
-      return Configuration.DEMO_SITE;
-    }
+    return Configuration.DEMO_SITE;
   }
 
   private updateLayerElementContainers(): void {
@@ -676,8 +671,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   feedbackContainerClicked() {
     if (this.configuration === Configuration.DEMO_SITE) {
       this.getTransitionToLayerAnimation(1, LAYER_TRANSITION_TIME_SECONDS).play();
-    } else if (this.configuration === Configuration.EXTERNAL) {
-      this.showFeedbackQuestion = true;
     }
   }
 
