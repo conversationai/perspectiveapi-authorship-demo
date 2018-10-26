@@ -564,6 +564,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
           this.shouldHideStatusWidget = hide;
         });
       },
+      onOverwrite: () => {
+        this.ngZone.run(() => {
+          console.log('overwritten');
+        });
+      }
     });
     updateStatusWidgetVisibilityAnimation.add([
       this.getChangeLoadingIconVisibilityAnimation(hide),
@@ -811,9 +816,47 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     return updateShapeAnimationTimeline;
   }
 
-  setShowMoreInfo(showMoreInfo: boolean): void {
-    this.getTransitionToLayerAnimation(
-      showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS).play();
+  setShowMoreInfo(showMoreInfo: boolean): Promise<void> {
+    console.log('setShowMoreInfo', showMoreInfo, LAYER_TRANSITION_TIME_SECONDS, NgZone.isInAngularZone());
+    //this.getTransitionToLayerAnimation(
+    //  showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS).play();
+
+    //Promise.resolve().then(() => {
+    //  console.log('after empty promise resolve');
+    //});
+
+
+    
+    new Promise((resolve, reject) => {
+      setTimeout(() => {
+        console.log('resolve *', NgZone.isInAngularZone());
+        resolve();
+      }, 10);
+    }).then(() => {
+      console.log('new promise resolve');
+    });
+
+   
+   /*
+   Promise.resolve().then(() => {
+    return this.playAnimation(this.getTransitionToLayerAnimation(
+      showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS))
+      .then(() => {
+        console.log('test promise then resolve');
+      });
+   }).then(() => {
+     console.log('End');
+   });;
+   */
+
+    //setTimeout(() => {
+    //  console.log('has microtasks within setTimeout', this.ngZone.hasPendingMicrotasks);
+    //}, 0);
+    console.log('has microtasks within fn', this.ngZone.hasPendingMicrotasks);
+
+    return this.playAnimation(this.getTransitionToLayerAnimation(
+      showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS));
+    //console.log('End setShowMoreInfo');
   }
 
   getAccessibilityDescriptionForEmoji(emoji: Emoji): string {
@@ -1447,10 +1490,28 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     });
   }
 
+  private playAnimation(animation: Animation): Promise<void> {
+    console.log('playAnimation, inZone?', NgZone.isInAngularZone());
+    return new Promise((resolve, reject) => {
+      console.log('Play animation promise started');
+      let wrapperTimeline = new TimelineMax({
+        onComplete: () => {
+          this.ngZone.run(() => {
+            console.log('Resolving');
+            resolve();
+          })
+        }
+      });
+      wrapperTimeline.add(animation);
+      wrapperTimeline.play();
+    });
+  }
+
   private getTransitionToLayerAnimation(endLayerIndex: number, timeSeconds: number): Animation {
     this.layerHeightPixels = this.layerAnimationHandles[this.currentLayerIndex].offsetHeight;
 
     let timeline = new TimelineMax({
+      callbackScope: this,
       onStart: () => {
         this.ngZone.run(() => {
           console.debug('Transitioning from layer ' + this.currentLayerIndex
@@ -1460,6 +1521,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       },
       onComplete: () => {
         this.ngZone.run(() => {
+          console.log('*****************');
           this.layersAnimating = false;
           this.currentLayerIndex = endLayerIndex;
           console.debug('Finished transitioning to layer ' + this.currentLayerIndex);

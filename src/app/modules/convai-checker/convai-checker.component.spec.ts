@@ -25,6 +25,7 @@ import {
   fakeAsync,
   tick,
   flush,
+  flushMicrotasks,
   getTestBed,
 } from '@angular/core/testing';
 
@@ -865,7 +866,6 @@ describe('Convai checker test', () => {
     const mockReq = httpMock.expectOne('test-url/check');
 
     // Once a request is in flight, loading is set to true.
-    tick();
     expect(checker.statusWidget.isLoading).toBe(true);
 
     // Now we have checked the expectations before the response is sent, we
@@ -907,9 +907,8 @@ describe('Convai checker test', () => {
     httpMock.verify();
   }));
 
-  /*
   it('Should not make suggest score request after text has been cleared, external config',
-     async(() => {
+     fakeAsync(() => {
     let fixture =
       TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     configureFixtureForExternalFeedbackStyleConfiguration(fixture);
@@ -917,91 +916,63 @@ describe('Convai checker test', () => {
 
     let checker = fixture.componentInstance.checker;
 
-    let checkUrl = 'test-url/check';
-    let suggestScoreUrl = 'test-url/suggest_score';
-    let lastRequestUrl = '';
     let queryText = 'Your mother was a hamster';
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
 
-    // Sets up mock responses for the check and suggest score calls.
-    let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] = getMockCheckerResponse(queryText);
-    mockResponses[suggestScoreUrl] = {
-      clientToken: "token"
-    };
-
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       lastRequestUrl = connection.request.url;
-       if (lastRequestUrl === suggestScoreUrl) {
-         fail('A suggest score request was made');
-       } else if (lastRequestUrl === checkUrl) {
-         expect(checker.statusWidget.isLoading).toBe(true);
-       }
-       connection.mockRespond(
-          new Response(
-            new ResponseOptions({
-              body: mockResponses[connection.request.url]
-            })
-          )
-        );
-
-       // Wait for async code to complete.
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-
-         // Checks that loading has stopped.
-         expect(checker.statusWidget.isLoading).toBe(false);
-
-         if (lastRequestUrl === checkUrl) {
-           if (textArea.value === queryText) {
-             // 2) After the first check completes, send an event that the
-             // textbox has been cleared.
-
-             // Open the info details.
-             let infoButtonDetailsHidden = document.getElementById('infoButton');
-             sendClickEvent(infoButtonDetailsHidden);
-             fixture.whenStable().then(() => {
-               fixture.detectChanges();
-               // Seem wrong button should be displayed.
-               expect(fixture.nativeElement.textContent).toContain('Seem wrong?');
-
-               // Clear the text box.
-               setTextAndFireInputEvent('', textArea);
-
-             });
-           } else if (textArea.value === '') {
-             // 3) Try to leave feedback for the empty string.
-
-             // Open the info details.
-             let infoButtonDetailsHidden = document.getElementById('infoButton');
-             sendClickEvent(infoButtonDetailsHidden);
-             fixture.whenStable().then(() => {
-               fixture.detectChanges();
-               // Sanity check -- seems wrong button should not be displayed.
-               expect(fixture.nativeElement.textContent).not.toContain('Seem wrong?');
-
-               // Try to submit feedback anyway, to make sure it does not go
-               // through. This state should not be possible but we want to
-               // guard against it.
-               let commentFeedback: CommentFeedback = {
-                 commentMarkedAsToxic: true
-               };
-               checker.onCommentFeedbackReceived(commentFeedback);
-             });
-           }
-         }
-       });
-     });
-
     // 1) Fire an event to trigger a check request.
     setTextAndFireInputEvent(queryText, textArea);
+    tick(REQUEST_LIMIT_MS);
+
+    let mockReq = httpMock.expectOne('test-url/check');
+    expect(checker.statusWidget.isLoading).toBe(true);
+
+    mockReq.flush(getMockCheckerResponse(0.5, queryText));
+    tick();
+    fixture.detectChanges();
+
+    // 2) After the first check completes, send an event that the
+    // textbox has been cleared.
+
+    // Open the info details.
+    let infoButtonDetailsHidden = document.getElementById('infoButton');
+    sendClickEvent(infoButtonDetailsHidden);
+
+    tick();
+    fixture.detectChanges();
+    // Seem wrong button should be displayed.
+    expect(fixture.nativeElement.textContent).toContain('Seem wrong?');
+
+    // Clear the text box.
+    setTextAndFireInputEvent('', textArea);
+    tick(REQUEST_LIMIT_MS);
+    httpMock.expectNone('test-url/check');
+
+    // 3) Try to leave feedback for the empty string.
+
+    // Open the info details.
+    infoButtonDetailsHidden = document.getElementById('infoButton');
+    sendClickEvent(infoButtonDetailsHidden);
+    tick();
+    fixture.detectChanges();
+
+    // Sanity check -- seems wrong button should not be displayed.
+    expect(fixture.nativeElement.textContent).not.toContain('Seem wrong?');
+
+    // Try to submit feedback anyway, to make sure it does not go
+    // through. This state should not be possible but we want to
+    // guard against it.
+    let commentFeedback: CommentFeedback = {
+      commentMarkedAsToxic: true
+    };
+    checker.onCommentFeedbackReceived(commentFeedback);
+    tick();
+
+    httpMock.expectNone('test-url/suggest_score');
   }));
 
   it('Should not make suggest score request after text has been cleared, demo config',
-     async(() => {
+     fakeAsync(() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
@@ -1013,70 +984,48 @@ describe('Convai checker test', () => {
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
 
-    // Sets up mock responses for the check and suggest score calls.
-    let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] = getMockCheckerResponse(queryText);
-    mockResponses[suggestScoreUrl] = {
-      clientToken: "token"
-    };
-
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       lastRequestUrl = connection.request.url;
-       if (lastRequestUrl === suggestScoreUrl) {
-         fail('A suggest score request was made');
-       } else if (lastRequestUrl === checkUrl) {
-         expect(checker.statusWidget.isLoading).toBe(true);
-       }
-       connection.mockRespond(
-          new Response(
-            new ResponseOptions({
-              body: mockResponses[connection.request.url]
-            })
-          )
-        );
-
-       // Wait for async code to complete.
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-
-         // Checks that loading has stopped.
-         expect(checker.statusWidget.isLoading).toBe(false);
-
-         if (lastRequestUrl === checkUrl) {
-           if (textArea.value === queryText) {
-             fixture.whenStable().then(() => {
-               fixture.detectChanges();
-
-               // Seem wrong button should be displayed.
-               expect(fixture.nativeElement.textContent).toContain('Seem wrong?');
-
-               // 2) After the first check completes, send an event that the
-               // textbox has been cleared.
-               setTextAndFireInputEvent('', textArea);
-             });
-           } else if (textArea.value === '') {
-             fixture.detectChanges();
-             // Sanity check -- seems wrong button should not be displayed.
-             expect(fixture.nativeElement.textContent).not.toContain('Seem wrong?');
-
-             // 3) Try to leave feedback for the empty string anyway, to make sure it
-             // does not go through. This state should not be possible but we
-             // want to guard against it.
-             let commentFeedback: CommentFeedback = {
-               commentMarkedAsToxic: true
-             };
-             checker.onCommentFeedbackReceived(commentFeedback);
-           }
-         }
-       });
-     });
-
     // 1) Fire an event to trigger a check request.
     setTextAndFireInputEvent(queryText, textArea);
+
+    tick(REQUEST_LIMIT_MS);
+
+    const mockReq = httpMock.expectOne('test-url/check');
+
+    expect(checker.statusWidget.isLoading).toBe(true);
+
+    mockReq.flush(getMockCheckerResponse(0.5, queryText))
+    tick();
+    fixture.detectChanges();
+
+    expect(checker.statusWidget.isLoading).toBe(false);
+
+    // Seem wrong button should be displayed.
+    expect(fixture.nativeElement.textContent).toContain('Seem wrong?');
+
+    // 2) After the first check completes, send an event that the
+    // textbox has been cleared.
+    setTextAndFireInputEvent('', textArea);
+    tick(REQUEST_LIMIT_MS);
+    httpMock.expectNone('test-url/check');
+
+    fixture.detectChanges();
+
+    // Sanity check -- seems wrong button should not be displayed.
+    expect(fixture.nativeElement.textContent).not.toContain('Seem wrong?');
+
+    // 3) Try to leave feedback for the empty string anyway, to make sure it
+    // does not go through. This state should not be possible but we
+    // want to guard against it.
+    let commentFeedback: CommentFeedback = {
+      commentMarkedAsToxic: true
+    };
+    checker.onCommentFeedbackReceived(commentFeedback);
+
+    tick();
+    httpMock.expectNone('test-url/suggest_score');
   }));
 
+  /*
   it('Handles feedback error', ((done: Function) => {
     let fixture =
       TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
@@ -1205,8 +1154,13 @@ describe('Convai checker test', () => {
     expect(checker.statusWidget.isLoading).toBe(false);
   }));
 
-  /*
-  it('Should handle UI layer changes, external config', (done: Function) => {
+  function waitForTimeout(ms: number): Promise<void> {
+    return new Promise((re, rj) => {
+      setTimeout(() => { re(); }, ms);
+    });
+  }
+
+  fit('Should handle UI layer changes, external config', async() => {
     // Note: This test doesn't test error case UI, since that is handled in
     // other tests.
     let fixture =
@@ -1216,14 +1170,153 @@ describe('Convai checker test', () => {
 
     let checker = fixture.componentInstance.checker;
     let queryText = 'Your mother was a hamster';
-    let checkUrl = 'test-url/check';
-    let suggestScoreUrl = 'test-url/suggest_score';
-    let lastRequestUrl = '';
-    // Set a flag to make sure the check request happens before the suggest
-    // score request in the test, since we call done() in the suggest score
-    // request handling.
-    let checkRequestUICheckFinished = false;
 
+    let textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    let layer1TextElements = ['perceived as toxic'];
+    let layer1VisibleElementIds = ['infoButton'];
+    let layer1HiddenElementIds = ['cancelButton'];
+    let layer2TextElements = [
+      'Scored',
+      '%',
+      'by the Perspective "Toxicity" analyzer',
+      'Seem wrong?',
+    ];
+    let layer2VisibleElementIds = ['cancelButton'];
+    let layer2HiddenElementIds = ['infoButton'];
+
+    // Step 1: Send an input event to trigger the check call.
+    setTextAndFireInputEvent(queryText, textArea);
+    await waitForTimeout(REQUEST_LIMIT_MS);
+    //tick(REQUEST_LIMIT_MS);
+
+    const mockReq = httpMock.expectOne('test-url/check');
+    expect(checker.statusWidget.isLoading).toBe(true);
+
+    mockReq.flush(getMockCheckerResponse(0.5, queryText));
+    //tick();
+    await fixture.detectChanges();
+
+    // Step 2: Check layer 1 UI.
+    for (let text of layer1TextElements) {
+      expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+    }
+    for (let elementId of layer1VisibleElementIds) {
+      expect(getIsElementWithIdVisible(elementId)).toBe(true);
+    }
+    for (let elementId of layer1HiddenElementIds) {
+      expect(getIsElementWithIdVisible(elementId)).toBe(false);
+    }
+
+   // Step 3: Click on the more info button.
+   let infoButton = document.getElementById('infoButton');
+   //sendClickEvent(infoButton);
+
+   await checker.statusWidget.setShowMoreInfo(true);
+
+   fixture.detectChanges();
+   //tick();
+
+   //console.log(fixture.isStable());
+
+   // TODO: fakeAsync doesn't know about pending gsap animations.
+
+   console.log('EXPECTATION');
+
+   // Step 4: Check layer 2 UI.
+   for (let text of layer2TextElements) {
+     expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+   }
+   for (let elementId of layer2VisibleElementIds) {
+     expect(getIsElementWithIdVisible(elementId)).toBe(true);
+   }
+   for (let elementId of layer2HiddenElementIds) {
+     expect(getIsElementWithIdVisible(elementId)).toBe(false);
+   }
+
+   /*
+   // Step 5: Click the cancel button to return to layer 1.
+   let cancelButton = document.getElementById('cancelButton');
+   sendClickEvent(cancelButton);
+
+   tick();
+   fixture.detectChanges();
+
+   // Step 6: Check layer 1 UI again.
+   for (let text of layer1TextElements) {
+     expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+   }
+   for (let elementId of layer1VisibleElementIds) {
+     expect(getIsElementWithIdVisible(elementId)).toBe(true);
+   }
+   for (let elementId of layer1HiddenElementIds) {
+     expect(getIsElementWithIdVisible(elementId)).toBe(false);
+   }
+
+   tick();
+   fixture.detectChanges();
+
+   // Step 7: Click the info button to move to layer 2 again.
+   infoButton = document.getElementById('infoButton');
+   sendClickEvent(infoButton);
+
+   tick();
+   fixture.detectChanges();
+
+   // Step 8: Click the 'Seem wrong?' button.
+   sendClickEvent(document.getElementById('seemWrongButton'));
+
+   tick();
+   fixture.detectChanges();
+
+   // Step 9: Click the yes button to send feedback.
+   sendClickEvent(document.getElementById('yesButtonExternalConfig'));
+
+   tick();
+
+   const mockSuggestReq = httpMock.expectOne('test-url/suggest_score');
+   expect(fixture.nativeElement.textContent).toContain('Sending');
+
+   mockSuggestReq.flush({clientToken: "token"});
+
+   tick();
+   fixture.detectChanges();
+
+   // Step 10: Check the updated layer 2 UI after feedback submission is
+   // complete.
+   layer2TextElements.splice(layer2TextElements.indexOf('Seem wrong?'), 1);
+   layer2TextElements.push('Thanks for the feedback!');
+   for (let text of layer2TextElements) {
+     expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+   }
+   for (let elementId of layer2VisibleElementIds) {
+     expect(getIsElementWithIdVisible(elementId)).toBe(true);
+   }
+   for (let elementId of layer2HiddenElementIds) {
+     expect(getIsElementWithIdVisible(elementId)).toBe(false);
+   }
+
+   // Step 11: Press the cancel button to return to layer 1.
+   cancelButton = document.getElementById('cancelButton');
+   sendClickEvent(cancelButton);
+
+   tick();
+   fixture.detectChanges();
+
+   // Step 12: Check the layer 1 UI again.
+   for (let text of layer1TextElements) {
+     expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+   }
+   for (let elementId of layer1VisibleElementIds) {
+     expect(getIsElementWithIdVisible(elementId)).toBe(true);
+   }
+   for (let elementId of layer1HiddenElementIds) {
+     expect(getIsElementWithIdVisible(elementId)).toBe(false);
+   }
+
+  */
+   /*
     // Sets up mock responses for the check and suggest score calls.
     let mockResponses: { [key: string]: Object } = {};
     mockResponses[checkUrl] = getMockCheckerResponse(queryText);
@@ -1372,9 +1465,11 @@ describe('Convai checker test', () => {
 
     // Step 1: Send an input event to trigger the check call.
     setTextAndFireInputEvent(queryText, textArea);
-  });
+    */
+  }));
 
 
+  /*
   it('Should handle UI layer changes, demo config, emoji loading icon style',
      (done: Function) => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
