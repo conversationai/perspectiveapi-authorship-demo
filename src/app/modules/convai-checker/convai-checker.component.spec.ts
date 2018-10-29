@@ -50,7 +50,7 @@ import {
 } from '@angular/common/http/testing';
 
 import * as test_components from './test-components';
-import { PerspectiveStatus, CommentFeedback, Emoji, LoadingIconStyle, Shape } from './perspective-status.component';
+import { PerspectiveStatus, CommentFeedback, Emoji, LoadingIconStyle, Shape, LAYER_TRANSITION_TIME_SECONDS, FADE_WIDGET_TIME_SECONDS } from './perspective-status.component';
 import { ConvaiChecker, REQUEST_LIMIT_MS, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
@@ -146,7 +146,7 @@ function getNormalizedInnerText(element: HTMLElement) {
 function configureFixtureForExternalFeedbackStyleConfiguration(
     fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettings>) {
   let demoSettings = getCopyOfDefaultDemoSettings();
-  demoSettings.configuration = 'external';
+  demoSettings.communityId = 'testCommunityId';
   fixture.componentInstance.setDemoSettings(demoSettings);
 }
 
@@ -197,13 +197,20 @@ function verifyEmojiIconsInDomWithZeroOpacity() {
   expect(getElementOpacity('sadEmoji')).toEqual(0);
 }
 
+function waitForTimeout(ms: number): Promise<void> {
+  return new Promise((re, rj) => {
+    setTimeout(() => { re(); }, ms);
+  });
+}
+
+
 // Checks that the transitions between UI layers (score information, feedback
 // prompt, and feedback thanks) behave correctly during user interaction with
 // the demo.
 // TODO(rachelrosen): Refactor this into smaller functions.
-function verifyLayerTransitionsWorkForDemoSiteConfig(
+async function verifyLayerTransitionsWorkForDemoSiteConfig(
     fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettings>,
-    done: Function) {
+    httpMock: HttpTestingController) {
   // Note: This test doesn't test error case UI, since that is handled in
   // other tests.
   let checker = fixture.componentInstance.checker;
@@ -211,133 +218,106 @@ function verifyLayerTransitionsWorkForDemoSiteConfig(
   let checkUrl = 'test-url/check';
   let suggestScoreUrl = 'test-url/suggest_score';
   let lastRequestUrl = '';
-  // Set a flag to make sure the check request happens before the suggest
-  // score request in the test, since we call done() in the suggest score
-  // request handling.
-  let checkRequestUICheckFinished = false;
 
-  // Sets up mock responses for the check and suggest score calls.
-  let mockResponses: { [key: string]: Object } = {};
-  mockResponses[checkUrl] = getMockCheckerResponse(0.5, queryText);
-  mockResponses[suggestScoreUrl] = {
-    clientToken: "token"
-  };
+  const layer1TextElements = [
+    'perceived as toxic',
+    'SEEM WRONG?'
+  ];
+  const layer1VisibleElementIds = ['layer1', 'seemWrongButtonDemoConfig'];
+  const layer1HiddenElementIds = ['layer2', 'layer3'];
+  const layer2TextElements = [
+    'Is this comment toxic?',
+    'YES',
+    'NO',
+  ];
+  const layer2VisibleElementIds = ['layer2', 'yesButtonDemoConfig', 'noButtonDemoConfig'];
+  const layer2HiddenElementIds = ['layer1', 'layer3'];
+  const layer3TextElements = [
+    'Thanks for your feedback!',
+  ];
+  const layer3VisibleElementIds = ['layer3', 'feedbackThanksDemoConfig'];
+  const layer3HiddenElementIds = ['layer1', 'layer2'];
 
-  let mockBackend = TestBed.get(MockBackend);
-  mockBackend.connections
-   .subscribe((connection: MockConnection) => {
-     lastRequestUrl = connection.request.url;
-     if (lastRequestUrl === suggestScoreUrl) {
-       fixture.detectChanges();
-       expect(fixture.nativeElement.textContent).not.toContain('Yes');
-       expect(fixture.nativeElement.textContent).not.toContain('No');
-     } else if (lastRequestUrl === checkUrl) {
-       expect(checker.statusWidget.isLoading).toBe(true);
-     }
-     connection.mockRespond(
-       new Response(
-          new ResponseOptions({
-            body: mockResponses[connection.request.url]
-          })
-       )
-     );
-
-     fixture.whenStable().then(() => {
-       fixture.detectChanges();
-       let layer1TextElements = [
-         'perceived as toxic',
-         'SEEM WRONG?'
-       ];
-       let layer1VisibleElementIds = ['layer1', 'seemWrongButtonDemoConfig'];
-       let layer1HiddenElementIds = ['layer2', 'layer3'];
-       let layer2TextElements = [
-         'Is this comment toxic?',
-         'YES',
-         'NO',
-       ];
-       let layer2VisibleElementIds = ['layer2', 'yesButtonDemoConfig', 'noButtonDemoConfig'];
-       let layer2HiddenElementIds = ['layer1', 'layer3'];
-       let layer3TextElements = [
-         'Thanks for your feedback!',
-       ];
-       let layer3VisibleElementIds = ['layer3', 'feedbackThanksDemoConfig'];
-       let layer3HiddenElementIds = ['layer1', 'layer2'];
-
-       if (lastRequestUrl === checkUrl) {
-         // Step 2: Check layer 1 UI.
-         for (let text of layer1TextElements) {
-           expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-         }
-         for (let elementId of layer1VisibleElementIds) {
-           expect(getIsElementWithIdVisible(elementId)).toBe(true);
-         }
-         for (let elementId of layer1HiddenElementIds) {
-           expect(getIsElementWithIdVisible(elementId)).toBe(false);
-         }
-
-         // Step 3: Click the seem wrong button.
-         let seemWrongButton = document.getElementById('seemWrongButtonDemoConfig');
-         sendClickEvent(seemWrongButton);
-
-         fixture.whenStable().then(() => {
-           // Step 4: Check layer 2 UI.
-           fixture.detectChanges();
-           for (let text of layer2TextElements) {
-             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-           }
-           for (let elementId of layer2VisibleElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(true);
-           }
-           for (let elementId of layer2HiddenElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(false);
-           }
-
-           checkRequestUICheckFinished = true;
-
-           // Step 5: Send feedback by pressing the yes button to move to layer 3.
-           sendClickEvent(document.getElementById('yesButtonDemoConfig'));
-         });
-       }
-       if (lastRequestUrl === suggestScoreUrl) {
-         // Step 6: Check layer 3 UI.
-         for (let text of layer3TextElements) {
-           expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-         }
-         for (let elementId of layer3VisibleElementIds) {
-           expect(getIsElementWithIdVisible(elementId)).toBe(true);
-         }
-         for (let elementId of layer3HiddenElementIds) {
-           expect(getIsElementWithIdVisible(elementId)).toBe(false);
-         }
-
-         // Step 7: Return to layer 1 and check UI again.
-         let thanksButton = document.getElementById('thanksForFeedbackButtonDemoConfig');
-         sendClickEvent(thanksButton);
-
-         fixture.whenStable().then(() => {
-           fixture.detectChanges();
-           for (let text of layer1TextElements) {
-             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-           }
-           for (let elementId of layer1VisibleElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(true);
-           }
-           for (let elementId of layer1HiddenElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(false);
-           }
-
-           expect(checkRequestUICheckFinished).toBe(true);
-           done();
-         });
-       }
-     });
-  });
-
-  let textArea = fixture.debugElement.query(
+  const textArea = fixture.debugElement.query(
     By.css('#' + checker.inputId)).nativeElement;
 
   // Step 1: Send an input event to trigger the check call.
   setTextAndFireInputEvent(queryText, textArea);
+
+  await waitForTimeout(REQUEST_LIMIT_MS);
+
+  const mockReq = httpMock.expectOne('test-url/check');
+  expect(checker.statusWidget.isLoading).toBe(true);
+
+  mockReq.flush(getMockCheckerResponse(0.5, queryText));
+  fixture.detectChanges();
+
+  // Step 2: Check layer 1 UI.
+  for (let text of layer1TextElements) {
+    expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+  }
+  for (let elementId of layer1VisibleElementIds) {
+    expect(getIsElementWithIdVisible(elementId)).toBe(true);
+  }
+  for (let elementId of layer1HiddenElementIds) {
+    expect(getIsElementWithIdVisible(elementId)).toBe(false);
+  }
+
+  // Step 3: Click the seem wrong button.
+  const seemWrongButton = document.getElementById('seemWrongButtonDemoConfig');
+  sendClickEvent(seemWrongButton);
+  await checker.statusWidget.animationPromise;
+  fixture.detectChanges();
+
+  // Step 4: Check layer 2 UI.
+  for (let text of layer2TextElements) {
+    expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+  }
+  for (let elementId of layer2VisibleElementIds) {
+    expect(getIsElementWithIdVisible(elementId)).toBe(true);
+  }
+  for (let elementId of layer2HiddenElementIds) {
+    expect(getIsElementWithIdVisible(elementId)).toBe(false);
+  }
+
+  // Step 5: Send feedback by pressing the yes button to move to layer 3.
+  sendClickEvent(document.getElementById('yesButtonDemoConfig'));
+  fixture.detectChanges();
+
+  const mockSuggestReq = httpMock.expectOne('test-url/suggest_score');
+  expect(fixture.nativeElement.textContent).not.toContain('Yes');
+  expect(fixture.nativeElement.textContent).not.toContain('No');
+
+  mockSuggestReq.flush({clientToken: "token"});
+  await checker.statusWidget.animationPromise;
+  fixture.detectChanges();
+
+  // Step 6: Check layer 3 UI.
+  for (let text of layer3TextElements) {
+    expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+  }
+  for (let elementId of layer3VisibleElementIds) {
+    expect(getIsElementWithIdVisible(elementId)).toBe(true);
+  }
+  for (let elementId of layer3HiddenElementIds) {
+    expect(getIsElementWithIdVisible(elementId)).toBe(false);
+  }
+
+  // Step 7: Return to layer 1 and check UI again.
+  let thanksButton = document.getElementById('thanksForFeedbackButtonDemoConfig');
+  sendClickEvent(thanksButton);
+  await checker.statusWidget.animationPromise;
+  fixture.detectChanges();
+
+  for (let text of layer1TextElements) {
+    expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
+  }
+  for (let elementId of layer1VisibleElementIds) {
+    expect(getIsElementWithIdVisible(elementId)).toBe(true);
+  }
+  for (let elementId of layer1HiddenElementIds) {
+    expect(getIsElementWithIdVisible(elementId)).toBe(false);
+  }
 }
 
 // Checks that colors are almost equal within some distance margin in the rgb
@@ -372,8 +352,9 @@ function verifyInterpolateColorsForControlPointsAndGradientColors(
 // TODO(rachelrosen): If this function is called more than once from within an
 // individual test, we get an error: "Connection has already been resolved."
 // Investigate why.
-function verifyWidgetVisibilityForDemoSettings(
+async function verifyWidgetVisibilityForDemoSettings(
     fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettings>,
+    httpMock: HttpTestingController,
     demoSettings: DemoSettings,
     mockResponseScores: number[],
     expectedWidgetVisibilitiesBeforeLoading: boolean[],
@@ -393,6 +374,89 @@ function verifyWidgetVisibilityForDemoSettings(
     'Your father smelled of elderberries',
     'What is the air velocity of an unladen swallow?'
   ];
+  let expectedFeedbackText = [
+    checker.statusWidget.getFeedbackTextForScore(mockResponseScores[0]),
+    checker.statusWidget.getFeedbackTextForScore(mockResponseScores[1]),
+    checker.statusWidget.getFeedbackTextForScore(mockResponseScores[2]),
+  ];
+
+  /***/
+
+  // Test steps:
+  // 1. Update settings
+  fixture.componentInstance.setDemoSettings(demoSettings);
+  console.log(demoSettings);
+  console.log('before loading', expectedWidgetVisibilitiesBeforeLoading);
+  console.log('while loading', expectedWidgetVisibilitiesWhileLoading);
+  console.log('after loading', expectedWidgetVisibilitiesAfterLoading);
+  fixture.detectChanges();
+  console.log(checker.statusWidget.scoreThresholds);
+
+  for (let callCount = 0; callCount < 1; callCount++) {//mockResponseScores.length; callCount++) {
+    console.log('Callcount =', callCount);
+    await fixture.whenStable();
+    await checker.statusWidget.animationPromise;
+    fixture.detectChanges();
+
+    // Check visibility before loading.
+    console.log('*********Expectation for visibilities before loading');
+    expect(getIsElementWithIdVisible(widgetId))
+      .toBe(expectedWidgetVisibilitiesBeforeLoading[callCount]);
+
+    // Run query and check visibility.
+    setTextAndFireInputEvent(queryTexts[callCount], textArea);
+
+    await waitForTimeout(REQUEST_LIMIT_MS);
+
+    let mockReq = httpMock.expectOne('test-url/check');
+    console.log('*********Expectation for visibilities while loading');
+    //fixture.detectChanges();
+    expect(checker.statusWidget.isLoading).toBe(true);
+    expect(getIsElementWithIdVisible(widgetId))
+      .toBe(expectedWidgetVisibilitiesWhileLoading[callCount]);
+
+    mockReq.flush(
+      getMockCheckerResponse(mockResponseScores[callCount], queryTexts[callCount]));
+
+    await fixture.whenStable();
+    // It is intentional that we wait twice; the first detectChanges triggers
+    // another animation.
+    await checker.statusWidget.animationPromise;
+    fixture.detectChanges();
+    console.log('****Detect changes 1');
+    await checker.statusWidget.animationPromise;
+    fixture.detectChanges();
+    console.log('****Detect changes 2');
+
+    // Checks that loading has stopped.
+    console.log('*********Expectation for visibilities after loading');
+    expect(checker.statusWidget.isLoading).toBe(false);
+    expect(getIsElementWithIdVisible(widgetId))
+      .toBe(expectedWidgetVisibilitiesAfterLoading[callCount]);
+
+    // Checks that if the widget is hidden, its x value in the transform is
+    // negative (it translated to the left), and that the text feedback
+    // element also translated to the left.
+    let widgetXTranslation = getElementXTranslation(widgetId);
+    let feedbackTextXTranslation = getElementXTranslation(textFeedbackElementId);
+    expect(widgetXTranslation).toEqual(feedbackTextXTranslation);
+    if (!expectedWidgetVisibilitiesAfterLoading[callCount]) {
+      expect(widgetXTranslation).toBeLessThan(0);
+      expect(feedbackTextXTranslation).toBeLessThan(0);
+    } else {
+      expect(widgetXTranslation).toBe(0);
+      expect(feedbackTextXTranslation).toBe(0);
+    }
+
+    if (expectedFeedbackTextVisibilitiesAfterLoading[callCount]) {
+      expect(getNormalizedInnerText(fixture.nativeElement)).toContain(
+        expectedFeedbackText[callCount])
+    } else {
+      expect(getNormalizedInnerText(fixture.nativeElement)).not.toContain(
+        expectedFeedbackText[callCount])
+    }
+  }
+  /*****
 
   let mockResponses = [
     getMockCheckerResponse(mockResponseScores[0], queryTexts[0]),
@@ -400,11 +464,6 @@ function verifyWidgetVisibilityForDemoSettings(
     getMockCheckerResponse(mockResponseScores[2], queryTexts[2])
   ];
 
-  let expectedFeedbackText = [
-    checker.statusWidget.getFeedbackTextForScore(mockResponseScores[0]),
-    checker.statusWidget.getFeedbackTextForScore(mockResponseScores[1]),
-    checker.statusWidget.getFeedbackTextForScore(mockResponseScores[2]),
-  ];
 
   let callCount = 0;
   let mockBackend = TestBed.get(MockBackend);
@@ -479,7 +538,7 @@ function verifyWidgetVisibilityForDemoSettings(
     // 3. Run query and check visibility.
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
-  });
+  });*/
 }
 
 describe('Convai checker test', () => {
@@ -537,7 +596,7 @@ describe('Convai checker test', () => {
 
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
-    expect(checker.demoSettings.configuration).toEqual('external');
+    expect(checker.demoSettings.communityId).toEqual('testCommunityId');
   }));
 
   it('should recognize inputs from angular input bindings', async(() => {
@@ -550,7 +609,7 @@ describe('Convai checker test', () => {
 
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
-    expect(checker.demoSettings.configuration).toEqual('external');
+    expect(checker.demoSettings.communityId).toEqual('testCommunityId');
   }));
 
   it('check default demo settings', async(() => {
@@ -664,45 +723,6 @@ describe('Convai checker test', () => {
   }));
 
   /*
-  it('Should handle analyze comment error, external config', async(() => {
-    let fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
-
-    let demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.configuration = 'external';
-    fixture.componentInstance.setDemoSettings(demoSettings);
-
-    fixture.detectChanges();
-    let checker = fixture.componentInstance.checker;
-    let queryText = 'Your mother was a hamster';
-
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       expect(checker.analyzeCommentResponse).toBe(null);
-       expect(checker.statusWidget.isLoading).toBe(true);
-
-       connection.mockError(new Error('error'));
-
-       // Wait for async code to complete.
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-         // Checks that the error message is displayed.
-         expect(checker.analyzeCommentResponse).toBe(null);
-         expect(fixture.nativeElement.textContent).toContain('Error');
-
-         // Checks that loading has stopped.
-         expect(checker.statusWidget.isLoading).toBe(false);
-       });
-    });
-
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
-
-    // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea);
-  }));
-
   it('Should handle analyze comment error, demo config', async(() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
@@ -777,76 +797,6 @@ describe('Convai checker test', () => {
     httpMock.expectNone('test-url/check');
   }));
 
-  it('Should update UI for sending score feedback, external config', fakeAsync(() => {
-    let fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
-    configureFixtureForExternalFeedbackStyleConfiguration(fixture);
-    fixture.detectChanges();
-
-    let checker = fixture.componentInstance.checker;
-    let queryText = 'Your mother was a hamster';
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
-
-    // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea);
-
-    tick(REQUEST_LIMIT_MS);
-
-    // Expect a request to have been sent.
-    const mockReq = httpMock.expectOne('test-url/check');
-
-    // Once a request is in flight, loading is set to true.
-    tick();
-    expect(checker.analyzeCommentResponse).toBe(null);
-    expect(checker.statusWidget.isLoading).toBe(true);
-
-    // Now we have checked the expectations before the response is sent, we
-    // send back the response.
-    mockReq.flush(getMockCheckerResponse(0.5, queryText));
-    tick();
-    fixture.detectChanges();
-
-    // Checks that loading has stopped.
-    expect(checker.statusWidget.isLoading).toBe(false);
-
-    // Open the info details.
-    let infoButtonDetailsHidden = document.getElementById('infoButton');
-    sendClickEvent(infoButtonDetailsHidden);
-    tick();
-
-    // Wait for UI update after click event.
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Seem wrong?');
-
-    // Click the 'Seem wrong?' button
-    sendClickEvent(document.getElementById('seemWrongButton'));
-    tick();
-
-    // Wait for the UI to update, then click the 'Yes' button
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Is this text toxic?');
-    sendClickEvent(document.getElementById('yesButtonExternalConfig'));
-
-    const mockSuggestReq = httpMock.expectOne('test-url/suggest_score');
-
-    tick();
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.textContent).toContain('Sending');
-
-    mockSuggestReq.flush({clientToken: "token"});
-
-    tick();
-    fixture.detectChanges();
-
-    // Confirm the UI state after feedback is submitted.
-    expect(fixture.nativeElement.textContent).not.toContain('Sending');
-    expect(fixture.nativeElement.textContent).toContain('Thanks');
-
-    httpMock.verify();
-  }));
-
   it('Should update UI for sending score feedback, demo config ', fakeAsync(() => {
     let fixture =
       TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
@@ -905,70 +855,6 @@ describe('Convai checker test', () => {
     expect(fixture.nativeElement.textContent).toContain('Thanks');
 
     httpMock.verify();
-  }));
-
-  it('Should not make suggest score request after text has been cleared, external config',
-     fakeAsync(() => {
-    let fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
-    configureFixtureForExternalFeedbackStyleConfiguration(fixture);
-    fixture.detectChanges();
-
-    let checker = fixture.componentInstance.checker;
-
-    let queryText = 'Your mother was a hamster';
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
-
-    // 1) Fire an event to trigger a check request.
-    setTextAndFireInputEvent(queryText, textArea);
-    tick(REQUEST_LIMIT_MS);
-
-    let mockReq = httpMock.expectOne('test-url/check');
-    expect(checker.statusWidget.isLoading).toBe(true);
-
-    mockReq.flush(getMockCheckerResponse(0.5, queryText));
-    tick();
-    fixture.detectChanges();
-
-    // 2) After the first check completes, send an event that the
-    // textbox has been cleared.
-
-    // Open the info details.
-    let infoButtonDetailsHidden = document.getElementById('infoButton');
-    sendClickEvent(infoButtonDetailsHidden);
-
-    tick();
-    fixture.detectChanges();
-    // Seem wrong button should be displayed.
-    expect(fixture.nativeElement.textContent).toContain('Seem wrong?');
-
-    // Clear the text box.
-    setTextAndFireInputEvent('', textArea);
-    tick(REQUEST_LIMIT_MS);
-    httpMock.expectNone('test-url/check');
-
-    // 3) Try to leave feedback for the empty string.
-
-    // Open the info details.
-    infoButtonDetailsHidden = document.getElementById('infoButton');
-    sendClickEvent(infoButtonDetailsHidden);
-    tick();
-    fixture.detectChanges();
-
-    // Sanity check -- seems wrong button should not be displayed.
-    expect(fixture.nativeElement.textContent).not.toContain('Seem wrong?');
-
-    // Try to submit feedback anyway, to make sure it does not go
-    // through. This state should not be possible but we want to
-    // guard against it.
-    let commentFeedback: CommentFeedback = {
-      commentMarkedAsToxic: true
-    };
-    checker.onCommentFeedbackReceived(commentFeedback);
-    tick();
-
-    httpMock.expectNone('test-url/suggest_score');
   }));
 
   it('Should not make suggest score request after text has been cleared, demo config',
@@ -1154,13 +1040,8 @@ describe('Convai checker test', () => {
     expect(checker.statusWidget.isLoading).toBe(false);
   }));
 
-  function waitForTimeout(ms: number): Promise<void> {
-    return new Promise((re, rj) => {
-      setTimeout(() => { re(); }, ms);
-    });
-  }
-
-  fit('Should handle UI layer changes, external config', async() => {
+   /*
+  it('Should handle UI layer changes, external config', async() => {
     // Note: This test doesn't test error case UI, since that is handled in
     // other tests.
     let fixture =
@@ -1235,7 +1116,6 @@ describe('Convai checker test', () => {
      expect(getIsElementWithIdVisible(elementId)).toBe(false);
    }
 
-   /*
    // Step 5: Click the cancel button to return to layer 1.
    let cancelButton = document.getElementById('cancelButton');
    sendClickEvent(cancelButton);
@@ -1314,164 +1194,12 @@ describe('Convai checker test', () => {
    for (let elementId of layer1HiddenElementIds) {
      expect(getIsElementWithIdVisible(elementId)).toBe(false);
    }
-
-  */
-   /*
-    // Sets up mock responses for the check and suggest score calls.
-    let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] = getMockCheckerResponse(queryText);
-    mockResponses[suggestScoreUrl] = {
-      clientToken: "token"
-    };
-
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       lastRequestUrl = connection.request.url;
-       fixture.detectChanges();
-       if (lastRequestUrl === suggestScoreUrl) {
-         expect(fixture.nativeElement.textContent).toContain('Sending');
-       } else if (lastRequestUrl === checkUrl) {
-         expect(checker.statusWidget.isLoading).toBe(true);
-       }
-       connection.mockRespond(
-         new Response(
-            new ResponseOptions({
-              body: mockResponses[connection.request.url]
-            })
-         )
-       );
-
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-         let layer1TextElements = ['perceived as toxic'];
-         let layer1VisibleElementIds = ['infoButton'];
-         let layer1HiddenElementIds = ['cancelButton'];
-         let layer2TextElements = [
-           'Scored',
-           '%',
-           'by the Perspective "Toxicity" analyzer',
-           'Seem wrong?',
-         ];
-         let layer2VisibleElementIds = ['cancelButton'];
-         let layer2HiddenElementIds = ['infoButton'];
-         if (lastRequestUrl === checkUrl) {
-           // Step 2: Check layer 1 UI.
-           for (let text of layer1TextElements) {
-             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-           }
-           for (let elementId of layer1VisibleElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(true);
-           }
-           for (let elementId of layer1HiddenElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(false);
-           }
-
-           // Step 3: Click on the more info button.
-           let infoButton = document.getElementById('infoButton');
-           sendClickEvent(infoButton);
-
-           fixture.whenStable().then(() => {
-             // Step 4: Check layer 2 UI.
-             fixture.detectChanges();
-             for (let text of layer2TextElements) {
-               expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-             }
-
-             for (let elementId of layer2VisibleElementIds) {
-               expect(getIsElementWithIdVisible(elementId)).toBe(true);
-             }
-             for (let elementId of layer2HiddenElementIds) {
-               expect(getIsElementWithIdVisible(elementId)).toBe(false);
-             }
-
-             // Step 5: Click the cancel button to return to layer 1.
-             let cancelButton = document.getElementById('cancelButton');
-             sendClickEvent(cancelButton);
-
-             // Step 6: Check layer 1 UI again.
-             fixture.whenStable().then(() => {
-               fixture.detectChanges();
-               for (let text of layer1TextElements) {
-                 expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-               }
-               for (let elementId of layer1VisibleElementIds) {
-                 expect(getIsElementWithIdVisible(elementId)).toBe(true);
-               }
-               for (let elementId of layer1HiddenElementIds) {
-                 expect(getIsElementWithIdVisible(elementId)).toBe(false);
-               }
-
-               // Step 7: Click the info button to move to layer 2 again.
-               let infoButton = document.getElementById('infoButton');
-               sendClickEvent(infoButton);
-
-               // Step 8: Click the 'Seem wrong?' button.
-               fixture.whenStable().then(() => {
-                 fixture.detectChanges();
-                 sendClickEvent(document.getElementById('seemWrongButton'));
-
-                 // Step 9: Click the yes button to send feedback.
-                 fixture.whenStable().then(() => {
-                   fixture.detectChanges();
-                   checkRequestUICheckFinished = true;
-                   sendClickEvent(document.getElementById('yesButtonExternalConfig'));
-
-                 });
-               });
-             });
-           });
-         }
-         if (lastRequestUrl === suggestScoreUrl) {
-           // Step 9: Check the updated layer 2 UI after feedback submission is
-           // complete.
-           layer2TextElements.splice(layer2TextElements.indexOf('Seem wrong?'), 1);
-           layer2TextElements.push('Thanks for the feedback!');
-           for (let text of layer2TextElements) {
-             expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-           }
-           for (let elementId of layer2VisibleElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(true);
-           }
-           for (let elementId of layer2HiddenElementIds) {
-             expect(getIsElementWithIdVisible(elementId)).toBe(false);
-           }
-
-           // Step 10: Press the cancel button to return to layer 1.
-           let cancelButton = document.getElementById('cancelButton');
-           sendClickEvent(cancelButton);
-
-           // Step 11: Check the layer 1 UI again.
-           fixture.whenStable().then(() => {
-             fixture.detectChanges();
-             for (let text of layer1TextElements) {
-               expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-             }
-             for (let elementId of layer1VisibleElementIds) {
-               expect(getIsElementWithIdVisible(elementId)).toBe(true);
-             }
-             for (let elementId of layer1HiddenElementIds) {
-               expect(getIsElementWithIdVisible(elementId)).toBe(false);
-             }
-             expect(checkRequestUICheckFinished).toBe(true);
-             done();
-           });
-         }
-       });
-     });
-
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
-
-    // Step 1: Send an input event to trigger the check call.
-    setTextAndFireInputEvent(queryText, textArea);
-    */
   }));
+  */
 
 
-  /*
   it('Should handle UI layer changes, demo config, emoji loading icon style',
-     (done: Function) => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
 
     // Configure settings.
@@ -1480,18 +1208,21 @@ describe('Convai checker test', () => {
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
 
-    verifyLayerTransitionsWorkForDemoSiteConfig(fixture, done);
+    await verifyLayerTransitionsWorkForDemoSiteConfig(fixture, httpMock);
   });
 
-
   it('Should handle UI layer changes, demo config, circle/square/diamond loading',
-     (done: Function) => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
 
-    verifyLayerTransitionsWorkForDemoSiteConfig(fixture, done);
+    let checker = fixture.componentInstance.checker;
+    await checker.statusWidget.animationPromise;
+
+    await verifyLayerTransitionsWorkForDemoSiteConfig(fixture, httpMock);
   });
 
+  /*
   it('Test loading icon visibility with setting hideLoadingIconAfterLoad', async(() => {
     let fixture =
       TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
@@ -2002,9 +1733,10 @@ describe('Convai checker test', () => {
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryTexts[callCount], textArea);
   }));
+ */
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold of 0',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
 
@@ -2021,18 +1753,19 @@ describe('Convai checker test', () => {
     let expectedWidgetVisibilitiesAfterLoading = [false, false, false];
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
       expectedWidgetVisibilitiesWhileLoading,
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading);
-  }));
+  });
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold of 0, emoji icon',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
 
@@ -2051,8 +1784,9 @@ describe('Convai checker test', () => {
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
     let widgetId = 'emojiStatusWidget';
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
@@ -2060,10 +1794,10 @@ describe('Convai checker test', () => {
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
-  }));
+  });
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold > 0',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, but never show the loading icon.
@@ -2078,18 +1812,19 @@ describe('Convai checker test', () => {
     let expectedWidgetVisibilitiesAfterLoading = [false, false, false];
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
       expectedWidgetVisibilitiesWhileLoading,
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading);
-  }));
+  });
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold > 0, emoji icon',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, but never show the loading icon.
@@ -2106,8 +1841,9 @@ describe('Convai checker test', () => {
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
     let widgetId = 'emojiStatusWidget';
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
@@ -2115,11 +1851,11 @@ describe('Convai checker test', () => {
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
-  }));
+  });
 
-  it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
+  fit('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
      +' min threshold = 0',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Always show feedback, and only show loading icon above the min threshold
@@ -2139,19 +1875,20 @@ describe('Convai checker test', () => {
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
     let widgetId = 'circleSquareDiamondWidget';
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
       expectedWidgetVisibilitiesWhileLoading,
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading);
-  }));
+  });
 
   it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
      +' min threshold = 0, emoji icon',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Always show feedback, and only show loading icon above the min threshold
@@ -2172,8 +1909,9 @@ describe('Convai checker test', () => {
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
     let widgetId = 'emojiStatusWidget';
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
@@ -2181,11 +1919,11 @@ describe('Convai checker test', () => {
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
-  }));
+  });
 
   it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
      + 'min threshold > 0',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, and only show loading
@@ -2209,19 +1947,20 @@ describe('Convai checker test', () => {
     let expectedWidgetVisibilitiesAfterLoading = [true, false, true];
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
       expectedWidgetVisibilitiesWhileLoading,
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading);
-  }));
+  });
 
   it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
      + 'min threshold > 0, emoji icon',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, and only show loading
@@ -2247,8 +1986,9 @@ describe('Convai checker test', () => {
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
     let widgetId = 'emojiStatusWidget';
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
@@ -2256,10 +1996,10 @@ describe('Convai checker test', () => {
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
-  }));
+  });
 
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold = 0',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
 
@@ -2275,18 +2015,19 @@ describe('Convai checker test', () => {
     let expectedWidgetVisibilitiesAfterLoading = [false, false, false];
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
       expectedWidgetVisibilitiesWhileLoading,
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading);
-  }));
+  });
 
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold = 0, emoji icon',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
 
@@ -2304,8 +2045,9 @@ describe('Convai checker test', () => {
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
     let widgetId = 'emojiStatusWidget';
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
@@ -2313,10 +2055,10 @@ describe('Convai checker test', () => {
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
-  }));
+  });
 
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold > 0',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, and hide the loading
@@ -2333,18 +2075,19 @@ describe('Convai checker test', () => {
     let expectedWidgetVisibilitiesAfterLoading = [false, false, false];
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
       expectedWidgetVisibilitiesWhileLoading,
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading);
-  }));
+  });
 
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold > 0, emoji icon',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, and hide the loading
@@ -2363,8 +2106,9 @@ describe('Convai checker test', () => {
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
     let widgetId = 'emojiStatusWidget';
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
@@ -2372,11 +2116,11 @@ describe('Convai checker test', () => {
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
-  }));
+  });
 
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, '
      + 'hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
@@ -2398,20 +2142,21 @@ describe('Convai checker test', () => {
     let expectedWidgetVisibilitiesAfterLoading = [false, false, false];
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
       expectedWidgetVisibilitiesWhileLoading,
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading);
-  }));
+  });
 
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, '
      + 'hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0 '
      + 'emoji icon',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
@@ -2435,8 +2180,9 @@ describe('Convai checker test', () => {
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
     let widgetId = 'emojiStatusWidget';
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
@@ -2444,11 +2190,11 @@ describe('Convai checker test', () => {
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
-  }));
+  });
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, '
      + ' hideLoadingIconAfterLoad = true, min threshold > 0',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
@@ -2465,19 +2211,20 @@ describe('Convai checker test', () => {
     let expectedWidgetVisibilitiesAfterLoading = [false, false, false];
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
       expectedWidgetVisibilitiesWhileLoading,
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading);
-  }));
+  });
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, '
      + ' hideLoadingIconAfterLoad = true, min threshold > 0, emoji icon',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
@@ -2496,8 +2243,9 @@ describe('Convai checker test', () => {
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
     let widgetId = 'emojiStatusWidget';
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
@@ -2506,11 +2254,11 @@ describe('Convai checker test', () => {
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
 
-  }));
+  });
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, hideLoadingIconAfterLoad = true, '
      + 'and hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
@@ -2529,19 +2277,20 @@ describe('Convai checker test', () => {
     let expectedWidgetVisibilitiesAfterLoading = [false, false, false];
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
       expectedWidgetVisibilitiesWhileLoading,
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading);
-  }));
+  });
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, hideLoadingIconAfterLoad = true, '
      + 'and hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0, emoji icon',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
@@ -2562,8 +2311,9 @@ describe('Convai checker test', () => {
     let expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
     let widgetId = 'emojiStatusWidget';
 
-    verifyWidgetVisibilityForDemoSettings(
+    await verifyWidgetVisibilityForDemoSettings(
       fixture,
+      httpMock,
       demoSettings,
       mockResponseScores,
       expectedWidgetVisibilitiesBeforeLoading,
@@ -2571,8 +2321,9 @@ describe('Convai checker test', () => {
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
-  }));
+  });
 
+  /*
   it('Test gradient colors', async(() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     let testGradientColorsRgb = [

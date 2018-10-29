@@ -84,7 +84,7 @@ export class ConvaiCheckerWithAttributeInput {
   @ViewChild(ConvaiChecker) checker: ConvaiChecker;
   demoSettings = JSON.parse(JSON.stringify(DEFAULT_DEMO_SETTINGS));
   constructor() {
-    this.demoSettings.configuration = 'external';
+    this.demoSettings.communityId = 'testCommunityId';
   }
 }
 

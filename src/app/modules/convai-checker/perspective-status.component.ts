@@ -46,13 +46,11 @@ export enum Emoji {
 
 export enum Configuration {
   DEMO_SITE,
-  EXTERNAL,
 };
 
 // The keys in ConfigurationInput should match items in the Configuration enum.
 export const ConfigurationInput = {
   DEMO_SITE: 'default',
-  EXTERNAL: 'external',
 };
 
 export const ScoreThreshold = {
@@ -75,8 +73,8 @@ const SHAPE_MORPH_TIME_SECONDS = 1;
 const FADE_DETAILS_TIME_SECONDS = 0.4;
 const FADE_ANIMATION_TIME_SECONDS = 0.3;
 const GRAYSCALE_ANIMATION_TIME_SECONDS = 0.2
-const LAYER_TRANSITION_TIME_SECONDS = 0.5;
-const FADE_WIDGET_TIME_SECONDS = 0.4;
+export const LAYER_TRANSITION_TIME_SECONDS = 0.5;
+export const FADE_WIDGET_TIME_SECONDS = 0.4;
 const WIDGET_PADDING_PX = 4;
 const WIDGET_RIGHT_MARGIN_PX = 10;
 const EMOJI_MAIN_LOADING_ANIMATION_LABEL = "emojiMainLoadingAnimation";
@@ -188,6 +186,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private isPlayingPostLoadingStateChangeAnimations = false;
   private currentStateChangeAnimationId: number = 0;
   private gradientColorScale: string[];
+  animationPromise: Promise<void> = Promise.resolve();
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
@@ -215,7 +214,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     // needs some quite careful documentation on what the actual intent here is.
     this.widgetReady = Promise.resolve().then(() => {
       this.updateWidgetElement();
-      this.getUpdateWidgetStateAnimation().play();
+      console.log('playAnimation: ngAfterViewInit');
+      this.playAnimation(this.getUpdateWidgetStateAnimation());
     });
   }
 
@@ -238,7 +238,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       console.debug('Change in gradientColors');
       this.updateGradient();
       if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
-        this.getUpdateGradientColorAnimation(0.1).play();
+        console.log('playAnimation: updateGradientColor');
+        this.playAnimation(this.getUpdateGradientColorAnimation(0.1));
       }
     }
 
@@ -404,7 +405,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         }
 
         this.stateChangeAnimations = afterChangesTimeline;
-        this.stateChangeAnimations.play();
+        console.log('playAnimation: statechangeAnimations');
+        this.playAnimation(this.stateChangeAnimations);
       });
     }
   }
@@ -509,6 +511,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getShouldHideStatusWidget(loadStart: boolean): boolean {
+    console.log('getShouldHideStatusWidget');
+    console.log(loadStart, this.hideLoadingIconAfterLoad, this.hideLoadingIconForScoresBelowMinThreshold, this.score, this.scoreThresholds);
     let shouldHide = false;
 
     if (this.hideLoadingIconAfterLoad) {
@@ -521,6 +525,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       shouldHide = true;
     }
 
+    console.log('shouldHide=', shouldHide);
     return shouldHide;
   }
 
@@ -643,12 +648,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getConfigurationFromInputString(inputString: string): Configuration {
-    if (inputString === ConfigurationInput.EXTERNAL) {
-      return Configuration.EXTERNAL;
-    } else {
-      // Demo site is the default.
-      return Configuration.DEMO_SITE;
-    }
+    return Configuration.DEMO_SITE;
   }
 
   private updateLayerElementContainers(): void {
@@ -684,9 +684,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   feedbackContainerClicked() {
     if (this.configuration === Configuration.DEMO_SITE) {
-      this.getTransitionToLayerAnimation(1, LAYER_TRANSITION_TIME_SECONDS).play();
-    } else if (this.configuration === Configuration.EXTERNAL) {
-      this.showFeedbackQuestion = true;
+      console.log('playAnimation: feedbackContainerClicked');
+      this.playAnimation(
+        this.getTransitionToLayerAnimation(1, LAYER_TRANSITION_TIME_SECONDS));
     }
   }
 
@@ -707,7 +707,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         this.getSetIconToNeutralStateAnimation()
       ]);
 
-      feedbackCompletedTimeline.play();
+      console.log('playAnimation: feedbackCompleted');
+      this.playAnimation(feedbackCompletedTimeline);
     }
   }
 
@@ -727,7 +728,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     let resetAnimationTimeline = new TimelineMax({});
     resetAnimationTimeline.add(this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
     resetAnimationTimeline.add(this.getUpdateWidgetStateAnimation());
-    resetAnimationTimeline.play();
+    console.log('playAnimation: resetLayers');
+    this.playAnimation(resetAnimationTimeline);
   }
 
   submitFeedback(commentIsToxic: boolean) {
@@ -816,47 +818,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     return updateShapeAnimationTimeline;
   }
 
-  setShowMoreInfo(showMoreInfo: boolean): Promise<void> {
-    console.log('setShowMoreInfo', showMoreInfo, LAYER_TRANSITION_TIME_SECONDS, NgZone.isInAngularZone());
-    //this.getTransitionToLayerAnimation(
-    //  showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS).play();
-
-    //Promise.resolve().then(() => {
-    //  console.log('after empty promise resolve');
-    //});
-
-
-    
-    new Promise((resolve, reject) => {
-      setTimeout(() => {
-        console.log('resolve *', NgZone.isInAngularZone());
-        resolve();
-      }, 10);
-    }).then(() => {
-      console.log('new promise resolve');
-    });
-
-   
-   /*
-   Promise.resolve().then(() => {
-    return this.playAnimation(this.getTransitionToLayerAnimation(
-      showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS))
-      .then(() => {
-        console.log('test promise then resolve');
-      });
-   }).then(() => {
-     console.log('End');
-   });;
-   */
-
-    //setTimeout(() => {
-    //  console.log('has microtasks within setTimeout', this.ngZone.hasPendingMicrotasks);
-    //}, 0);
-    console.log('has microtasks within fn', this.ngZone.hasPendingMicrotasks);
-
-    return this.playAnimation(this.getTransitionToLayerAnimation(
+  setShowMoreInfo(showMoreInfo: boolean) {
+    console.log('playAnimation: setShowMoreInfo');
+    this.playAnimation(this.getTransitionToLayerAnimation(
       showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS));
-    //console.log('End setShowMoreInfo');
   }
 
   getAccessibilityDescriptionForEmoji(emoji: Emoji): string {
@@ -955,7 +920,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // This indicates that the score was reset without being the result of a
       // load completing, such as the text being cleared.
       console.debug('Updating shape from notifyScoreChange');
-      this.getUpdateWidgetStateAnimation().play();
+      console.log('playAnimation: notifyScoreChange');
+      this.playAnimation(this.getUpdateWidgetStateAnimation());
     }
   }
 
@@ -964,7 +930,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   // observable to know when its done.
   setLoading(loading: boolean): void {
     this.widgetReady.then(() => {
-      console.debug('Calling setLoading(' + loading + ')');
+      console.log('Calling setLoading(' + loading + ')');
       if (this.widgetElement === null) {
         console.error('this.widgetElement = null in call to setLoading');
         return;
@@ -1262,7 +1228,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     if (loading && !this.isPlayingLoadingAnimation) {
       this.isPlayingLoadingAnimation = true;
       let loadingTimeline = new TimelineMax({
-        paused:true,
         ease: Power3.easeInOut,
         onStart: () => {
           this.ngZone.run(() => {
@@ -1276,7 +1241,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
               console.debug('Restarting main emoji loading animation');
               loadingTimeline.seek(EMOJI_MAIN_LOADING_ANIMATION_LABEL, true);
             } else {
-              this.getEndAnimationsForEmojiWidgetLoading(loadingTimeline).play();
+              console.log('playAnimation: getEndAnimationsForEmojiWidgetLoading');
+              this.playAnimation(
+                this.getEndAnimationsForEmojiWidgetLoading(loadingTimeline));
             }
           });
         }
@@ -1285,7 +1252,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       loadingTimeline.add(this.getStartAnimationsForEmojiWidgetLoading());
       loadingTimeline.add(this.getLoopAnimationForEmojiWidgetLoading(),
                           EMOJI_MAIN_LOADING_ANIMATION_LABEL);
-      loadingTimeline.play();
+      console.log('playAnimation in setLoadingForEmojiWidget', loading);
+      this.playAnimation(loadingTimeline);
     }
   }
 
@@ -1298,7 +1266,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       this.isPlayingLoadingAnimation = true;
 
       let loadingTimeline = new TimelineMax({
-        paused:true,
         ease: Power3.easeInOut,
         onStart: () => {
           this.ngZone.run(() => {
@@ -1322,7 +1289,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
               let updateScoreCompletedTimeline =
                 this.getEndAnimationsForCircleSquareDiamondWidgetLoading(
                   loadingTimeline);
-              updateScoreCompletedTimeline.play();
+              console.log('playAnimation: setLoadingForDefaultWidget', loading);
+              this.playAnimation(updateScoreCompletedTimeline);
             }
           });
         },
@@ -1333,7 +1301,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
       loadingTimeline.add(
         this.getLoopAnimationsForCircleSquareDiamondWidgetLoading(), FADE_START_LABEL);
-      loadingTimeline.play();
+      this.playAnimation(loadingTimeline);
     }
   }
 
@@ -1490,20 +1458,23 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     });
   }
 
-  private playAnimation(animation: Animation): Promise<void> {
-    console.log('playAnimation, inZone?', NgZone.isInAngularZone());
-    return new Promise((resolve, reject) => {
-      console.log('Play animation promise started');
-      let wrapperTimeline = new TimelineMax({
-        onComplete: () => {
-          this.ngZone.run(() => {
-            console.log('Resolving');
-            resolve();
-          })
-        }
+  private playAnimation(animation: Animation): void {
+    let promiseId = Math.random();
+    this.animationPromise = this.animationPromise.then(() => {
+      console.log('Chaining animation promise', promiseId);
+      return new Promise<void>((resolve, reject) => {
+        console.log('*****Play animation promise started*******', promiseId, animation);
+        let wrapperTimeline = new TimelineMax({
+          onComplete: () => {
+            this.ngZone.run(() => {
+              console.log('********Resolving********', promiseId);
+              resolve();
+            })
+          }
+        });
+        wrapperTimeline.add(animation);
+        wrapperTimeline.play();
       });
-      wrapperTimeline.add(animation);
-      wrapperTimeline.play();
     });
   }
 

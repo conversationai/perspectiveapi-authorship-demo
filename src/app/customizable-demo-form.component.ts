@@ -161,7 +161,7 @@ export class CustomizableDemoForm implements OnInit {
 
   // Configuration options for the checker that determine the style of the UI
   // for submitting corrections for bad scores.
-  configurations = [ConfigurationInput.DEMO_SITE, ConfigurationInput.EXTERNAL];
+  configurations = [ConfigurationInput.DEMO_SITE];
   // Configuration selected from the dropdown menu.
   configuration: string = 'default';
 

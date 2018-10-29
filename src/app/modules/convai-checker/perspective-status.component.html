@@ -78,21 +78,6 @@
       </div> <!-- End layerText -->
 
       <div class="interactiveElement">
-        <div *ngIf="configuration === configurationEnum.EXTERNAL">
-          <div id="infoButtonContainer" class="infoButtonContainer">
-            <button *ngIf="hasScore && shouldShowFeedback(score)"
-              id="infoButton"
-              class="infoButton"
-              role="button"
-              aria-label="Show score details"
-              [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
-              (click)="setShowMoreInfo(true)"
-              tabindex=0>
-              <i class="material-icons md-dark md-18">info</i>
-            </button>
-          </div>
-        </div> <!-- End configuration EXTERNAL-->
-
         <div *ngIf="configuration === configurationEnum.DEMO_SITE">
           <button id="seemWrongButtonDemoConfig"
                *ngIf="canAcceptFeedback && shouldShowFeedback(score)"
@@ -116,16 +101,6 @@
                      [attr.aria-hidden]="currentLayerIndex !== 1">
 
       <div class="layerText">
-        <div *ngIf="configuration === configurationEnum.EXTERNAL">
-          <div id="detailedScoreInfo"
-               class="widgetText"
-               role="status"
-               tabindex=0>
-            <span>Scored {{(score.toFixed(2) * 100).toFixed(0)}}% by the <a href="https://conversationai.github.io/">Perspective "Toxicity" analyzer</a>
-            </span>
-          </div>
-        </div> <!-- End configuration EXTERNAL-->
-
         <div *ngIf="configuration === configurationEnum.DEMO_SITE">
           <div class="widgetText"
             tabindex=0>
@@ -143,89 +118,6 @@
       </div> <!-- End layerText -->
 
       <div class="interactiveElement">
-
-        <div *ngIf="configuration === configurationEnum.EXTERNAL">
-          <div class="horizontal-container">
-            <div class="feedbackContainer widgetText"
-                 [style.fontSize]="fontSize"
-                 [attr.aria-hidden]="!showScore || isPlayingLoadingAnimation">
-              <button id="seemWrongButton"
-                   *ngIf="canAcceptFeedback && !showFeedbackQuestion
-                      && !feedbackRequestInProgress && !feedbackRequestSubmitted && !feedbackRequestError"
-                   role="button"
-                   class="seemWrongButton greyButton noBorderButton"
-                   [style.fontSize]="fontSize"
-                   [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
-                   (click)="feedbackContainerClicked()"
-                   tabindex=0>
-                {{userFeedbackPromptText}}
-              </button>
-              <div id="seemWrongQuestion" *ngIf="showFeedbackQuestion && !feedbackRequestInProgress">
-                <div class="feedbackQuestion widgetText" tabindex=0>Is this text toxic?</div>
-                <div class="yesNoButtonContainer horizontal-container">
-                  <div>
-                    <button
-                      id="yesButtonExternalConfig"
-                      class="yesNoButton greyButton underlineButton noBorderButton"
-                      role="button"
-                      [style.fontSize]="fontSize"
-                      [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
-                      (click)="submitFeedback(true)"
-                      tabindex=0>
-                      Yes
-                    </button>
-                  </div>
-                  <div>
-                    <button
-                      id="noButtonExternalConfig"
-                      class="yesNoButton greyButton underlineButton noBorderButton"
-                      role="button"
-                      [style.fontSize]="fontSize"
-                      [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
-                      (click)="submitFeedback(false)"
-                      tabindex=0>
-                      No
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div id="feedbackSubmitting"
-                   tabindex=0
-                   role="status"
-                   *ngIf="feedbackRequestInProgress">
-                Sending...
-              </div>
-              <div id="feedbackThanks"
-                   tabindex=0
-                   role="status"
-                   *ngIf="feedbackRequestSubmitted">
-                Thanks for the feedback!
-              </div>
-              <div *ngIf="feedbackRequestError">
-                <button
-                     class="error noBorderButton"
-                     role="button"
-                     [style.fontSize]="fontSize"
-                     (click)="resetFeedback()"
-                     tabindex=0>
-                  Error submitting feedback. Click to try again.
-                </button>
-              </div>
-            </div>
-            <div id="infoButtonContainer" class="infoButtonContainer">
-              <button *ngIf="hasScore"
-                id="cancelButton"
-                class="infoButton"
-                role="button"
-                aria-label="Hide score details"
-                [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
-                (click)="setShowMoreInfo(false)"
-                tabindex=0>
-                <i class="material-icons md-dark md-18">cancel</i>
-              </button>
-            </div>
-          </div>
-        </div> <!-- End configuration EXTERNAL -->
 
         <div *ngIf="configuration === configurationEnum.DEMO_SITE">
           <div class="yesNoButtonContainer horizontal-container"
