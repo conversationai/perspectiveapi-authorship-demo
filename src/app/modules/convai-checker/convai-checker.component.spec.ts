@@ -119,7 +119,7 @@ class ConvaiCheckerWithAttributeInputTestComponent {
   @ViewChild(ConvaiChecker) checker: ConvaiChecker;
   demoSettings = getCopyOfDefaultDemoSettings();
   constructor() {
-    this.demoSettings.configuration = 'external';
+    this.demoSettings.communityId = 'testCommunityId';
   }
 }
 
@@ -282,13 +282,6 @@ function getCopyOfDefaultDemoSettings(): DemoSettings {
 
 function getNormalizedInnerText(element: HTMLElement) {
   return element.innerText.replace(/\s+/g, ' ');
-}
-
-function configureFixtureForExternalFeedbackStyleConfiguration(
-    fixture: ComponentFixture<ConvaiCheckerCustomDemoSettingsTestComponent>) {
-  let demoSettings = getCopyOfDefaultDemoSettings();
-  demoSettings.configuration = 'external';
-  fixture.componentInstance.setDemoSettings(demoSettings);
 }
 
 function verifyLoadingWidgetHasShape(checker: ConvaiChecker, expectedShape: Shape) {
@@ -674,20 +667,22 @@ describe('Convai checker test', () => {
 
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
-    expect(checker.demoSettings.configuration).toEqual('external');
+    expect(checker.demoSettings.communityId).toEqual('testCommunityId');
   }));
 
   it('should recognize inputs from angular input bindings', async(() => {
     let fixture =
       TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
-    configureFixtureForExternalFeedbackStyleConfiguration(fixture);
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.communityId = 'testCommunityId';
+    fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
 
     let checker = fixture.componentInstance.checker;
 
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');
-    expect(checker.demoSettings.configuration).toEqual('external');
+    expect(checker.demoSettings.communityId).toEqual('testCommunityId');
   }));
 
   it('check default demo settings', async(() => {
@@ -789,45 +784,6 @@ describe('Convai checker test', () => {
          // Checks that the score was emitted.
          expect(lastEmittedScore).toEqual(mockScore);
          expect(emittedScoreCount).toEqual(1);
-
-         // Checks that loading has stopped.
-         expect(checker.statusWidget.isLoading).toBe(false);
-       });
-    });
-
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
-
-    // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryText, textArea);
-  }));
-
-  it('Should handle analyze comment error, external config', async(() => {
-    let fixture =
-      TestBed.createComponent(ConvaiCheckerCustomDemoSettingsTestComponent);
-
-    let demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.configuration = 'external';
-    fixture.componentInstance.setDemoSettings(demoSettings);
-
-    fixture.detectChanges();
-    let checker = fixture.componentInstance.checker;
-    let queryText = 'Your mother was a hamster';
-
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       expect(checker.analyzeCommentResponse).toBe(null);
-       expect(checker.statusWidget.isLoading).toBe(true);
-
-       connection.mockError(new Error('error'));
-
-       // Wait for async code to complete.
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-         // Checks that the error message is displayed.
-         expect(checker.analyzeCommentResponse).toBe(null);
-         expect(fixture.nativeElement.textContent).toContain('Error');
 
          // Checks that loading has stopped.
          expect(checker.statusWidget.isLoading).toBe(false);

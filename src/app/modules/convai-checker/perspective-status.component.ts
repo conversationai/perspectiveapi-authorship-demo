@@ -46,13 +46,11 @@ export enum Emoji {
 
 export enum Configuration {
   DEMO_SITE,
-  EXTERNAL,
 };
 
 // The keys in ConfigurationInput should match items in the Configuration enum.
 export const ConfigurationInput = {
   DEMO_SITE: 'default',
-  EXTERNAL: 'external',
 };
 
 export const ScoreThreshold = {
