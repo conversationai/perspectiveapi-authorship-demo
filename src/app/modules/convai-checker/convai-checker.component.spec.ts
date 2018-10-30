@@ -392,7 +392,7 @@ async function verifyWidgetVisibilityForDemoSettings(
   fixture.detectChanges();
   console.log(checker.statusWidget.scoreThresholds);
 
-  for (let callCount = 0; callCount < 1; callCount++) {//mockResponseScores.length; callCount++) {
+  for (let callCount = 0; callCount < mockResponseScores.length; callCount++) {
     console.log('Callcount =', callCount);
     await fixture.whenStable();
     await checker.statusWidget.animationPromise;
@@ -410,23 +410,36 @@ async function verifyWidgetVisibilityForDemoSettings(
 
     let mockReq = httpMock.expectOne('test-url/check');
     console.log('*********Expectation for visibilities while loading');
-    //fixture.detectChanges();
+    fixture.detectChanges();
     expect(checker.statusWidget.isLoading).toBe(true);
     expect(getIsElementWithIdVisible(widgetId))
       .toBe(expectedWidgetVisibilitiesWhileLoading[callCount]);
 
+    console.log('Flush');
     mockReq.flush(
       getMockCheckerResponse(mockResponseScores[callCount], queryTexts[callCount]));
 
+    console.log('Before fixture.whenStable');
     await fixture.whenStable();
-    // It is intentional that we wait twice; the first detectChanges triggers
-    // another animation.
-    await checker.statusWidget.animationPromise;
+    //fixture.detectChanges();
+    // It is intentional that we wait twice; the animationPromise gets
+    // reassigned so it doesn't wait for both animations.
+    // TODO: Is there a way to continue the first promise such that this isn't
+    // required?
+    // Added for all tests:
+    //
+    // 'Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
+    // ' min threshold = 0',
+    // Through
+    //
+    // 'Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold > 0, emoji icon',
+    console.log('******Before animation promise');
+    let promiseId = await checker.statusWidget.animationPromise; // Load animation completes
+    console.log('******animation ended,****', promiseId);
+    let promiseId2 = await checker.statusWidget.animationPromise;
+    console.log('******animation ended,****', promiseId2);
+    //await fixture.whenStable();
     fixture.detectChanges();
-    console.log('****Detect changes 1');
-    await checker.statusWidget.animationPromise;
-    fixture.detectChanges();
-    console.log('****Detect changes 2');
 
     // Checks that loading has stopped.
     console.log('*********Expectation for visibilities after loading');
@@ -1040,164 +1053,6 @@ describe('Convai checker test', () => {
     expect(checker.statusWidget.isLoading).toBe(false);
   }));
 
-   /*
-  it('Should handle UI layer changes, external config', async() => {
-    // Note: This test doesn't test error case UI, since that is handled in
-    // other tests.
-    let fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
-    configureFixtureForExternalFeedbackStyleConfiguration(fixture);
-    fixture.detectChanges();
-
-    let checker = fixture.componentInstance.checker;
-    let queryText = 'Your mother was a hamster';
-
-    let textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
-
-    let layer1TextElements = ['perceived as toxic'];
-    let layer1VisibleElementIds = ['infoButton'];
-    let layer1HiddenElementIds = ['cancelButton'];
-    let layer2TextElements = [
-      'Scored',
-      '%',
-      'by the Perspective "Toxicity" analyzer',
-      'Seem wrong?',
-    ];
-    let layer2VisibleElementIds = ['cancelButton'];
-    let layer2HiddenElementIds = ['infoButton'];
-
-    // Step 1: Send an input event to trigger the check call.
-    setTextAndFireInputEvent(queryText, textArea);
-    await waitForTimeout(REQUEST_LIMIT_MS);
-    //tick(REQUEST_LIMIT_MS);
-
-    const mockReq = httpMock.expectOne('test-url/check');
-    expect(checker.statusWidget.isLoading).toBe(true);
-
-    mockReq.flush(getMockCheckerResponse(0.5, queryText));
-    //tick();
-    await fixture.detectChanges();
-
-    // Step 2: Check layer 1 UI.
-    for (let text of layer1TextElements) {
-      expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-    }
-    for (let elementId of layer1VisibleElementIds) {
-      expect(getIsElementWithIdVisible(elementId)).toBe(true);
-    }
-    for (let elementId of layer1HiddenElementIds) {
-      expect(getIsElementWithIdVisible(elementId)).toBe(false);
-    }
-
-   // Step 3: Click on the more info button.
-   let infoButton = document.getElementById('infoButton');
-   //sendClickEvent(infoButton);
-
-   await checker.statusWidget.setShowMoreInfo(true);
-
-   fixture.detectChanges();
-   //tick();
-
-   //console.log(fixture.isStable());
-
-   // TODO: fakeAsync doesn't know about pending gsap animations.
-
-   console.log('EXPECTATION');
-
-   // Step 4: Check layer 2 UI.
-   for (let text of layer2TextElements) {
-     expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-   }
-   for (let elementId of layer2VisibleElementIds) {
-     expect(getIsElementWithIdVisible(elementId)).toBe(true);
-   }
-   for (let elementId of layer2HiddenElementIds) {
-     expect(getIsElementWithIdVisible(elementId)).toBe(false);
-   }
-
-   // Step 5: Click the cancel button to return to layer 1.
-   let cancelButton = document.getElementById('cancelButton');
-   sendClickEvent(cancelButton);
-
-   tick();
-   fixture.detectChanges();
-
-   // Step 6: Check layer 1 UI again.
-   for (let text of layer1TextElements) {
-     expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-   }
-   for (let elementId of layer1VisibleElementIds) {
-     expect(getIsElementWithIdVisible(elementId)).toBe(true);
-   }
-   for (let elementId of layer1HiddenElementIds) {
-     expect(getIsElementWithIdVisible(elementId)).toBe(false);
-   }
-
-   tick();
-   fixture.detectChanges();
-
-   // Step 7: Click the info button to move to layer 2 again.
-   infoButton = document.getElementById('infoButton');
-   sendClickEvent(infoButton);
-
-   tick();
-   fixture.detectChanges();
-
-   // Step 8: Click the 'Seem wrong?' button.
-   sendClickEvent(document.getElementById('seemWrongButton'));
-
-   tick();
-   fixture.detectChanges();
-
-   // Step 9: Click the yes button to send feedback.
-   sendClickEvent(document.getElementById('yesButtonExternalConfig'));
-
-   tick();
-
-   const mockSuggestReq = httpMock.expectOne('test-url/suggest_score');
-   expect(fixture.nativeElement.textContent).toContain('Sending');
-
-   mockSuggestReq.flush({clientToken: "token"});
-
-   tick();
-   fixture.detectChanges();
-
-   // Step 10: Check the updated layer 2 UI after feedback submission is
-   // complete.
-   layer2TextElements.splice(layer2TextElements.indexOf('Seem wrong?'), 1);
-   layer2TextElements.push('Thanks for the feedback!');
-   for (let text of layer2TextElements) {
-     expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-   }
-   for (let elementId of layer2VisibleElementIds) {
-     expect(getIsElementWithIdVisible(elementId)).toBe(true);
-   }
-   for (let elementId of layer2HiddenElementIds) {
-     expect(getIsElementWithIdVisible(elementId)).toBe(false);
-   }
-
-   // Step 11: Press the cancel button to return to layer 1.
-   cancelButton = document.getElementById('cancelButton');
-   sendClickEvent(cancelButton);
-
-   tick();
-   fixture.detectChanges();
-
-   // Step 12: Check the layer 1 UI again.
-   for (let text of layer1TextElements) {
-     expect(getNormalizedInnerText(fixture.nativeElement)).toContain(text);
-   }
-   for (let elementId of layer1VisibleElementIds) {
-     expect(getIsElementWithIdVisible(elementId)).toBe(true);
-   }
-   for (let elementId of layer1HiddenElementIds) {
-     expect(getIsElementWithIdVisible(elementId)).toBe(false);
-   }
-  }));
-  */
-
-
   it('Should handle UI layer changes, demo config, emoji loading icon style',
      async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
@@ -1222,8 +1077,7 @@ describe('Convai checker test', () => {
     await verifyLayerTransitionsWorkForDemoSiteConfig(fixture, httpMock);
   });
 
-  /*
-  it('Test loading icon visibility with setting hideLoadingIconAfterLoad', async(() => {
+  it('Test loading icon visibility with setting hideLoadingIconAfterLoad', async() => {
     let fixture =
       TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
 
@@ -1245,55 +1099,47 @@ describe('Convai checker test', () => {
       getMockCheckerResponse(0.2, queryTexts[2])
     ];
 
-    let callCount = 0;
-
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       fixture.detectChanges();
-       expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(true);
-       expect(checker.statusWidget.isLoading).toBe(true);
-       connection.mockRespond(
-         new Response(
-           new ResponseOptions({
-              body: mockResponses[callCount]
-           })
-         )
-       );
-
-       // Wait for async code to complete.
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-
-         // Checks that loading has stopped.
-         expect(checker.statusWidget.isLoading).toBe(false);
-         expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
-         if (callCount < 2) {
-           callCount++;
-
-           setTextAndFireInputEvent('', textArea);
-
-           // Checks that clearing the textbox hides the status widget.
-           fixture.whenStable().then(() => {
-             fixture.detectChanges();
-             expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
-
-             // Fire another request.
-             setTextAndFireInputEvent(queryTexts[callCount], textArea);
-           });
-         }
-       });
-    });
-
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
 
-    // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryTexts[callCount], textArea);
-  }));
+
+    for (let callCount = 0; callCount < mockResponses.length; callCount++) {
+      // Send an input event to trigger the service call.
+      setTextAndFireInputEvent(queryTexts[callCount], textArea);
+
+      await waitForTimeout(REQUEST_LIMIT_MS);
+
+      const mockReq = httpMock.expectOne('test-url/check');
+      fixture.detectChanges();
+      expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(true);
+      expect(checker.statusWidget.isLoading).toBe(true);
+
+      mockReq.flush(mockResponses[callCount]);
+
+      // TODO: Again, two of these are needed here...why?
+      await checker.statusWidget.animationPromise;
+      await checker.statusWidget.animationPromise;
+
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      // Checks that loading has stopped.
+      expect(checker.statusWidget.isLoading).toBe(false);
+      expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
+
+      setTextAndFireInputEvent('', textArea);
+
+      await checker.statusWidget.animationPromise;
+      // Checks that clearing the textbox hides the status widget.
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
+
+    }
+  });
 
   it('Test loading icon visibility with setting hideLoadingIconForScoresBelowMinThreshold',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
 
     // Configure settings.
@@ -1317,61 +1163,50 @@ describe('Convai checker test', () => {
       getMockCheckerResponse(0.2, queryTexts[2])
     ];
 
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       fixture.detectChanges();
-       expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
-       expect(checker.statusWidget.isLoading).toBe(true);
-       connection.mockRespond(
-         new Response(
-           new ResponseOptions({
-              body: mockResponses[callCount]
-           })
-         )
-       );
-
-       // Wait for async code to complete.
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-
-         // Checks that loading has stopped.
-         expect(checker.statusWidget.isLoading).toBe(false);
-         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
-
-         let statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
-         // The first and fourth responses (indices 0 and 2) have a score below
-         // the min threshold, so the loading widget should only be visible for
-         // the second one (index 1).
-         expect(statusWidgetVisible).toBe(callCount === 1);
-
-         if (callCount < 2) {
-           callCount++;
-
-           setTextAndFireInputEvent('', textArea);
-
-           // Checks that clearing the textbox hides the status widget.
-           fixture.whenStable().then(() => {
-             console.log('Checking clearing');
-             fixture.detectChanges();
-             statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
-             expect(statusWidgetVisible).toBe(false);
-
-             // Fire another request.
-             setTextAndFireInputEvent(queryTexts[callCount], textArea);
-           });
-         }
-       });
-    });
-
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
 
-    // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryTexts[callCount], textArea);
-  }));
+    for (let callCount = 0; callCount < mockResponses.length; callCount++) {
+      // Send an input event to trigger the service call.
+      setTextAndFireInputEvent(queryTexts[callCount], textArea);
 
-  it('Test circle square diamond change for score thresholds', async(() => {
+      await waitForTimeout(REQUEST_LIMIT_MS);
+
+      let mockReq = httpMock.expectOne('test-url/check');
+      fixture.detectChanges();
+      expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
+      expect(checker.statusWidget.isLoading).toBe(true);
+
+      mockReq.flush(mockResponses[callCount]);
+
+      // TODO: Again, two of these are needed here...why?
+      await checker.statusWidget.animationPromise;
+      await checker.statusWidget.animationPromise;
+      fixture.detectChanges();
+
+      // Checks that loading has stopped.
+      expect(checker.statusWidget.isLoading).toBe(false);
+      expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+      let statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
+      // The first and fourth responses (indices 0 and 2) have a score below
+      // the min threshold, so the loading widget should only be visible for
+      // the second one (index 1).
+      expect(statusWidgetVisible).toBe(callCount === 1);
+
+      setTextAndFireInputEvent('', textArea);
+
+      // Checks that clearing the textbox hides the status widget.
+      console.log('Checking clearing');
+      await checker.statusWidget.animationPromise;
+      await fixture.whenStable();
+      fixture.detectChanges();
+      statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
+      expect(statusWidgetVisible).toBe(false);
+    }
+  });
+
+  it('Test circle square diamond change for score thresholds', async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
 
     // Configure settings.
@@ -1407,48 +1242,43 @@ describe('Convai checker test', () => {
       Shape.CIRCLE
     ];
 
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       fixture.detectChanges();
-       // Check the UI state before returning the repsonse.
-       verifyCircleSquareDiamondWidgetVisible();
-       expect(checker.statusWidget.isLoading).toBe(true);
-       connection.mockRespond(
-         new Response(
-           new ResponseOptions({
-              body: mockResponses[callCount]
-           })
-         )
-       );
-
-       // Wait for async code to complete.
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-         // Checks the UI state after the response has been received.
-
-         // Checks that loading has stopped.
-         expect(checker.statusWidget.isLoading).toBe(false);
-         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
-
-         verifyCircleSquareDiamondWidgetVisible();
-         verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
-
-         if (callCount < 2) {
-           callCount++;
-           // Fire another request.
-           setTextAndFireInputEvent(queryTexts[callCount], textArea);
-         }
-       });
-    });
-
     verifyCircleSquareDiamondWidgetVisible();
 
-    // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryTexts[callCount], textArea);
-  }));
+    for (let callCount = 0; callCount < mockResponses.length; callCount++) {
+      // Send an input event to trigger the service call.
+      setTextAndFireInputEvent(queryTexts[callCount], textArea);
 
-  it('Test emoji change for score thresholds', async(() => {
+      await waitForTimeout(REQUEST_LIMIT_MS);
+
+      let mockReq = httpMock.expectOne('test-url/check');
+
+      fixture.detectChanges();
+      // Check the UI state before returning the repsonse.
+      verifyCircleSquareDiamondWidgetVisible();
+      expect(checker.statusWidget.isLoading).toBe(true);
+
+      //console.log('********FLUSH******');
+      mockReq.flush(mockResponses[callCount]);
+
+      await fixture.whenStable();
+      //console.log('******STABLE*******');
+      //console.log('*******WAITING FOR ANIMATION*******');
+      // TODO: Two awaits?
+      await checker.statusWidget.animationPromise;
+      await checker.statusWidget.animationPromise;
+      //console.log('*******ANIMATION DONE**************');
+      // Checks the UI state after the response has been received.
+
+      // Checks that loading has stopped.
+      expect(checker.statusWidget.isLoading).toBe(false);
+      expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+      verifyCircleSquareDiamondWidgetVisible();
+      verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
+    }
+  });
+
+  it('Test emoji change for score thresholds', async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
 
     // Configure settings.
@@ -1484,58 +1314,46 @@ describe('Convai checker test', () => {
       Emoji.SMILE,
     ];
 
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       fixture.detectChanges();
-       // Check the UI state before returning the repsonse.
-
-       verifyEmojiWidgetVisible();
-
-       // TODO(rachelrosen): Figure out how to "fast-forward" the state of the
-       // animation in the test environment without messing up the other test
-       // state, and then uncomment the code below to check the opacity of the
-       // emoji icons here.
-       // verifyEmojiIconsInDomWithZeroOpacity();
-
-       expect(checker.statusWidget.isLoading).toBe(true);
-
-       connection.mockRespond(
-         new Response(
-           new ResponseOptions({
-              body: mockResponses[callCount]
-           })
-         )
-       );
-
-       // Wait for async code to complete.
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-         // Checks the UI state after the response has been received.
-
-         // Checks that loading has stopped.
-         expect(checker.statusWidget.isLoading).toBe(false);
-         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
-
-         verifyEmojiWidgetVisible();
-         verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
-
-         if (callCount < 2) {
-           callCount++;
-           // Fire another request.
-           setTextAndFireInputEvent(queryTexts[callCount], textArea);
-         }
-       });
-    });
-
     verifyEmojiWidgetVisible();
 
-    // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryTexts[callCount], textArea);
-  }));
+    for (let callCount = 0; callCount < mockResponses.length; callCount++) {
+      // Send an input event to trigger the service call.
+      setTextAndFireInputEvent(queryTexts[callCount], textArea);
+      await waitForTimeout(REQUEST_LIMIT_MS);
+
+      let mockReq = httpMock.expectOne('test-url/check');
+      // Check the UI state before returning the repsonse.
+
+      verifyEmojiWidgetVisible();
+
+      // TODO(rachelrosen): Figure out how to "fast-forward" the state of the
+      // animation in the test environment without messing up the other test
+      // state, and then uncomment the code below to check the opacity of the
+      // emoji icons here.
+      // verifyEmojiIconsInDomWithZeroOpacity();
+
+      expect(checker.statusWidget.isLoading).toBe(true);
+
+      mockReq.flush(mockResponses[callCount]);
+
+      // TODO: Two awaits?
+      await checker.statusWidget.animationPromise;
+      await checker.statusWidget.animationPromise;
+      await fixture.whenStable();
+      fixture.detectChanges();
+      // Checks the UI state after the response has been received.
+
+      // Checks that loading has stopped.
+      expect(checker.statusWidget.isLoading).toBe(false);
+      expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+      verifyEmojiWidgetVisible();
+      verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
+    }
+  });
 
   it('Test loading icon style setting change. Circle square diamond to emoji',
-     async(() => {
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
 
     // Configure settings.
@@ -1572,72 +1390,59 @@ describe('Convai checker test', () => {
       Emoji.SAD, Emoji.NEUTRAL, Emoji.SMILE
     ];
 
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       fixture.detectChanges();
-       // Check the UI state before returning the repsonse.
-       verifyCircleSquareDiamondWidgetVisible();
-       expect(checker.statusWidget.isLoading).toBe(true);
-       connection.mockRespond(
-         new Response(
-           new ResponseOptions({
-              body: mockResponses[callCount]
-           })
-         )
-       );
-
-       // Wait for async code to complete.
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-         // Checks the UI state after the response has been received.
-
-         // Checks that loading has stopped.
-         expect(checker.statusWidget.isLoading).toBe(false);
-         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
-
-         verifyCircleSquareDiamondWidgetVisible();
-         verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
-
-         // Change to the emoji style, and verify the loading icon visibility
-         // change.
-         demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-         fixture.componentInstance.setDemoSettings(demoSettings);
-         fixture.whenStable().then(() => {
-           fixture.detectChanges();
-
-           // We need another fixture.whenStable() after the detectChanges()
-           // call above because animations get started in ngAfterViewChecked
-           // which is triggered from ngOnChanges().
-           fixture.whenStable().then(() => {
-             verifyEmojiWidgetVisible();
-             verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
-
-             if (callCount < 2) {
-               // Set demo settings back to circle/square/diamond.
-               demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
-               fixture.componentInstance.setDemoSettings(demoSettings);
-               fixture.detectChanges();
-               fixture.whenStable().then(() => {
-                 fixture.detectChanges();
-                   callCount++;
-                   // Fire another request.
-                   setTextAndFireInputEvent(queryTexts[callCount], textArea);
-               });
-             }
-           });
-         });
-       });
-    });
-
     verifyCircleSquareDiamondWidgetVisible();
 
-    // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryTexts[callCount], textArea);
-  }));
+    for (let callCount = 0; callCount < mockResponses.length; callCount++) {
+      // Send an input event to trigger the service call.
+      setTextAndFireInputEvent(queryTexts[callCount], textArea);
+      await waitForTimeout(REQUEST_LIMIT_MS);
 
-  it('Test loading icon style setting change. Emoji to circle square diamond',
-     async(() => {
+      let mockReq = httpMock.expectOne('test-url/check');
+
+      fixture.detectChanges();
+      // Check the UI state before returning the repsonse.
+      verifyCircleSquareDiamondWidgetVisible();
+      expect(checker.statusWidget.isLoading).toBe(true);
+      mockReq.flush(mockResponses[callCount]);
+
+      // Wait for async code to complete.
+      await checker.statusWidget.animationPromise;
+      await checker.statusWidget.animationPromise;
+      await fixture.whenStable();
+      fixture.detectChanges();
+      // Checks the UI state after the response has been received.
+
+      // Checks that loading has stopped.
+      expect(checker.statusWidget.isLoading).toBe(false);
+      expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+      verifyCircleSquareDiamondWidgetVisible();
+      verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
+
+      // Change to the emoji style, and verify the loading icon visibility
+      // change.
+      demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+      fixture.componentInstance.setDemoSettings(demoSettings);
+      fixture.detectChanges();
+      // TODO: Two awaits?
+      await checker.statusWidget.animationPromise;
+
+      // We need another fixture.whenStable() after the detectChanges()
+      // call above because animations get started in ngAfterViewChecked
+      // which is triggered from ngOnChanges().
+      await checker.statusWidget.animationPromise;
+      verifyEmojiWidgetVisible();
+      verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
+
+      // Set demo settings back to circle/square/diamond.
+      demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+      fixture.componentInstance.setDemoSettings(demoSettings);
+      fixture.detectChanges();
+    }
+  });
+
+  fit('Test loading icon style setting change. Emoji to circle square diamond',
+     async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
 
     // Configure settings.
@@ -1674,66 +1479,54 @@ describe('Convai checker test', () => {
       Shape.DIAMOND, Shape.SQUARE, Shape.CIRCLE
     ];
 
-    let mockBackend = TestBed.get(MockBackend);
-    mockBackend.connections
-     .subscribe((connection: MockConnection) => {
-       fixture.detectChanges();
-       // Check the UI state before returning the repsonse.
-       verifyEmojiWidgetVisible();
-       expect(checker.statusWidget.isLoading).toBe(true);
-       connection.mockRespond(
-         new Response(
-           new ResponseOptions({
-              body: mockResponses[callCount]
-           })
-         )
-       );
-
-       // Wait for async code to complete.
-       fixture.whenStable().then(() => {
-         fixture.detectChanges();
-         // Checks the UI state after the response has been received.
-
-         // Checks that loading has stopped.
-         expect(checker.statusWidget.isLoading).toBe(false);
-         expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
-
-         verifyEmojiWidgetVisible();
-         verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
-
-         // Change to the shape style, and verify the loading icon visibility
-         // change.
-         demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
-         fixture.componentInstance.setDemoSettings(demoSettings);
-         fixture.detectChanges();
-         fixture.whenStable().then(() => {
-           fixture.detectChanges();
-
-           verifyCircleSquareDiamondWidgetVisible();
-           verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
-
-           if (callCount < 2) {
-             // Set loading icon back to EMOJI style.
-             demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-             fixture.componentInstance.setDemoSettings(demoSettings);
-             fixture.detectChanges();
-             fixture.whenStable().then(() => {
-               fixture.detectChanges();
-                 callCount++;
-                 // Fire another request.
-                 setTextAndFireInputEvent(queryTexts[callCount], textArea);
-             });
-           }
-         });
-       });
-    });
-
     verifyEmojiWidgetVisible();
 
-    // Send an input event to trigger the service call.
-    setTextAndFireInputEvent(queryTexts[callCount], textArea);
-  }));
- */
+    for (let callCount = 0; callCount < mockResponses.length; callCount++) {
+      // Send an input event to trigger the service call.
+      setTextAndFireInputEvent(queryTexts[callCount], textArea);
+
+      await waitForTimeout(REQUEST_LIMIT_MS);
+
+      let mockReq = httpMock.expectOne('test-url/check');
+
+      fixture.detectChanges();
+      // Check the UI state before returning the repsonse.
+      verifyEmojiWidgetVisible();
+      expect(checker.statusWidget.isLoading).toBe(true);
+      mockReq.flush(mockResponses[callCount]);
+
+      // Wait for async code to complete.
+      await checker.statusWidget.animationPromise;
+      await checker.statusWidget.animationPromise;
+      fixture.detectChanges();
+      // Checks the UI state after the response has been received.
+
+      // Checks that loading has stopped.
+      expect(checker.statusWidget.isLoading).toBe(false);
+      expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+      verifyEmojiWidgetVisible();
+      verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
+
+      // Change to the shape style, and verify the loading icon visibility
+      // change.
+      demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+      fixture.componentInstance.setDemoSettings(demoSettings);
+      fixture.detectChanges();
+      // TODO: Two awaits?
+      await checker.statusWidget.animationPromise;
+      await checker.statusWidget.animationPromise;
+      fixture.detectChanges();
+
+      verifyCircleSquareDiamondWidgetVisible();
+      verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
+
+      // Set loading icon back to EMOJI style.
+      demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+      fixture.componentInstance.setDemoSettings(demoSettings);
+      fixture.detectChanges();
+    }
+  });
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold of 0',
      async() => {
@@ -1853,7 +1646,7 @@ describe('Convai checker test', () => {
       widgetId);
   });
 
-  fit('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
+  it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
      +' min threshold = 0',
      async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
@@ -2323,8 +2116,7 @@ describe('Convai checker test', () => {
       widgetId);
   });
 
-  /*
-  it('Test gradient colors', async(() => {
+  fit('Test gradient colors', async(() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     let testGradientColorsRgb = [
       "rgb(130, 224, 170)",
@@ -2506,7 +2298,7 @@ describe('Convai checker test', () => {
                             testGradientColorsRgb[2]);
   }));
 
-  it('Test JSON DemoSettings', async(() => {
+  fit('Test JSON DemoSettings', async(() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerJsonDemoSettings);
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
@@ -2516,6 +2308,5 @@ describe('Convai checker test', () => {
     expect(checker.demoSettings).not.toEqual(getCopyOfDefaultDemoSettings());
   }));
 
-  */
 
 });

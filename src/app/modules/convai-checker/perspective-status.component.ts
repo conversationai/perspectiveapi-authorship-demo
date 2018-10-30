@@ -186,7 +186,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private isPlayingPostLoadingStateChangeAnimations = false;
   private currentStateChangeAnimationId: number = 0;
   private gradientColorScale: string[];
-  animationPromise: Promise<void> = Promise.resolve();
+  animationPromise: Promise<number> = Promise.resolve(0);
+  private animationPromises: Promise<number>[] = [];
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
@@ -511,8 +512,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getShouldHideStatusWidget(loadStart: boolean): boolean {
-    console.log('getShouldHideStatusWidget');
-    console.log(loadStart, this.hideLoadingIconAfterLoad, this.hideLoadingIconForScoresBelowMinThreshold, this.score, this.scoreThresholds);
+    //console.log('getShouldHideStatusWidget');
+    //console.log(loadStart, this.hideLoadingIconAfterLoad, this.hideLoadingIconForScoresBelowMinThreshold, this.score, this.scoreThresholds);
     let shouldHide = false;
 
     if (this.hideLoadingIconAfterLoad) {
@@ -1289,7 +1290,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
               let updateScoreCompletedTimeline =
                 this.getEndAnimationsForCircleSquareDiamondWidgetLoading(
                   loadingTimeline);
-              console.log('playAnimation: setLoadingForDefaultWidget', loading);
+              console.log('playAnimation: setLoadingForDefaultWidget, update score completed');
               this.playAnimation(updateScoreCompletedTimeline);
             }
           });
@@ -1301,6 +1302,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
       loadingTimeline.add(
         this.getLoopAnimationsForCircleSquareDiamondWidgetLoading(), FADE_START_LABEL);
+      console.log('playAnimation: setLoadingForDefaultWidget');
       this.playAnimation(loadingTimeline);
     }
   }
@@ -1459,22 +1461,30 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private playAnimation(animation: Animation): void {
-    let promiseId = Math.random();
     this.animationPromise = this.animationPromise.then(() => {
-      console.log('Chaining animation promise', promiseId);
-      return new Promise<void>((resolve, reject) => {
-        console.log('*****Play animation promise started*******', promiseId, animation);
-        let wrapperTimeline = new TimelineMax({
-          onComplete: () => {
-            this.ngZone.run(() => {
-              console.log('********Resolving********', promiseId);
-              resolve();
-            })
-          }
-        });
-        wrapperTimeline.add(animation);
-        wrapperTimeline.play();
+      return this.getPlayAnimationPromise(animation);
+    });
+    //this.animationPromises.push(this.getPlayAnimationPromise(animation));
+    //this.animationPromise = Promise.all(this.animationPromises);
+    //console.log('this.animationPromise', this.animationPromise);
+    //console.log(this.animationPromises);
+  }
+
+  private getPlayAnimationPromise(animation: Animation): Promise<number> {
+    let promiseId = Math.random();
+    console.log('Chaining animation promise', promiseId);
+    return new Promise<number>((resolve, reject) => {
+      console.log('*****Play animation promise started*******', promiseId, animation);
+      let wrapperTimeline = new TimelineMax({
+        onComplete: () => {
+          this.ngZone.run(() => {
+            resolve(promiseId);
+            console.log('********Resolving********', promiseId);
+          })
+        }
       });
+      wrapperTimeline.add(animation);
+      wrapperTimeline.play();
     });
   }
 

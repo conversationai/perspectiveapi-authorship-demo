@@ -95,11 +95,8 @@ export class PerspectiveApiService {
       let headers = new HttpHeaders();
       headers.append('Content-Type', 'application/json');
 
-      // TODO: why are we appending the '/check' string? Nearly always better to
-      // do  have this provided as input; appending here will make it much less
-      // flexible.
       return this.httpClient.post(
-        serverUrl + '/check', JSON.stringify(data), {headers});
+        serverUrl + '/check', data, {headers});
     }
   }
 
@@ -135,11 +132,8 @@ export class PerspectiveApiService {
       let headers = new HttpHeaders();
       headers.append('Content-Type', 'application/json');
 
-      // TODO: why are we appending the '/suggest_score' string? Nearly always
-      // better to do  have this provided as input; appending here will make it
-      // much less flexible.
       return this.httpClient.post(
-        serverUrl + '/suggest_score', JSON.stringify(data), {headers});
+        serverUrl + '/suggest_score', data, {headers});
     }
   }
 }
