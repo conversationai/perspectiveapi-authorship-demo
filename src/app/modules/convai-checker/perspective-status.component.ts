@@ -44,15 +44,14 @@ export enum Emoji {
   SAD,
 };
 
+// If adding an alternate UI flow, create a new Configuration.
 export enum Configuration {
   DEMO_SITE,
-  EXTERNAL,
 };
 
 // The keys in ConfigurationInput should match items in the Configuration enum.
 export const ConfigurationInput = {
   DEMO_SITE: 'default',
-  EXTERNAL: 'external',
 };
 
 export const ScoreThreshold = {
@@ -634,12 +633,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getConfigurationFromInputString(inputString: string): Configuration {
-    if (inputString === ConfigurationInput.EXTERNAL) {
-      return Configuration.EXTERNAL;
-    } else {
-      // Demo site is the default.
-      return Configuration.DEMO_SITE;
-    }
+    return Configuration.DEMO_SITE;
   }
 
   private updateLayerElementContainers(): void {
@@ -676,8 +670,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   feedbackContainerClicked() {
     if (this.configuration === Configuration.DEMO_SITE) {
       this.getTransitionToLayerAnimation(1, LAYER_TRANSITION_TIME_SECONDS).play();
-    } else if (this.configuration === Configuration.EXTERNAL) {
-      this.showFeedbackQuestion = true;
     }
   }
 
