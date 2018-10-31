@@ -1475,7 +1475,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     let promiseId = Math.random();
     console.log('Chaining animation promise', promiseId);
     return new Promise<number>((resolve, reject) => {
-      console.log('*****Play animation promise started*******', promiseId, animation);
+      console.log('*****Play animation promise started*******', promiseId);
       let wrapperTimeline = new TimelineMax({
         onComplete: () => {
           this.ngZone.run(() => {
