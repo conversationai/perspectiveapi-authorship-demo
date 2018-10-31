@@ -44,6 +44,7 @@ export enum Emoji {
   SAD,
 };
 
+// If adding an alternate UI flow, create a new Configuration.
 export enum Configuration {
   DEMO_SITE,
 };

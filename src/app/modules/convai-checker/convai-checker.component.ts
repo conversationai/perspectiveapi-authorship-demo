@@ -45,9 +45,8 @@ export interface InputEvent {
 // TODO: Make more of these parameters optional, especially the ones we don't
 // want to expose to users in the public launch.
 export interface DemoSettings {
-  // Refers to the correction UI style. Current options are "default" or
-  // "external" (see perspective-status.ConfigurationInput).
-  configuration: string;
+  // DEPRECATED. Value is ignored.
+  configuration?: string;
 
   // An array of colors to use as the gradient for the animated loading widget.
   // Minimum length is two, but there is no maximum length.
@@ -113,7 +112,6 @@ export const REQUEST_LIMIT_MS = 500;
 const LOCAL_STORAGE_SESSION_ID_KEY = 'sessionId';
 
 export const DEFAULT_DEMO_SETTINGS = {
-  configuration: 'default',
   gradientColors: ["#25C1F9", "#7C4DFF", "#D400F9"],
   apiKey: '',
   useGapi: false,
@@ -180,7 +178,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
   private sessionId: string|null = null;
   private gradientColors: string[] = ["#25C1F9", "#7C4DFF", "#D400F9"];
   private apiKey: string|undefined;
-  private configuration: string;
 
   constructor(
       private elementRef: ElementRef,

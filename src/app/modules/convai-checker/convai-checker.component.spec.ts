@@ -42,8 +42,6 @@ import {
   XHRBackend
 } from '@angular/http';
 import { By } from '@angular/platform-browser';
-
-
 import {
   HttpClientTestingModule,
   HttpTestingController
@@ -141,13 +139,6 @@ function getCopyOfDefaultDemoSettings(): DemoSettings {
 
 function getNormalizedInnerText(element: HTMLElement) {
   return element.innerText.replace(/\s+/g, ' ');
-}
-
-function configureFixtureForExternalFeedbackStyleConfiguration(
-    fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettings>) {
-  let demoSettings = getCopyOfDefaultDemoSettings();
-  demoSettings.communityId = 'testCommunityId';
-  fixture.componentInstance.setDemoSettings(demoSettings);
 }
 
 function verifyLoadingWidgetHasShape(checker: ConvaiChecker, expectedShape: Shape) {
@@ -530,7 +521,9 @@ describe('Convai checker test', () => {
   it('should recognize inputs from angular input bindings', async(() => {
     let fixture =
       TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
-    configureFixtureForExternalFeedbackStyleConfiguration(fixture);
+    let demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.communityId = 'testCommunityId';
+    fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
 
     let checker = fixture.componentInstance.checker;
@@ -848,7 +841,7 @@ describe('Convai checker test', () => {
 
     // Sets up mock responses for the check and suggest score calls.
     let mockResponses: { [key: string]: Object } = {};
-    mockResponses[checkUrl] = getMockCheckerResponse(queryText);
+    mockResponses[checkUrl] = getMockCheckerResponse(0.5, queryText);
 
     let textArea = fixture.debugElement.query(
       By.css('#' + checker.inputId)).nativeElement;
@@ -888,7 +881,6 @@ describe('Convai checker test', () => {
   it('Should handle manual check', fakeAsync(() => {
     let fixture =
       TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
-    configureFixtureForExternalFeedbackStyleConfiguration(fixture);
     fixture.detectChanges();
 
     let checker = fixture.componentInstance.checker;
