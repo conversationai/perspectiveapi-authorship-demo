@@ -134,9 +134,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   @Output() commentFeedbackSubmitted: EventEmitter<CommentFeedback> =
     new EventEmitter<CommentFeedback>();
 
-  @Output() animationsDone: EventEmitter<void> = new EventEmitter<void>();
-  //pendingAnimations: {[key: string]: Promise} = {};
-
   public configurationEnum = Configuration;
   public configuration = this.configurationEnum.DEMO_SITE;
   public loadingIconStyleConst = LoadingIconStyle;
@@ -191,8 +188,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private currentStateChangeAnimationId: number = 0;
   private gradientColorScale: string[];
   animationPromise: Promise<number> = Promise.resolve(0);
-  private animationPromises: Promise<number>[] = [];
-  private pendingAnimations: number[] = [];
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
@@ -214,10 +209,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   ngAfterViewInit() {
-    // TODO: this is simply putting an event on the stack, and it not actually
-    // chaining anything in a dependable way; therefore it wont have consistent
-    // timing behaviour w.r.t. anything else. This is maybe wrong, and if not
-    // needs some quite careful documentation on what the actual intent here is.
     this.widgetReady = Promise.resolve().then(() => {
       this.updateWidgetElement();
       console.log('playAnimation: ngAfterViewInit');
@@ -517,8 +508,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getShouldHideStatusWidget(loadStart: boolean): boolean {
-    //console.log('getShouldHideStatusWidget');
-    //console.log(loadStart, this.hideLoadingIconAfterLoad, this.hideLoadingIconForScoresBelowMinThreshold, this.score, this.scoreThresholds);
     let shouldHide = false;
 
     if (this.hideLoadingIconAfterLoad) {
@@ -531,7 +520,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       shouldHide = true;
     }
 
-    console.log('shouldHide=', shouldHide);
     return shouldHide;
   }
 
@@ -697,9 +685,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   feedbackCompleted(success: boolean) {
-    // TODO: probably want something like an observable for when the animation
-    // has finished, and to be returning that, so that we can test for animation
-    // completes, etc.
     if (success) {
       this.feedbackRequestSubmitted = true;
     } else {
@@ -912,10 +897,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
   }
 
-  // TODO: when a score changes, we should return an observable (probably a
-  // Single) for when the animation has completed. That way we can test against
-  // it sensibly, and also make sure timing dependencies can be programmed
-  // against.
   notifyScoreChange(score: number): void {
     console.debug('Setting this.score =', score);
     this.score = score;
@@ -931,9 +912,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
   }
 
-  // TODO: unclear why this needs to be async. Remove, or add a comment to
-  // explain/justify why. If it does need to be async, it should return an
-  // observable to know when its done.
   setLoading(loading: boolean): void {
     this.widgetReady.then(() => {
       console.log('Calling setLoading(' + loading + ')');
@@ -1493,7 +1471,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     this.layerHeightPixels = this.layerAnimationHandles[this.currentLayerIndex].offsetHeight;
 
     let timeline = new TimelineMax({
-      callbackScope: this,
       onStart: () => {
         this.ngZone.run(() => {
           console.debug('Transitioning from layer ' + this.currentLayerIndex
