@@ -1469,30 +1469,18 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     this.animationPromise = this.animationPromise.then(() => {
       return this.getPlayAnimationPromise(animation);
     });
-    //this.animationPromises.push(this.getPlayAnimationPromise(animation));
-    //this.animationPromise = Promise.all(this.animationPromises);
-    //console.log('this.animationPromise', this.animationPromise);
-    //console.log(this.animationPromises);
-
   }
 
   private getPlayAnimationPromise(animation: Animation): Promise<number> {
     let promiseId = Math.random();
-    console.log('Chaining animation promise', promiseId);
-    this.pendingAnimations.push(promiseId);
-    console.log('Pending animations', this.pendingAnimations);
+    console.log('New animation promise', promiseId);
     return new Promise<number>((resolve, reject) => {
       console.log('*****Play animation promise started*******', promiseId);
       let wrapperTimeline = new TimelineMax({
         onComplete: () => {
           this.ngZone.run(() => {
-            this.pendingAnimations.splice(this.pendingAnimations.indexOf(promiseId), 1);
-            if (this.pendingAnimations.length === 0) {
-              console.log('No pending animations, emitting');
-              this.animationsDone.emit();
-            }
             resolve(promiseId);
-            console.log('********Resolving********', promiseId);
+            console.log('********Resolving animation promise********', promiseId);
           })
         }
       });
