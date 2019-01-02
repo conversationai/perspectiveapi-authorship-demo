@@ -43,3 +43,4 @@ tmp
 
 # dist directory used by NPM
 dist
+dist.tgz
