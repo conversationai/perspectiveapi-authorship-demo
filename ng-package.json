@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/ng-packagr/ng-package.schema.json",
-  "whitelistedNonPeerDependencies": ["."],
+  "whitelistedNonPeerDependencies": [".", "@types/gapi"],
   "lib": {
     "entryFile": "public_api.ts",
     "umdModuleIds": {
@@ -11,5 +11,6 @@
       "gsap": "gsap",
       "rxjs" : "rxjs"
     }
-  }
+  },
+  "dest": "dist"
 }

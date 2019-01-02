@@ -1,6 +1,6 @@
 {
   "name": "@conversationai/perspectiveapi-authorship-demo",
-  "version": "0.6.5",
+  "version": "0.6.7",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
@@ -17,13 +17,6 @@
     "lint": "ng lint",
     "e2e": "ng e2e",
     "build-plugin-js": "npm run build:prod && cat build/static/runtime*.js build/static/polyfills*.js build/static/main*.js >build/static/perspective_authorship_widget.js"
-  },
-  "ngPackage": {
-    "$schema": "./node_modules/ng-packagr/ng-package.schema.json",
-    "lib": {
-      "entryFile": "public_api.ts"
-    },
-    "dest": "dist"
   },
   "peerDependencies": {
     "@angular/animations": "^6.0.0",

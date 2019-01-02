@@ -145,7 +145,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     "#layer1", "#layer2", "#layer3"
   ];
 
-  private showFeedbackQuestion: boolean = false;
+  public showFeedbackQuestion: boolean = false;
   isLoading: boolean = false;
   public isPlayingLoadingAnimation: boolean = false;
   public isPlayingFadeDetailsAnimation: boolean = false;
@@ -171,7 +171,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private updateDemoSettingsAnimation: any;
   private isPlayingUpdateShapeAnimation: boolean;
   private updateStatusWidgetVisibilityAnimation: TimelineMax;
-  private hideEmojiIconsForLoadingAnimation = false;
+  public hideEmojiIconsForLoadingAnimation = false;
   // Promise that should resolve once this.widget has been initialized.
   private widgetReady: Promise<void>;
 
@@ -188,6 +188,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private isPlayingPostLoadingStateChangeAnimations = false;
   private currentStateChangeAnimationId: number = 0;
   private gradientColorScale: string[];
+
+  public percentScore() {
+    return ( parseInt(this.score.toFixed(2)) * 100 ).toFixed(0)
+  }
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
