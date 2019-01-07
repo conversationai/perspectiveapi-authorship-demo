@@ -79,7 +79,7 @@ export const FADE_WIDGET_TIME_SECONDS = 0.4;
 const WIDGET_PADDING_PX = 4;
 const WIDGET_RIGHT_MARGIN_PX = 10;
 const EMOJI_MAIN_LOADING_ANIMATION_LABEL = "emojiMainLoadingAnimation";
-const FADE_EMOJI_TIME_SECONDS = 0.5;
+export const FADE_EMOJI_TIME_SECONDS = 0.5;
 const EMOJI_BOUNCE_IN_TIME_SECONDS = 1;
 const COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.5;
 const FIRST_GRADIENT_RATIO = 0.9;
@@ -1264,6 +1264,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   setLoadingForDefaultWidget(loading: boolean): void {
+    console.log('setLoadingForDefaultWidget');
     if (loading && !this.isPlayingLoadingAnimation) {
       console.debug('About to create loadingTimeline');
       // Set isPlayingLoadingAnimation = true here instead of in the onStart()
@@ -1466,9 +1467,13 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private playAnimation(animation: Animation): void {
+    const id = Math.random();
+    this.pendingAnimations.push(id);
     this.animationPromise = this.animationPromise.then(() => {
-      return this.getPlayAnimationPromise(animation);
+      return this.getPlayAnimationPromise(animation, id);
     });
+    console.log('PROMISE DEFINITION');
+    console.log(Promise.prototype.then);
     //this.animationPromises.push(this.getPlayAnimationPromise(animation));
     //this.animationPromise = Promise.all(this.animationPromises);
     //console.log('this.animationPromise', this.animationPromise);
@@ -1476,10 +1481,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   }
 
-  private getPlayAnimationPromise(animation: Animation): Promise<number> {
-    let promiseId = Math.random();
+  private getPlayAnimationPromise(animation: Animation, promiseId: number): Promise<number> {
+    //let promiseId = Math.random();
     console.log('Chaining animation promise', promiseId);
-    this.pendingAnimations.push(promiseId);
+    //this.pendingAnimations.push(promiseId);
     console.log('Pending animations', this.pendingAnimations);
     return new Promise<number>((resolve, reject) => {
       console.log('*****Play animation promise started*******', promiseId);
@@ -1487,11 +1492,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         onComplete: () => {
           this.ngZone.run(() => {
             this.pendingAnimations.splice(this.pendingAnimations.indexOf(promiseId), 1);
+            resolve(promiseId);
             if (this.pendingAnimations.length === 0) {
               console.log('No pending animations, emitting');
               this.animationsDone.emit();
             }
-            resolve(promiseId);
             console.log('********Resolving********', promiseId);
           })
         }
