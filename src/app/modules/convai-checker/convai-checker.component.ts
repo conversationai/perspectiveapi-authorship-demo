@@ -283,7 +283,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
     // makes it consistently type number.
     console.debug('Updating this.pendingRequest for text: ', text);
     this.pendingRequest = window.setTimeout(() => {
-      console.log('Calling _checkText from within callback');
       this._checkText(text);
     }, REQUEST_LIMIT_MS);
   }

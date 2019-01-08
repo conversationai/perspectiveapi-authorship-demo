@@ -258,7 +258,7 @@ async function verifyLayerTransitionsWorkForDemoSiteConfig(
   // Step 3: Click the seem wrong button.
   const seemWrongButton = document.getElementById('seemWrongButtonDemoConfig');
   sendClickEvent(seemWrongButton);
-  await checker.statusWidget.animationPromise;
+  await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
   fixture.detectChanges();
 
   // Step 4: Check layer 2 UI.
@@ -281,7 +281,7 @@ async function verifyLayerTransitionsWorkForDemoSiteConfig(
   expect(fixture.nativeElement.textContent).not.toContain('No');
 
   mockSuggestReq.flush({clientToken: "token"});
-  await checker.statusWidget.animationPromise;
+  await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
   fixture.detectChanges();
 
   // Step 6: Check layer 3 UI.
@@ -298,7 +298,7 @@ async function verifyLayerTransitionsWorkForDemoSiteConfig(
   // Step 7: Return to layer 1 and check UI again.
   let thanksButton = document.getElementById('thanksForFeedbackButtonDemoConfig');
   sendClickEvent(thanksButton);
-  await checker.statusWidget.animationPromise;
+  await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
   fixture.detectChanges();
 
   for (let text of layer1TextElements) {
@@ -372,6 +372,9 @@ async function verifyWidgetVisibilityForDemoSettings(
     checker.statusWidget.getFeedbackTextForScore(mockResponseScores[2]),
   ];
 
+  // Wait for animation triggered in ngAfterViewInit.
+  await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+
   // Test steps:
   // 1. Update settings
   fixture.componentInstance.setDemoSettings(demoSettings);
@@ -379,7 +382,12 @@ async function verifyWidgetVisibilityForDemoSettings(
   console.log('before loading', expectedWidgetVisibilitiesBeforeLoading);
   console.log('while loading', expectedWidgetVisibilitiesWhileLoading);
   console.log('after loading', expectedWidgetVisibilitiesAfterLoading);
+
   fixture.detectChanges();
+  // Wait for animations triggered by changing the settings.
+  await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+
+
 
   for (let callCount = 0; callCount < 1; callCount++) { //mockResponseScores.length; callCount++) {
     //await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
@@ -1380,7 +1388,7 @@ describe('Convai checker test', () => {
       expectedFeedbackTextVisibilitiesAfterLoading);
   });
 
-  fit('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold of 0, emoji icon',
+  it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold of 0, emoji icon',
      async() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
