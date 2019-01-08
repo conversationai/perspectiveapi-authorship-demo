@@ -193,8 +193,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   // Promise for any pending animations. New animations will be chained to this
   // Promise.
   private animationPromise: Promise<number> = Promise.resolve(0);
-  // Keeps track of any pending animations that are in progress.
-  private pendingAnimations: number[] = [];
+  // Keeps track of the number of animations that are queued or in progress.
+  private pendingAnimationCount = 0;
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
@@ -566,11 +566,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
           console.debug('Changing status widget visibility complete, hide=', hide);
           this.isPlayingShowOrHideLoadingWidgetAnimation = false;
           this.shouldHideStatusWidget = hide;
-        });
-      },
-      onOverwrite: () => {
-        this.ngZone.run(() => {
-          console.log('overwritten');
         });
       }
     });
@@ -1444,13 +1439,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   /** Wraps animations in Promises and chains them. */
   private playAnimation(animation: Animation): void {
-    // Assign each animation a random id to keep track of it.
-    const id = Math.random();
-    this.pendingAnimations.push(id);
+    this.pendingAnimationCount++;
 
     // Chain animations to complete after the previous one.
     this.animationPromise = this.animationPromise.then(() => {
-      return this.getPlayAnimationPromise(animation, id);
+      return this.getPlayAnimationPromise(animation);
     });
   }
 
@@ -1458,14 +1451,17 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
    * Returns a Promise that resolves when the animation's onComplete() callback
    * is called.
    */
-  private getPlayAnimationPromise(animation: Animation, animationId: number): Promise<number> {
+  private getPlayAnimationPromise(animation: Animation): Promise<number> {
     return new Promise<number>((resolve, reject) => {
       let wrapperTimeline = new TimelineMax({
         onComplete: () => {
+          // We have to re-enter the Angular zone before resolving (the
+          // onComplete() callback is outside the zone) in order to
+          // properly wait for the animations to complete.
           this.ngZone.run(() => {
-            this.pendingAnimations.splice(this.pendingAnimations.indexOf(animationId), 1);
-            resolve(animationId);
-            if (this.pendingAnimations.length === 0) {
+            this.pendingAnimationCount--;
+            resolve();
+            if (this.pendingAnimationCount === 0) {
               console.log('No pending animations left, emitting an event.');
               this.animationsDone.emit();
             }
@@ -1481,7 +1477,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     this.layerHeightPixels = this.layerAnimationHandles[this.currentLayerIndex].offsetHeight;
 
     let timeline = new TimelineMax({
-      callbackScope: this,
       onStart: () => {
         this.ngZone.run(() => {
           console.debug('Transitioning from layer ' + this.currentLayerIndex

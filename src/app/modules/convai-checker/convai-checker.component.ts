@@ -241,8 +241,8 @@ export class ConvaiChecker implements OnInit, OnChanges {
   // Listens to input events from elements outside the component, and forwards
   // the ones from the element with the desired input id into our check request
   // handlers.
-  // TODO(rachelrosen): Consider using a CSS selector for this instead, for
-  // better specificity.
+  // TODO: Consider using a CSS selector for this instead, for better
+  // specificity.
   private _handleInputEvent(event: InputEvent) {
     if (event.target.id === this.inputId) {
       this._handlePendingCheckRequest(event.target.value);

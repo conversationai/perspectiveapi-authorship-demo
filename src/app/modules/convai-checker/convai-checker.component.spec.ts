@@ -378,10 +378,6 @@ async function verifyWidgetVisibilityForDemoSettings(
   // Test steps:
   // 1. Update settings
   fixture.componentInstance.setDemoSettings(demoSettings);
-  console.log(demoSettings);
-  console.log('before loading', expectedWidgetVisibilitiesBeforeLoading);
-  console.log('while loading', expectedWidgetVisibilitiesWhileLoading);
-  console.log('after loading', expectedWidgetVisibilitiesAfterLoading);
 
   fixture.detectChanges();
   // Wait for animations triggered by changing the settings.
@@ -389,10 +385,7 @@ async function verifyWidgetVisibilityForDemoSettings(
 
 
 
-  for (let callCount = 0; callCount < 1; callCount++) { //mockResponseScores.length; callCount++) {
-    //await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
-    console.log('Callcount=', callCount);
-    await fixture.whenStable();
+  for (let callCount = 0; callCount < mockResponseScores.length; callCount++) {
     fixture.detectChanges();
 
     // Check visibility before loading.
@@ -482,13 +475,9 @@ describe('Convai checker test', () => {
     // Because of the animation involved, many tests take longer than usual. So
     // we increase the timeout.
     jasmine.DEFAULT_TIMEOUT_INTERVAL = INCREASED_TIMEOUT_IN_MS;
-
-    console.log('PROMISE DEFINITION');
-    console.log(Promise.prototype.then);
   });
 
   afterEach(() => {
-    console.log('AFTER EACH');
     // Make sure there are no more outstanding HTTP requests.
     httpMock.verify();
     // Return to normal timeout.
@@ -873,7 +862,6 @@ describe('Convai checker test', () => {
 
     let checker = fixture.componentInstance.checker;
 
-    console.log('Should handle manual check');
     const queryText = 'Your mother was a hamster';
     const mockResponseBody = getMockCheckerResponse(0.5, queryText);
 
@@ -1049,7 +1037,6 @@ describe('Convai checker test', () => {
       setTextAndFireInputEvent('', textArea);
 
       // Checks that clearing the textbox hides the status widget.
-      console.log('Checking clearing');
       await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
       fixture.detectChanges();
       statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
