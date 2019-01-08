@@ -917,7 +917,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   // observable to know when its done.
   setLoading(loading: boolean): void {
     this.widgetReady.then(() => {
-      console.log('Calling setLoading(' + loading + ')');
+      console.debug('Calling setLoading(' + loading + ')');
       if (this.widgetElement === null) {
         console.error('this.widgetElement = null in call to setLoading');
         return;
@@ -1493,6 +1493,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         this.ngZone.run(() => {
           this.layersAnimating = false;
           this.currentLayerIndex = endLayerIndex;
+          console.debug('Finished transitioning to layer ' + this.currentLayerIndex);
           this.showingMoreInfo = this.currentLayerIndex === 1;
           this.updateLayerElementContainers();
         });

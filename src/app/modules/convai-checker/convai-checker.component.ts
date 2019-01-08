@@ -339,12 +339,13 @@ export class ConvaiChecker implements OnInit, OnChanges {
       suggestCommentScoreData,
       this.demoSettings.useGapi /* makeDirectApiCall */,
       this.serverUrl
-    ).pipe(finalize(() => {
+    ).pipe(
+      finalize(() => {
         console.debug('Feedback request done');
         this.statusWidget.hideFeedbackQuestion();
         this.feedbackRequestInProgress = false;
-      }))
-      .subscribe(
+      })
+    ).subscribe(
       (response: SuggestCommentScoreResponse) => {
         this.statusWidget.feedbackCompleted(true);
         console.log(response);
