@@ -74,12 +74,12 @@ const SHAPE_MORPH_TIME_SECONDS = 1;
 const FADE_DETAILS_TIME_SECONDS = 0.4;
 const FADE_ANIMATION_TIME_SECONDS = 0.3;
 const GRAYSCALE_ANIMATION_TIME_SECONDS = 0.2
-export const LAYER_TRANSITION_TIME_SECONDS = 0.5;
-export const FADE_WIDGET_TIME_SECONDS = 0.4;
+const LAYER_TRANSITION_TIME_SECONDS = 0.5;
+const FADE_WIDGET_TIME_SECONDS = 0.4;
 const WIDGET_PADDING_PX = 4;
 const WIDGET_RIGHT_MARGIN_PX = 10;
 const EMOJI_MAIN_LOADING_ANIMATION_LABEL = "emojiMainLoadingAnimation";
-export const FADE_EMOJI_TIME_SECONDS = 0.5;
+const FADE_EMOJI_TIME_SECONDS = 0.5;
 const EMOJI_BOUNCE_IN_TIME_SECONDS = 1;
 const COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.5;
 const FIRST_GRADIENT_RATIO = 0.9;
@@ -95,7 +95,7 @@ const EMOJI_COLOR = "#ffcc4d";
 })
 @Injectable()
 export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChecked {
-  // TODO(rachelrosen): Instead of all these inputs, we should merge the
+  // TODO: Instead of all these inputs, we should merge the
   // convai-checker component with this one.
   @Input() indicatorWidth: number = 13;
   @Input() indicatorHeight: number = 13;
@@ -135,7 +135,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     new EventEmitter<CommentFeedback>();
 
   @Output() animationsDone: EventEmitter<void> = new EventEmitter<void>();
-  //pendingAnimations: {[key: string]: Promise} = {};
 
   public configurationEnum = Configuration;
   public configuration = this.configurationEnum.DEMO_SITE;
@@ -190,7 +189,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private isPlayingPostLoadingStateChangeAnimations = false;
   private currentStateChangeAnimationId: number = 0;
   private gradientColorScale: string[];
+
+  // Promise for any pending animations. New animations will be chained to this
+  // Promise.
   private animationPromise: Promise<number> = Promise.resolve(0);
+  // Keeps track of any pending animations that are in progress.
   private pendingAnimations: number[] = [];
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
@@ -201,7 +204,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   ngOnInit() {
     this.configuration = this.getConfigurationFromInputString(this.configurationInput);
 
-    // TODO(rachelrosen): Investigate changing these to ViewChildren/replacing
+    // TODO: Investigate changing these to ViewChildren/replacing
     // calls to querySelector, if possible.
     for (let layerAnimationSelector of this.layerAnimationSelectors) {
       this.layerAnimationHandles.push(
@@ -213,10 +216,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   ngAfterViewInit() {
-    // TODO: this is simply putting an event on the stack, and it not actually
-    // chaining anything in a dependable way; therefore it wont have consistent
-    // timing behaviour w.r.t. anything else. This is maybe wrong, and if not
-    // needs some quite careful documentation on what the actual intent here is.
+    // The Promise.resolve().then is required to prevent
+    // ExpressionChangedAfterItHasBeenCheck errors.
     this.widgetReady = Promise.resolve().then(() => {
       this.updateWidgetElement();
       this.playAnimation(this.getUpdateWidgetStateAnimation());
@@ -385,9 +386,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
           console.debug('Setting loadingIconStyleChanged to false');
           this.loadingIconStyleChanged = false;
           let loadingIconStyleChangedTimeline = new TimelineMax({});
-          // TODO(rachelrosen): Determine whether this covers all cases
-          // regarding the correct x position of elements, or if more animations
-          // are needed here.
+          // TODO: Determine whether this covers all cases regarding the correct
+          // x position of elements, or if more animations are needed here.
           loadingIconStyleChangedTimeline.add(this.getUpdateWidgetStateAnimation());
           if (this.isLoading) {
             this.pendingPostLoadingStateChangeAnimations.add(
@@ -689,9 +689,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   feedbackCompleted(success: boolean) {
-    // TODO: probably want something like an observable for when the animation
-    // has finished, and to be returning that, so that we can test for animation
-    // completes, etc.
     if (success) {
       this.feedbackRequestSubmitted = true;
     } else {
@@ -794,9 +791,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // we're in the middle of an existing rotation, so reset the rotation
       // accordingly before animating to prevent this bug.
       // Note that this only works if the previous animation gets killed first.
-      // TODO(rachelrosen): Figure out a more general way to prevent this bug
-      // for all cases, not just when customizing the demo. It seems to happen
-      // occasionally in the wild as well.
+      // TODO: Figure out a more general way to prevent this bug for all cases,
+      // not just when customizing the demo. It seems to happen occasionally in
+      // the wild as well.
       if (this.isPlayingUpdateShapeAnimation) {
         console.debug('Starting updateShapeAnimation to square while in the'
                       + ' middle of an existing updateShapeAnimation or before'
@@ -874,7 +871,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         onComplete: () => {
           this.ngZone.run(() => {
             console.debug(this.scoreChangeAnimationCompleted);
-            // TODO(rachelrosen): Debug ObjectUnsubscribedError that occurs here.
+            // TODO: Debug ObjectUnsubscribedError that occurs here.
             // Seems to happen when animation finishes after changing from emoji
             // to shape. This only happens when this component is a child of the
             // conversationai-website. This error does not reproduce reliably
@@ -901,10 +898,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
   }
 
-  // TODO: when a score changes, we should return an observable (probably a
-  // Single) for when the animation has completed. That way we can test against
-  // it sensibly, and also make sure timing dependencies can be programmed
-  // against.
   notifyScoreChange(score: number): void {
     console.debug('Setting this.score =', score);
     this.score = score;
@@ -1269,7 +1262,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
             console.debug('Completing timeline');
             console.debug('Updating shape from animation complete');
             if (this.isLoading) {
-              // TODO(rachelrosen): Consider the edge case where
+              // TODO: Consider the edge case where
               // isPlayingShowOrHideLoadingWidgetAnimation is true here. It's
               // not ever getting triggered in the existing logs and might not
               // be possible to hit now, but could become an issue later.
@@ -1461,6 +1454,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     });
   }
 
+  /**
+   * Returns a Promise that resolves when the animation's onComplete() callback
+   * is called.
+   */
   private getPlayAnimationPromise(animation: Animation, animationId: number): Promise<number> {
     return new Promise<number>((resolve, reject) => {
       let wrapperTimeline = new TimelineMax({
