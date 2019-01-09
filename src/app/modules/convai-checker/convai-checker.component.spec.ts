@@ -52,7 +52,7 @@ import { PerspectiveStatus, CommentFeedback, Emoji, LoadingIconStyle, Shape } fr
 import { ConvaiChecker, REQUEST_LIMIT_MS, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
-import { take } from 'rxjs/operators'; 
+import { take } from 'rxjs/operators';
 import * as d3 from 'd3-color';
 
 let getMockCheckerResponse = function(score: number, token?: string):
@@ -556,7 +556,7 @@ describe('Convai checker test', () => {
     expect(fixture.nativeElement.textContent).toContain('Error');
   }));
 
-  it('Should analyze comment and store and emit response', fakeAsync(() => {
+  it('Should analyze comment and store and emit response', async () => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
     fixture.detectChanges();
     let checker = fixture.componentInstance.checker;
@@ -590,20 +590,20 @@ describe('Convai checker test', () => {
     // Send an input event to trigger the service call.
     setTextAndFireInputEvent(queryText, textArea);
 
-    tick(REQUEST_LIMIT_MS);
+    await waitForTimeout(REQUEST_LIMIT_MS);
 
     // Expect a request to have been sent.
     const mockReq = httpMock.expectOne('test-url/check');
 
     // Once a request is in flight, loading is set to true.
-    tick();
     expect(checker.analyzeCommentResponse).toBe(null);
     expect(checker.statusWidget.isLoading).toBe(true);
 
     // Now we have checked the expectations before the response is sent, we
     // send back the response.
     mockReq.flush(mockResponse);
-    tick();
+
+    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
 
     // Checks that the response is received and stored.
     expect(checker.analyzeCommentResponse).not.toBe(null);
@@ -619,7 +619,7 @@ describe('Convai checker test', () => {
 
     // Checks that loading has stopped.
     expect(checker.statusWidget.isLoading).toBe(false);
-  }));
+  });
 
   it('Should handle analyze comment error, demo config', fakeAsync(() => {
     let fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);

@@ -409,23 +409,22 @@ export class ConvaiChecker implements OnInit, OnChanges {
         this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
       .pipe(finalize(() => {
         console.log('Request done');
-        // TODO: Add a comment to explain why/how this.analyzeCommentResponse is set
-        // to the new value. That seems to happen later in the subscribe.
+        // this.analyzeCommentResponse is updated in the subscribe, which
+        // happens before the finalize() call here. It is either equal to the
+        // last response or null if the last response was an error.
         let newScore = this.getMaxScore(this.analyzeCommentResponse);
-        // TODO: notifyScoreChange's behaviour is async: we should either make
-        // it sync, or chain it so that the piped result completes AFTER
-        // notifyScoreChange has compkleted.
-        this.statusWidget.notifyScoreChange(newScore);
-        this.scoreChanged.emit(newScore);
+        // TODO: This will wait until animations finish before notifying any
+        // listening parent containers (e.g. the Perspectiveapi.com website)
+        // that there is a new score, which could cause a lag in some UI
+        // elements that depend on this. Determine if we actually want to wait
+        // for the animations here.
+        this.statusWidget.notifyScoreChange(newScore).then(() => {
+          this.scoreChanged.emit(newScore);
+        });
         this.mostRecentRequestSubscription = null;
       }))
       .subscribe((response: AnalyzeCommentResponse) => {
-        // TODO: this seems to be an important part of the completion of the
-        // behaviour for checking text, so it should be done in the pipe, not
-        // in the subscription result. That way the resulting observable
-        // happens when we want it to: when everything that should have
-        // hapened for the new result, has happened, and then we can test
-        // reliably.
+        // Note: This gets called before the finalize();
         this.analyzeCommentResponse = response;
         this.analyzeCommentResponseChanged.emit(this.analyzeCommentResponse);
         console.log(this.analyzeCommentResponse);

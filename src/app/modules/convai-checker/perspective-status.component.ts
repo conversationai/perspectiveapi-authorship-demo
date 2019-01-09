@@ -30,6 +30,7 @@ import {
 import * as d3 from 'd3-interpolate';
 import * as toxicLibsJS from 'toxiclibsjs';
 import {Animation, Elastic, Power3, TimelineMax, TweenMax} from 'gsap';
+import { take } from 'rxjs/operators';
 import twemoji from 'twemoji';
 
 export enum Shape {
@@ -893,7 +894,14 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
   }
 
-  notifyScoreChange(score: number): void {
+  /**
+   * Returns a Promise that resolves when the score change animation completes.
+   *
+   * TODO: I'm not sure there's a huge benefit to returning a Promise (or even
+   * an Observable) here rather than having the caller listen on the
+   * animationsDone EventEmitter directly.
+   */
+  async notifyScoreChange(score: number): Promise<void> {
     console.debug('Setting this.score =', score);
     this.score = score;
     if (this.isPlayingLoadingAnimation) {
@@ -905,27 +913,35 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       console.debug('Updating shape from notifyScoreChange');
       this.playAnimation(this.getUpdateWidgetStateAnimation());
     }
+    return new Promise<void>((resolve, reject) => {
+      this.animationsDone.pipe(take(1)).subscribe(() => { resolve(); });
+    });
   }
 
-  // TODO: unclear why this needs to be async. Remove, or add a comment to
-  // explain/justify why. If it does need to be async, it should return an
-  // observable to know when its done.
-  setLoading(loading: boolean): void {
-    this.widgetReady.then(() => {
-      console.debug('Calling setLoading(' + loading + ')');
-      if (this.widgetElement === null) {
-        console.error('this.widgetElement = null in call to setLoading');
-        return;
-      }
-      this.isLoading = loading;
-      if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
-        this.setLoadingForDefaultWidget(loading);
-      } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
-        this.setLoadingForEmojiWidget(loading);
-      } else {
-        console.error(
-          'Calling setLoading for unknown loadingIconStyle: ' + this.loadingIconStyle);
-      }
+  /**
+   * Updates the internal loading state, and kicks off asynchronous animations
+   * to reflect the change. Returns a Promise that resolves when the animations
+   * complete.
+   */
+  async setLoading(loading: boolean): Promise<void> {
+    console.debug('Calling setLoading(' + loading + ')');
+    return new Promise<void>((resolve, reject) => {
+      this.widgetReady.then(async () => {
+        if (this.widgetElement === null) {
+          console.error('this.widgetElement = null in call to setLoading');
+          return;
+        }
+        this.isLoading = loading;
+        if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+          this.setLoadingForDefaultWidget(loading);
+        } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
+          this.setLoadingForEmojiWidget(loading);
+        } else {
+          console.error(
+            'Calling setLoading for unknown loadingIconStyle: ' + this.loadingIconStyle);
+        }
+        this.animationsDone.pipe(take(1)).subscribe(() => { resolve(); });
+      });
     });
   }
 
