@@ -335,17 +335,13 @@ export class ConvaiChecker implements OnInit, OnChanges {
       suggestCommentScoreData.modelName = this.demoSettings.modelName;
     }
 
-    this.analyzeApiService.suggestScore(
+    const suggestScoreObservable = this.analyzeApiService.suggestScore(
       suggestCommentScoreData,
       this.demoSettings.useGapi /* makeDirectApiCall */,
       this.serverUrl
-    ).pipe(
-      finalize(() => {
-        console.debug('Feedback request done');
-        this.statusWidget.hideFeedbackQuestion();
-        this.feedbackRequestInProgress = false;
-      })
-    ).subscribe(
+    );
+
+    suggestScoreObservable.subscribe(
       (response: SuggestCommentScoreResponse) => {
         this.statusWidget.feedbackCompleted(true);
         console.log(response);
@@ -355,6 +351,14 @@ export class ConvaiChecker implements OnInit, OnChanges {
         this.statusWidget.feedbackCompleted(false);
       }
     );
+
+    suggestScoreObservable.pipe(
+      finalize(() => {
+        console.debug('Feedback request done');
+        this.statusWidget.hideFeedbackQuestion();
+        this.feedbackRequestInProgress = false;
+      })
+    )
   }
 
   private _getErrorMessage(error: any): string {
