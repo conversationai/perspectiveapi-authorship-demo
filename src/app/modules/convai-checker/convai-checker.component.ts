@@ -358,7 +358,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
         this.statusWidget.hideFeedbackQuestion();
         this.feedbackRequestInProgress = false;
       })
-    )
+    );
   }
 
   private _getErrorMessage(error: any): string {
