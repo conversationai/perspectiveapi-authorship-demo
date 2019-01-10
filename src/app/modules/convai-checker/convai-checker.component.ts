@@ -36,6 +36,7 @@ import {
 } from './perspectiveapi-types'
 import * as rxjs from 'rxjs';
 import { Subscription, Observable, Subject } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 export interface InputEvent {
@@ -339,6 +340,13 @@ export class ConvaiChecker implements OnInit, OnChanges {
       suggestCommentScoreData,
       this.demoSettings.useGapi /* makeDirectApiCall */,
       this.serverUrl
+    ).pipe(
+      take(1), // Prevents memory leaks.
+      finalize(() => {
+        console.debug('Feedback request done');
+        this.statusWidget.hideFeedbackQuestion();
+        this.feedbackRequestInProgress = false;
+      })
     );
 
     suggestScoreObservable.subscribe(
@@ -350,14 +358,6 @@ export class ConvaiChecker implements OnInit, OnChanges {
         console.error('Error', error);
         this.statusWidget.feedbackCompleted(false);
       }
-    );
-
-    suggestScoreObservable.pipe(
-      finalize(() => {
-        console.debug('Feedback request done');
-        this.statusWidget.hideFeedbackQuestion();
-        this.feedbackRequestInProgress = false;
-      })
     );
   }
 
@@ -403,27 +403,32 @@ export class ConvaiChecker implements OnInit, OnChanges {
       analyzeCommentData.modelName = this.demoSettings.modelName;
     }
 
-    this.analyzeApiService.checkText(
+    const analyzeCommentObservable = this.analyzeApiService.checkText(
         analyzeCommentData,
         this.demoSettings.useGapi /* makeDirectApiCall */,
         this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
-      .pipe(finalize(() => {
-        console.log('Request done');
-        // this.analyzeCommentResponse is updated in the subscribe, which
-        // happens before the finalize() call here. It is either equal to the
-        // last response or null if the last response was an error.
-        let newScore = this.getMaxScore(this.analyzeCommentResponse);
-        // TODO: This will wait until animations finish before notifying any
-        // listening parent containers (e.g. the Perspectiveapi.com website)
-        // that there is a new score, which could cause a lag in some UI
-        // elements that depend on this. Determine if we actually want to wait
-        // for the animations here.
-        this.statusWidget.notifyScoreChange(newScore).then(() => {
-          this.scoreChanged.emit(newScore);
-        });
-        this.mostRecentRequestSubscription = null;
-      }))
-      .subscribe((response: AnalyzeCommentResponse) => {
+      .pipe(
+        take(1), // Prevents memory leaks
+        finalize(() => {
+          console.log('Request done');
+          // this.analyzeCommentResponse is updated in the subscribe, which
+          // happens before the finalize() call here. It is either equal to the
+          // last response or null if the last response was an error.
+          let newScore = this.getMaxScore(this.analyzeCommentResponse);
+          // TODO: This will wait until animations finish before notifying any
+          // listening parent containers (e.g. the Perspectiveapi.com website)
+          // that there is a new score, which could cause a lag in some UI
+          // elements that depend on this. Determine if we actually want to wait
+          // for the animations here.
+          this.statusWidget.notifyScoreChange(newScore).then(() => {
+            this.scoreChanged.emit(newScore);
+          });
+          this.mostRecentRequestSubscription = null;
+        })
+      );
+
+    this.mostRecentRequestSubscription = analyzeCommentObservable.subscribe(
+      (response: AnalyzeCommentResponse) => {
         // Note: This gets called before the finalize();
         this.analyzeCommentResponse = response;
         this.analyzeCommentResponseChanged.emit(this.analyzeCommentResponse);
