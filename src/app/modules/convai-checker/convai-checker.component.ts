@@ -1,14 +1,14 @@
 /*
 Copyright 2017 Google Inc.
 
-Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the 'License');
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
+distributed under the License is distributed on an 'AS IS' BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
@@ -33,7 +33,7 @@ import {
   SpanScores,
   SuggestCommentScoreData,
   SuggestCommentScoreResponse,
-} from './perspectiveapi-types'
+} from './perspectiveapi-types';
 import * as rxjs from 'rxjs';
 import { Subscription, Observable, Subject } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -113,7 +113,7 @@ export const REQUEST_LIMIT_MS = 500;
 const LOCAL_STORAGE_SESSION_ID_KEY = 'sessionId';
 
 export const DEFAULT_DEMO_SETTINGS = {
-  gradientColors: ["#25C1F9", "#7C4DFF", "#D400F9"],
+  gradientColors: ['#25C1F9', '#7C4DFF', '#D400F9'],
   apiKey: '',
   useGapi: false,
   usePluginEndpoint: false,
@@ -149,7 +149,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   @ViewChild(PerspectiveStatus) statusWidget: PerspectiveStatus;
   @Input() inputId: string;
   @Input() serverUrl: string;
-  @Input() fontSize: number = 12;
+  @Input() fontSize = 12;
   @Input() demoSettings: DemoSettings = DEFAULT_DEMO_SETTINGS;
   // A JSON string representation of the DemoSettings. Expected to be static
   // over the course of the component's lifecycle, and should only be used from
@@ -174,10 +174,10 @@ export class ConvaiChecker implements OnInit, OnChanges {
   private inputListener: EventListener;
   public initializeErrorMessage: string;
   public analyzeErrorMessage: string|null = null;
-  public canAcceptFeedback: boolean = false;
-  public feedbackRequestInProgress: boolean = false;
+  public canAcceptFeedback = false;
+  public feedbackRequestInProgress = false;
   private sessionId: string|null = null;
-  private gradientColors: string[] = ["#25C1F9", "#7C4DFF", "#D400F9"];
+  private gradientColors: string[] = ['#25C1F9', '#7C4DFF', '#D400F9'];
   private apiKey: string|undefined;
 
   constructor(
@@ -197,8 +197,8 @@ export class ConvaiChecker implements OnInit, OnChanges {
 
   ngOnInit() {
     if (!this.inputId) {
-      this.initializeErrorMessage = "Error initializing: No input element id"
-        + " specified. Set inputId=<inputElementId> to use this component.";
+      this.initializeErrorMessage = 'Error initializing: No input element id'
+        + ' specified. Set inputId=<inputElementId> to use this component.';
       return;
     }
 
@@ -220,7 +220,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
     }
   }
 
-  ngOnChanges(changes: SimpleChanges) : void {
+  ngOnChanges(changes: SimpleChanges): void {
     if (changes['demoSettings']) {
       if (this.demoSettings && this.demoSettings.apiKey &&
           this.apiKey !== this.demoSettings.apiKey) {
@@ -308,8 +308,8 @@ export class ConvaiChecker implements OnInit, OnChanges {
 
   /**
    * This event callback can get triggered in two ways:
-   *   1) when the user clicks "Learn more"
-   *   2) when the user clicks the "toxic" link for the "Is this toxic?"
+   *   1) when the user clicks 'Learn more'
+   *   2) when the user clicks the 'toxic' link for the 'Is this toxic?'
    *      feedback question.
    */
   handleModelInfoLinkClicked() {
@@ -323,8 +323,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
     }
   }
 
-  suggestCommentScore(text: string, feedback: CommentFeedback)
-      : void {
+  suggestCommentScore(text: string, feedback: CommentFeedback): void {
     this.feedbackRequestInProgress = true;
 
     const suggestCommentScoreData: SuggestCommentScoreData = {
@@ -414,7 +413,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
           // this.analyzeCommentResponse is updated in the subscribe, which
           // happens before the finalize() call here. It is either equal to the
           // last response or null if the last response was an error.
-          let newScore = this.getMaxScore(this.analyzeCommentResponse);
+          const newScore = this.getMaxScore(this.analyzeCommentResponse);
           // TODO: This will wait until animations finish before notifying any
           // listening parent containers (e.g. the Perspectiveapi.com website)
           // that there is a new score, which could cause a lag in some UI
@@ -450,9 +449,9 @@ export class ConvaiChecker implements OnInit, OnChanges {
     if (response === null || response.attributeScores == null) {
       return 0;
     }
-    let max: number = undefined;
+    let max: number;
     Object.keys(response.attributeScores).forEach((key: string) => {
-      let maxSpanScoreForAttribute =
+      const maxSpanScoreForAttribute =
         this.getMaxSpanScore(response.attributeScores[key]);
       if (max === undefined || maxSpanScoreForAttribute > max) {
           max = maxSpanScoreForAttribute;
@@ -467,8 +466,8 @@ export class ConvaiChecker implements OnInit, OnChanges {
   }
 
   getMaxSpanScore(spanScores: SpanScores): number {
-    let max: number = undefined;
-    for (let spanScore of spanScores.spanScores) {
+    let max: number;
+    for (const spanScore of spanScores.spanScores) {
       if (max === undefined || spanScore.score.value > max) {
         max = spanScore.score.value;
       }
