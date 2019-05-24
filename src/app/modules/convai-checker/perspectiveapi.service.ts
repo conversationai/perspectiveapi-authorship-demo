@@ -28,7 +28,7 @@ import {
   SuggestCommentScoreData,
   SuggestCommentScoreRequest,
   SuggestCommentScoreResponse,
-} from './perspectiveapi-types'
+} from './perspectiveapi-types';
 
 // TODO: Make this configurable for dev vs prod.
 const DISCOVERY_URL = 'https://commentanalyzer.googleapis.com/$discovery'
@@ -57,13 +57,14 @@ export class PerspectiveApiService {
         this.gapiClient = (gapi.client as any) as PerspectiveGapiClient;
       }, (error: Error) => {
         console.error('Error loading gapi client:', error);
-      })});
+      });
+    });
   }
 
   // TODO: this should be a Single observable, not a general observable because
   // any call to checkText will only give a single result.
-  checkText(data: AnalyzeCommentData, makeDirectApiCall: boolean, serverUrl?: string)
-      : Observable<AnalyzeCommentResponse> {
+  checkText(data: AnalyzeCommentData, makeDirectApiCall: boolean,
+            serverUrl?: string): Observable<AnalyzeCommentResponse> {
     if (makeDirectApiCall && this.gapiClient === null) {
       console.error('No gapi client found; call initGapiClient with your API'
                     + 'key to make a direct API call. Using server instead');
@@ -100,8 +101,8 @@ export class PerspectiveApiService {
     }
   }
 
-  suggestScore(data: SuggestCommentScoreData, makeDirectApiCall: boolean, serverUrl?: string)
-      : Observable<SuggestCommentScoreResponse> {
+  suggestScore(data: SuggestCommentScoreData, makeDirectApiCall: boolean,
+               serverUrl?: string): Observable<SuggestCommentScoreResponse> {
     if (makeDirectApiCall && this.gapiClient === null) {
       console.error('No gapi client found; call initGapiClient with your API'
                     + 'key to make a direct API call. Using server instead');

@@ -40,8 +40,8 @@ export class ConvaiCheckerNoInput {
 export class ConvaiCheckerNoDemoSettings {
   @ViewChild(ConvaiChecker) checker: ConvaiChecker;
   textArea: HTMLTextAreaElement;
-  checkerInputId: string = 'checkerTextarea';
-  serverUrl: string = 'test-url';
+  checkerInputId = 'checkerTextarea';
+  serverUrl = 'test-url';
   constructor() {
   }
 }
@@ -62,7 +62,7 @@ export class ConvaiCheckerNoDemoSettings {
 export class ConvaiCheckerInvalidInput {
   @ViewChild(ConvaiChecker) checker: ConvaiChecker;
   textArea: HTMLTextAreaElement;
-  serverUrl: string = 'test-url';
+  serverUrl = 'test-url';
 }
 
 @Component({
@@ -106,8 +106,8 @@ export class ConvaiCheckerWithAttributeInput {
 export class ConvaiCheckerCustomDemoSettings implements OnInit {
   @ViewChild(ConvaiChecker) checker: ConvaiChecker;
   textArea: HTMLTextAreaElement;
-  checkerInputId: string = 'checkerTextarea';
-  serverUrl: string = 'test-url';
+  checkerInputId = 'checkerTextarea';
+  serverUrl = 'test-url';
   demoSettings = JSON.parse(JSON.stringify(DEFAULT_DEMO_SETTINGS));
 
   ngOnInit() {
@@ -137,12 +137,12 @@ export class ConvaiCheckerCustomDemoSettings implements OnInit {
 export class ConvaiCheckerJsonDemoSettings implements OnInit {
   @ViewChild(ConvaiChecker) checker: ConvaiChecker;
   textArea: HTMLTextAreaElement;
-  checkerInputId: string = 'checkerTextarea';
-  serverUrl: string = 'test-url';
-  demoSettingsJson: string = '';
+  checkerInputId = 'checkerTextarea';
+  serverUrl = 'test-url';
+  demoSettingsJson = '';
 
   ngOnInit() {
-    let demoSettings = JSON.parse(JSON.stringify(DEFAULT_DEMO_SETTINGS));
+    const demoSettings = JSON.parse(JSON.stringify(DEFAULT_DEMO_SETTINGS));
     demoSettings.scoreThresholds = [0.2, 0.5, 0.8];
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
     demoSettings.feedbackText = ['foo', 'bar', 'test'];
