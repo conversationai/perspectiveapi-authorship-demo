@@ -1237,7 +1237,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
             console.debug('Completing timeline (emoji)');
             if (this.isLoading) {
               console.debug('Restarting main emoji loading animation');
-              loadingTimeline.seek(EMOJI_MAIN_LOADING_ANIMATION_LABEL, true);
+              this.seekPosition(loadingTimeline, EMOJI_MAIN_LOADING_ANIMATION_LABEL);
             } else {
               this.playAnimation(
                 this.getEndAnimationsForEmojiWidgetLoading(loadingTimeline));
@@ -1278,7 +1278,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
               // not ever getting triggered in the existing logs and might not
               // be possible to hit now, but could become an issue later.
               console.debug('Restarting loading to fade animation.');
-              loadingTimeline.seek(FADE_START_LABEL, true);
+              this.seekPosition(loadingTimeline, FADE_START_LABEL);
             } else {
               console.debug('Loading complete');
               console.debug('hasScore:', this.hasScore);
@@ -1453,6 +1453,15 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     });
   }
 
+  /**
+   * Wrapper around Animation.seek() that increases the internal animation
+   * count. This assumes that the animation was started with playAnimation().
+   */
+  private seekPosition(animation: Animation, label: string) {
+    this.pendingAnimationCount++;
+    animation.seek(label, true);
+  }
+
   /** Wraps animations in Promises and chains them. */
   private playAnimation(animation: Animation): void {
     this.pendingAnimationCount++;
@@ -1469,8 +1478,13 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
    */
   private getPlayAnimationPromise(animation: Animation): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      let wrapperTimeline = new TimelineMax({
-        onComplete: () => {
+      // Override the onComplete callback to do anything already there and then
+      // check the status of pending animations.
+      let completedCallback = animation.eventCallback('onComplete');
+      animation.eventCallback('onComplete', () => {
+          if (completedCallback !== undefined) {
+            completedCallback();
+          }
           // We have to re-enter the Angular zone before resolving (the
           // onComplete() callback is outside the zone) in order to
           // properly wait for the animations to complete.
@@ -1480,12 +1494,16 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
             if (this.pendingAnimationCount === 0) {
               console.log('No pending animations left, emitting an event.');
               this.animationsDone.emit();
+            } else if (this.pendingAnimationCount < 0) {
+              console.error('Invalid state: this.pendingAnimationCount < 0.');
+            } else {
+              console.log(
+                `Animation complete. There are ${this.pendingAnimationCount}`
+                + ` pending animations left.`);
             }
           })
-        }
-      });
-      wrapperTimeline.add(animation);
-      wrapperTimeline.play();
+        });
+      animation.play();
     });
   }
 
