@@ -383,8 +383,6 @@ async function verifyWidgetVisibilityForDemoSettings(
   // Wait for animations triggered by changing the settings.
   await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
 
-
-
   for (let callCount = 0; callCount < mockResponseScores.length; callCount++) {
     fixture.detectChanges();
 

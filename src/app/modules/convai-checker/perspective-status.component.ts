@@ -183,6 +183,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   private hideLoadingIconAfterLoadChanged = false;
   private alwaysHideLoadingIconChanged = false;
+  private gradientColorsChanged = false;
 
   private stateChangeAnimations: TimelineMax|null = null;
   private isPlayingStateChangeAnimations = false;
@@ -243,9 +244,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     if (changes['gradientColors'] !== undefined) {
       console.debug('Change in gradientColors');
       this.updateGradient();
-      if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
-        this.playAnimation(this.getUpdateGradientColorAnimation(0.1));
-      }
+      this.gradientColorsChanged = true;
     }
 
     if (changes['configurationInput'] !== undefined) {
@@ -274,13 +273,14 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         // will not get overridden by the old animation before the new one can
         // begin; this can lead to bugs.
         if (this.updateDemoSettingsAnimation) {
+          console.debug('Killing update demo settings animation');
           this.updateDemoSettingsAnimation.kill();
         }
         this.scoreThresholdsChanged = true;
       }
     }
 
-    if (changes['hideLoadingIconAfterLoad']) {
+    if (changes['hideLoadingIconAfterLoad'] !== undefined) {
       this.hideLoadingIconAfterLoadChanged = true;
     }
 
@@ -349,6 +349,18 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // Run in a Promise resolve statement so we don't get an
       // ExpressionChangedAfterItHasBeenCheckedError.
       Promise.resolve().then(() => {
+        if (this.gradientColorsChanged) {
+          this.gradientColorsChanged = false;
+          if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+            const updateGradientAnimation =
+              this.getUpdateGradientColorAnimation(0.1);
+            if (this.isLoading) {
+              this.pendingPostLoadingStateChangeAnimations.add(updateGradientAnimation);
+            } else {
+              afterChangesTimeline.add(updateGradientAnimation);
+            }
+          }
+        }
         if (this.hideLoadingIconAfterLoadChanged
             || this.alwaysHideLoadingIconChanged) {
           if (this.hideLoadingIconAfterLoadChanged) {
@@ -1466,9 +1478,13 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private playAnimation(animation: Animation): void {
     this.pendingAnimationCount++;
 
+    console.debug('Increasing pending animation count to', this.pendingAnimationCount);
+
+    const nextPromise = this.getPlayAnimationPromise(animation);
+
     // Chain animations to complete after the previous one.
     this.animationPromise = this.animationPromise.then(() => {
-      return this.getPlayAnimationPromise(animation);
+      return nextPromise;
     });
   }
 
@@ -1480,29 +1496,29 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     return new Promise<number>((resolve, reject) => {
       // Override the onComplete callback to do anything already there and then
       // check the status of pending animations.
-      let completedCallback = animation.eventCallback('onComplete');
+      const completedCallback = animation.eventCallback('onComplete');
       animation.eventCallback('onComplete', () => {
+        // We have to re-enter the Angular zone before resolving (the
+        // onComplete() callback is outside the zone) in order to
+        // properly wait for the animations to complete.
+        this.ngZone.run(() => {
           if (completedCallback !== undefined) {
             completedCallback();
           }
-          // We have to re-enter the Angular zone before resolving (the
-          // onComplete() callback is outside the zone) in order to
-          // properly wait for the animations to complete.
-          this.ngZone.run(() => {
-            this.pendingAnimationCount--;
-            resolve();
-            if (this.pendingAnimationCount === 0) {
-              console.log('No pending animations left, emitting an event.');
-              this.animationsDone.emit();
-            } else if (this.pendingAnimationCount < 0) {
-              console.error('Invalid state: this.pendingAnimationCount < 0.');
-            } else {
-              console.log(
-                `Animation complete. There are ${this.pendingAnimationCount}`
-                + ` pending animations left.`);
-            }
-          })
-        });
+          this.pendingAnimationCount--;
+          resolve();
+          if (this.pendingAnimationCount === 0) {
+            console.log('No pending animations left, emitting an event.');
+            this.animationsDone.emit();
+          } else if (this.pendingAnimationCount < 0) {
+            console.error('Invalid state: this.pendingAnimationCount < 0.');
+          } else {
+            console.log(
+              `Animation complete. There are ${this.pendingAnimationCount}`
+              + ` pending animations left.`);
+          }
+        })
+      });
       animation.play();
     });
   }
