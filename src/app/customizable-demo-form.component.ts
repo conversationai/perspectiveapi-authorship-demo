@@ -26,20 +26,20 @@ import {ActivatedRoute, Params, Router} from '@angular/router';
 import emoji from 'node-emoji';
 import * as _ from 'lodash';
 
-const RAISED_EYEBROW_EMOJI = "🤨 ";
+const RAISED_EYEBROW_EMOJI = '🤨 ';
 
 /** Settings about the UI state that should be encoded in the URL. */
 export interface UISettings {
-  useCustomColorScheme: boolean,
-  useCustomFeedbackText: boolean,
-  customizeScoreThresholds: boolean,
-  showDemoSettings: boolean
+  useCustomColorScheme: boolean;
+  useCustomFeedbackText: boolean;
+  customizeScoreThresholds: boolean;
+  showDemoSettings: boolean;
 };
 
 /** Describes a configuration for demo colors. */
 export interface ColorScheme {
-  name: string,
-  colors: string[],
+  name: string;
+  colors: string[];
 };
 
 /** Names of color scheme options for the checker. */
@@ -49,13 +49,13 @@ const ColorSchemes = {
 };
 
 /** Arrays of colors that can be used as colors in a ColorScheme. */
-const DEFAULT_COLORS = ["#25C1F9", "#7C4DFF", "#D400F9"];
-const TRAFFIC_LIGHT_COLORS = ["#4CAF50", "#FDD835", "#D50000"];
+const DEFAULT_COLORS = ['#25C1F9', '#7C4DFF', '#D400F9'];
+const TRAFFIC_LIGHT_COLORS = ['#4CAF50', '#FDD835', '#D50000'];
 
 /** Describes a configuration for feedback text to use in the demo. */
 export interface FeedbackTextScheme {
-  name: string,
-  feedbackTextSet: [string, string, string],
+  name: string;
+  feedbackTextSet: [string, string, string];
 };
 
 /** Names of feedback text options for the checker. */
@@ -98,7 +98,7 @@ function arraysEqual<T>(array1: T[], array2: T[]): boolean {
   templateUrl: './customizable-demo-form.component.html',
   styleUrls: ['./customizable-demo-form.component.css'],
 })
-export class CustomizableDemoForm implements OnInit {
+export class CustomizableDemoFormComponent implements OnInit {
   /** Whether to show the expanded demo settings. */
   showDemoSettings = true;
 
@@ -163,19 +163,19 @@ export class CustomizableDemoForm implements OnInit {
   // for submitting corrections for bad scores.
   configurations = [ConfigurationInput.DEMO_SITE];
   // Configuration selected from the dropdown menu.
-  configuration: string = 'default';
+  configuration = 'default';
 
   /** Other settings. */
 
   // Whether to use gapi to make direct API calls instead of going through the
   // server. Requires an API key.
-  useGapi: boolean = false;
+  useGapi = false;
   // Whether to use the endpoint for the plugin.
   usePluginEndpoint = false;
   // URL to use for the plugin endpoint (for debugging and local tests).
   pluginEndpointUrl = '';
   // API key to use when making gapi calls.
-  apiKey: string = '';
+  apiKey = '';
   // Whether to show the percentage next to the feedback text.
   showPercentage = true;
   // Whether to show a "more info" link next to the feedback text.
@@ -195,7 +195,7 @@ export class CustomizableDemoForm implements OnInit {
   modelName = '';
 
   demoSettings: DemoSettings|null = null;
-  demoSettingsJson: string = '';
+  demoSettingsJson = '';
   uiSettings: UISettings|null = null;
 
   constructor(private route: ActivatedRoute, private router: Router) {}
@@ -223,7 +223,7 @@ export class CustomizableDemoForm implements OnInit {
           // selection list and find the one that equals the color scheme passed
           // in via the URL parameters.
           for (let i = 0; i < this.colorSchemes.length; i++) {
-            let colorScheme = this.colorSchemes[i];
+            const colorScheme = this.colorSchemes[i];
             if (arraysEqual(
               colorScheme.colors, decodedDemoSettings.gradientColors)) {
               this.selectedColorScheme = this.colorSchemes[i];
@@ -239,7 +239,7 @@ export class CustomizableDemoForm implements OnInit {
           // schemes in the selection list and find the one that equals the
           // feedback text passed in via the URL parameters.
           for (let i = 0; i < this.feedbackTextSchemes.length; i++) {
-            let feedbackTextScheme = this.feedbackTextSchemes[i];
+            const feedbackTextScheme = this.feedbackTextSchemes[i];
             if (arraysEqual(feedbackTextScheme.feedbackTextSet,
                             decodedDemoSettings.feedbackText)) {
               this.selectedFeedbackTextScheme = this.feedbackTextSchemes[i];
@@ -303,8 +303,8 @@ export class CustomizableDemoForm implements OnInit {
   }
 
   onSettingsChanged() {
-    let newDemoSettings = this.getDemoSettings();
-    let newUISettings = this.getUISettings();
+    const newDemoSettings = this.getDemoSettings();
+    const newUISettings = this.getUISettings();
     if (!_.isEqual(this.demoSettings, newDemoSettings)
         || !_.isEqual(this.uiSettings, newUISettings)) {
       console.debug('Updating this.demoSettings', newDemoSettings);

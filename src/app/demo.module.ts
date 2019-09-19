@@ -17,18 +17,18 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterModule, Routes } from '@angular/router';
 import { ColorPickerModule } from 'ngx-color-picker';
 
-import { CustomizableDemoForm } from './customizable-demo-form.component';
-import { WrapperApp } from './demo.component';
+import { CustomizableDemoFormComponent } from './customizable-demo-form.component';
+import { WrapperAppComponent } from './demo.component';
 import { ConvaiCheckerModule } from './modules/convai-checker/convai-checker.module';
 
 const appRoutes: Routes = [
   {
     path: 'customize',
-    component: CustomizableDemoForm
+    component: CustomizableDemoFormComponent
   },
   {
     path: 'customize/:uiSettings/:encodedDemoSettings',
-    component: CustomizableDemoForm
+    component: CustomizableDemoFormComponent
   },
   {
     path: '',
@@ -40,8 +40,8 @@ const appRoutes: Routes = [
 
 @NgModule({
   declarations: [
-    CustomizableDemoForm,
-    WrapperApp
+    CustomizableDemoFormComponent,
+    WrapperAppComponent
   ],
   imports: [
     ConvaiCheckerModule,
@@ -60,6 +60,6 @@ const appRoutes: Routes = [
     MatSliderModule,
     RouterModule.forRoot(appRoutes, {useHash: true})
   ],
-  bootstrap: [WrapperApp]
+  bootstrap: [WrapperAppComponent]
 })
 export class DemoModule { }

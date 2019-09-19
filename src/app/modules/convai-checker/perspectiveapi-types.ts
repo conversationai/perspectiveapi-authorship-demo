@@ -148,16 +148,10 @@ export interface GapiSuggestCommentScoreResponse {
   result: SuggestCommentScoreResponse;
 }
 
-// Extends base interfaces for gapi request types for naming clarity.
-export interface GapiAnalyzeCommentRequest extends AnalyzeCommentRequest {}
-
-export interface GapiSuggestCommentScoreRequest extends
-  SuggestCommentScoreRequest{}
-
 export interface GapiAnalyzer {
-  analyze(obj: GapiAnalyzeCommentRequest): Promise<GapiAnalyzeCommentResponse>;
-  suggestscore(obj: GapiSuggestCommentScoreRequest)
-    : Promise<GapiSuggestCommentScoreResponse>;
+  analyze(obj: AnalyzeCommentRequest): Promise<GapiAnalyzeCommentResponse>;
+  suggestscore(obj: SuggestCommentScoreRequest):
+    Promise<GapiSuggestCommentScoreResponse>;
 }
 
 export interface NodeAnalyzeApiClient {
@@ -176,20 +170,14 @@ export interface NodeSuggestCommentScoreRequest {
   resource: SuggestCommentScoreRequest;
 }
 
-// Extends base interfaces for node response types for naming clarity.
-export interface NodeAnalyzeCommentResponse extends AnalyzeCommentResponse {}
-
-export interface NodeSuggestCommentScoreResponse extends
-  SuggestCommentScoreResponse {}
-
 export interface NodeAnalyzer {
   analyze(obj: NodeAnalyzeCommentRequest,
-          handleFn: (error: Error, response: AnalyzeCommentResponse) => void)
-    : Promise<NodeAnalyzeCommentResponse>;
+          handleFn: (error: Error, response: AnalyzeCommentResponse) => void):
+            Promise<AnalyzeCommentResponse>;
   suggestscore(obj: NodeSuggestCommentScoreRequest,
                handleFn: (error: Error,
-                          response: SuggestCommentScoreResponse) => void)
-    : Promise<NodeSuggestCommentScoreResponse>;
+                          response: SuggestCommentScoreResponse) => void):
+                            Promise<SuggestCommentScoreResponse>;
 }
 
 export interface ResponseError {

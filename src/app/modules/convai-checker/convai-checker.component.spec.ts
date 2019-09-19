@@ -49,7 +49,7 @@ import {
 
 import * as test_components from './test-components';
 import { PerspectiveStatus, CommentFeedback, Emoji, LoadingIconStyle, Shape } from './perspective-status.component';
-import { ConvaiChecker, REQUEST_LIMIT_MS, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
+import { ConvaiCheckerComponent, REQUEST_LIMIT_MS, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import { take } from 'rxjs/operators';
@@ -142,12 +142,12 @@ function getNormalizedInnerText(element: HTMLElement) {
   return element.innerText.replace(/\s+/g, ' ');
 }
 
-function verifyLoadingWidgetHasShape(checker: ConvaiChecker, expectedShape: Shape) {
+function verifyLoadingWidgetHasShape(checker: ConvaiCheckerComponent, expectedShape: Shape) {
   const shape = checker.statusWidget.currentShape;
   expect(shape).toEqual(expectedShape);
 }
 
-function verifyLoadingWidgetHasEmoji(checker: ConvaiChecker, expectedEmoji: Emoji) {
+function verifyLoadingWidgetHasEmoji(checker: ConvaiCheckerComponent, expectedEmoji: Emoji) {
   const smileEmojiVisible = getIsElementWithIdVisible('smileEmoji');
   const neutralEmojiVisible = getIsElementWithIdVisible('neutralEmoji');
   const sadEmojiVisible = getIsElementWithIdVisible('sadEmoji');
@@ -201,7 +201,7 @@ function waitForTimeout(ms: number): Promise<void> {
 // the demo.
 // TODO(rachelrosen): Refactor this into smaller functions.
 async function verifyLayerTransitionsWorkForDemoSiteConfig(
-    fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettings>,
+    fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettingsComponent>,
     httpMock: HttpTestingController) {
   // Note: This test doesn't test error case UI, since that is handled in
   // other tests.
@@ -327,7 +327,7 @@ function verifyColorsAlmostEqual(color1: string, color2: string, maxDistance = 1
 // Checks that the interpolateColors function provides the correct value at
 // gradient control points.
 function verifyInterpolateColorsForControlPointsAndGradientColors(
-  checker: ConvaiChecker, controlPoints: number[],
+  checker: ConvaiCheckerComponent, controlPoints: number[],
   gradientColorsRgb: string[]) {
   console.log(controlPoints);
   console.log(gradientColorsRgb);
@@ -345,7 +345,7 @@ function verifyInterpolateColorsForControlPointsAndGradientColors(
 // individual test, we get an error: 'Connection has already been resolved.'
 // Investigate why.
 async function verifyWidgetVisibilityForDemoSettings(
-    fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettings>,
+    fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettingsComponent>,
     httpMock: HttpTestingController,
     demoSettings: DemoSettings,
     mockResponseScores: number[],
@@ -449,14 +449,13 @@ describe('Convai checker test', () => {
     TestBed.configureTestingModule({
       declarations: [
         PerspectiveStatus,
-        test_components.ConvaiCheckerInvalidInput,
-        test_components.ConvaiCheckerNoDemoSettings,
-        test_components.ConvaiCheckerNoInput,
-        test_components.ConvaiCheckerCustomDemoSettings,
-        test_components.ConvaiCheckerWithAttributeInput,
-        test_components.ConvaiCheckerCustomDemoSettings,
-        test_components.ConvaiCheckerJsonDemoSettings,
-        ConvaiChecker
+        test_components.ConvaiCheckerInvalidInputComponent,
+        test_components.ConvaiCheckerNoDemoSettingsComponent,
+        test_components.ConvaiCheckerNoInputComponent,
+        test_components.ConvaiCheckerCustomDemoSettingsComponent,
+        test_components.ConvaiCheckerWithAttributeInputComponent,
+        test_components.ConvaiCheckerJsonDemoSettingsComponent,
+        ConvaiCheckerComponent
       ],
       imports: [HttpClientTestingModule],
       providers: [PerspectiveApiService],
@@ -482,7 +481,7 @@ describe('Convai checker test', () => {
 
   it('should recognize inputs from attributes', async(() => {
     const fixture = TestBed.createComponent(
-      test_components.ConvaiCheckerWithAttributeInput);
+      test_components.ConvaiCheckerWithAttributeInputComponent);
 
     const checker = fixture.componentInstance.checker;
     fixture.detectChanges();
@@ -494,7 +493,7 @@ describe('Convai checker test', () => {
 
   it('should recognize inputs from angular input bindings', async(() => {
     const fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponentComponent);
     const demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.communityId = 'testCommunityId';
     fixture.componentInstance.setDemoSettings(demoSettings);
@@ -508,7 +507,7 @@ describe('Convai checker test', () => {
   }));
 
   it('check default demo settings', async(() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerNoDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerNoDemoSettingsComponent);
     fixture.detectChanges();
 
     const checker = fixture.componentInstance.checker;
@@ -521,7 +520,7 @@ describe('Convai checker test', () => {
 
   it('should default to demo configuration when an invalid configuration is specified', async(() => {
     const fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponentComponent);
 
     const demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.configuration = 'foo';
@@ -539,21 +538,21 @@ describe('Convai checker test', () => {
   }));
 
   it('should show an error if no textarea id is specified', async(() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerNoInput);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerNoInputComponent);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Error');
   }));
 
   it('should show an error if an invalid textarea id is specified', async(() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerInvalidInput);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerInvalidInputComponent);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Error');
   }));
 
   it('Should analyze comment and store and emit response', async () => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     const checker = fixture.componentInstance.checker;
     const queryText = 'Your mother was a hamster';
@@ -618,7 +617,7 @@ describe('Convai checker test', () => {
   });
 
   it('Should handle analyze comment error, demo config', fakeAsync(() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     const checker = fixture.componentInstance.checker;
     const queryText = 'Your mother was a hamster';
@@ -647,7 +646,7 @@ describe('Convai checker test', () => {
   }));
 
   it('Should not make duplicate analyze comment requests', fakeAsync(() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     const checker = fixture.componentInstance.checker;
     const queryText = 'Your mother was a hamster';
@@ -689,7 +688,7 @@ describe('Convai checker test', () => {
 
   it('Should update UI for sending score feedback, demo config ', fakeAsync(() => {
     const fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
 
     const checker = fixture.componentInstance.checker;
@@ -749,7 +748,7 @@ describe('Convai checker test', () => {
 
   it('Should not make suggest score request after text has been cleared, demo config',
      fakeAsync(() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     const checker = fixture.componentInstance.checker;
 
@@ -803,7 +802,7 @@ describe('Convai checker test', () => {
 
   it('Handles feedback error', async() => {
     const fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
 
     const checker = fixture.componentInstance.checker;
@@ -853,7 +852,7 @@ describe('Convai checker test', () => {
 
   it('Should handle manual check', fakeAsync(() => {
     const fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
 
     const checker = fixture.componentInstance.checker;
@@ -901,7 +900,7 @@ describe('Convai checker test', () => {
 
   it('Should handle UI layer changes, demo config, emoji loading icon style',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
@@ -914,7 +913,7 @@ describe('Convai checker test', () => {
 
   it('Should handle UI layer changes, demo config, circle/square/diamond loading',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
 
     const checker = fixture.componentInstance.checker;
@@ -925,7 +924,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon visibility with setting hideLoadingIconAfterLoad', async () => {
     const fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
 
     const demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.hideLoadingIconAfterLoad = true;
@@ -978,7 +977,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon visibility with setting hideLoadingIconForScoresBelowMinThreshold',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
@@ -994,7 +993,6 @@ describe('Convai checker test', () => {
       'What is the air velocity of an unladen swallow?'
     ];
 
-    const callCount = 0;
     const mockResponses = [
       getMockCheckerResponse(0.2, queryTexts[0]),
       getMockCheckerResponse(0.5, queryTexts[1]),
@@ -1041,7 +1039,7 @@ describe('Convai checker test', () => {
   });
 
   it('Test circle square diamond change for score thresholds', async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
@@ -1062,7 +1060,6 @@ describe('Convai checker test', () => {
       'What is the air velocity of an unladen swallow?'
     ];
 
-    const callCount = 0;
     const mockResponses = [
       getMockCheckerResponse(0.9, queryTexts[0]),
       getMockCheckerResponse(0.7, queryTexts[1]),
@@ -1106,7 +1103,7 @@ describe('Convai checker test', () => {
   });
 
   it('Test emoji change for score thresholds', async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
@@ -1127,7 +1124,6 @@ describe('Convai checker test', () => {
       'What is the air velocity of an unladen swallow?'
     ];
 
-    const callCount = 0;
     const mockResponses = [
       getMockCheckerResponse(0.9, queryTexts[0]),
       getMockCheckerResponse(0.7, queryTexts[1]),
@@ -1178,7 +1174,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon style setting change. Circle square diamond to emoji',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
@@ -1197,7 +1193,6 @@ describe('Convai checker test', () => {
       'What is the air velocity of an unladen swallow?'
     ];
 
-    const callCount = 0;
     const mockResponses = [
       getMockCheckerResponse(0.9, queryTexts[0]),
       getMockCheckerResponse(0.7, queryTexts[1]),
@@ -1246,7 +1241,7 @@ describe('Convai checker test', () => {
       demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
       fixture.componentInstance.setDemoSettings(demoSettings);
       fixture.detectChanges();
-  
+
       await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
 
       verifyEmojiWidgetVisible();
@@ -1261,7 +1256,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon style setting change. Emoji to circle square diamond',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
@@ -1280,7 +1275,6 @@ describe('Convai checker test', () => {
       'What is the air velocity of an unladen swallow?'
     ];
 
-    const callCount = 0;
     const mockResponses = [
       getMockCheckerResponse(0.9, queryTexts[0]),
       getMockCheckerResponse(0.7, queryTexts[1]),
@@ -1344,7 +1338,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold of 0',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
 
     // Always show feedback, but never show the loading icon.
@@ -1373,7 +1367,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold of 0, emoji icon',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
 
     // Always show feedback, but never show the loading icon.
@@ -1405,7 +1399,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold > 0',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, but never show the loading icon.
     const demoSettings = getCopyOfDefaultDemoSettings();
@@ -1432,7 +1426,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold > 0, emoji icon',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, but never show the loading icon.
     const demoSettings = getCopyOfDefaultDemoSettings();
@@ -1463,7 +1457,7 @@ describe('Convai checker test', () => {
   it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
      + ' min threshold = 0',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Always show feedback, and only show loading icon above the min threshold
     // (Implied that the loading icon should always display).
@@ -1496,7 +1490,7 @@ describe('Convai checker test', () => {
   it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
      + ' min threshold = 0, emoji icon',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Always show feedback, and only show loading icon above the min threshold
     // (Implied that the loading icon should always display).
@@ -1531,7 +1525,7 @@ describe('Convai checker test', () => {
   it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
      + 'min threshold > 0',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, and only show loading
     // icon above the min threshold.
@@ -1568,7 +1562,7 @@ describe('Convai checker test', () => {
   it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
      + 'min threshold > 0, emoji icon',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, and only show loading
     // icon above the min threshold.
@@ -1607,7 +1601,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold = 0',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
 
     // Always show feedback, but hide the loading icon after load.
@@ -1635,7 +1629,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold = 0, emoji icon',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
 
     // Always show feedback, but hide the loading icon after load.
@@ -1666,7 +1660,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold > 0',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, and hide the loading
     // icon after load.
@@ -1695,7 +1689,7 @@ describe('Convai checker test', () => {
 
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold > 0, emoji icon',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, and hide the loading
     // icon after load.
@@ -1728,7 +1722,7 @@ describe('Convai checker test', () => {
   it('Test loading icon visibility, hideLoadingIconAfterLoad = true, '
      + 'hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
     // after loading compconstes, and hide the loading icon for scores below the
@@ -1764,7 +1758,7 @@ describe('Convai checker test', () => {
      + 'hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0 '
      + 'emoji icon',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
     // after loading compconstes, and hide the loading icon for scores below the
@@ -1802,7 +1796,7 @@ describe('Convai checker test', () => {
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, '
      + ' hideLoadingIconAfterLoad = true, min threshold > 0',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
     // after loading compconstes, and always hide the loading icon.
@@ -1832,7 +1826,7 @@ describe('Convai checker test', () => {
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, '
      + ' hideLoadingIconAfterLoad = true, min threshold > 0, emoji icon',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
     // after loading compconstes, and always hide the loading icon.
@@ -1866,7 +1860,7 @@ describe('Convai checker test', () => {
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, hideLoadingIconAfterLoad = true, '
      + 'and hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
     // after loading compconstes, hide the loading icon for scores below the
@@ -1898,7 +1892,7 @@ describe('Convai checker test', () => {
   it('Test loading icon visibility, alwaysHideLoadingIcon = true, hideLoadingIconAfterLoad = true, '
      + 'and hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0, emoji icon',
      async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, hide the loading icon
     // after loading compconstes, hide the loading icon for scores below the
@@ -1931,7 +1925,7 @@ describe('Convai checker test', () => {
   });
 
   it('Test gradient colors', async(() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     const testGradientColorsRgb = [
       'rgb(130, 224, 170)',
       'rgb(136, 78, 160)',

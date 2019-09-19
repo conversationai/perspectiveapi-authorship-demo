@@ -25,7 +25,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { Injectable } from '@angular/core';
-import { PerspectiveStatus, CommentFeedback, LoadingIconStyle } from './perspective-status.component';
+import { PerspectiveStatusComponent, CommentFeedback, LoadingIconStyle } from './perspective-status.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import {
   AnalyzeCommentData,
@@ -145,8 +145,8 @@ const GITHUB_PAGE_LINK =
     '(document:input)': '_handleInputEvent($event)',
   },
 })
-export class ConvaiChecker implements OnInit, OnChanges {
-  @ViewChild(PerspectiveStatus) statusWidget: PerspectiveStatus;
+export class ConvaiCheckerComponent implements OnInit, OnChanges {
+  @ViewChild(PerspectiveStatusComponent) statusWidget: PerspectiveStatusComponent;
   @Input() inputId: string;
   @Input() serverUrl: string;
   @Input() fontSize = 12;

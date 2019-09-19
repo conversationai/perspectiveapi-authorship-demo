@@ -18,5 +18,5 @@ import {
   selector: 'wrapper-app',
   template: '<router-outlet></router-outlet>',
 })
-export class WrapperApp {
+export class WrapperAppComponent {
 }
