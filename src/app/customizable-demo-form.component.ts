@@ -34,13 +34,13 @@ export interface UISettings {
   useCustomFeedbackText: boolean;
   customizeScoreThresholds: boolean;
   showDemoSettings: boolean;
-};
+}
 
 /** Describes a configuration for demo colors. */
 export interface ColorScheme {
   name: string;
   colors: string[];
-};
+}
 
 /** Names of color scheme options for the checker. */
 const ColorSchemes = {
@@ -56,7 +56,7 @@ const TRAFFIC_LIGHT_COLORS = ['#4CAF50', '#FDD835', '#D50000'];
 export interface FeedbackTextScheme {
   name: string;
   feedbackTextSet: [string, string, string];
-};
+}
 
 /** Names of feedback text options for the checker. */
 const TextFeedbackSchemes = {

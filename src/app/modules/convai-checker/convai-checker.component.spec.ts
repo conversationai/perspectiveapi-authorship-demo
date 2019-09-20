@@ -48,7 +48,7 @@ import {
 } from '@angular/common/http/testing';
 
 import * as test_components from './test-components';
-import { PerspectiveStatus, CommentFeedback, Emoji, LoadingIconStyle, Shape } from './perspective-status.component';
+import { PerspectiveStatusComponent, CommentFeedback, Emoji, LoadingIconStyle, Shape } from './perspective-status.component';
 import { ConvaiCheckerComponent, REQUEST_LIMIT_MS, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
@@ -448,7 +448,7 @@ describe('Convai checker test', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       declarations: [
-        PerspectiveStatus,
+        PerspectiveStatusComponent,
         test_components.ConvaiCheckerInvalidInputComponent,
         test_components.ConvaiCheckerNoDemoSettingsComponent,
         test_components.ConvaiCheckerNoInputComponent,
@@ -493,7 +493,7 @@ describe('Convai checker test', () => {
 
   it('should recognize inputs from angular input bindings', async(() => {
     const fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponentComponent);
+      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     const demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.communityId = 'testCommunityId';
     fixture.componentInstance.setDemoSettings(demoSettings);
@@ -520,7 +520,7 @@ describe('Convai checker test', () => {
 
   it('should default to demo configuration when an invalid configuration is specified', async(() => {
     const fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponentComponent);
+      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
 
     const demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.configuration = 'foo';
@@ -562,7 +562,7 @@ describe('Convai checker test', () => {
       getMockCheckerResponse(mockScore, queryText);
 
     let lastEmittedResponse: AnalyzeCommentResponse|null = null;
-    let lastEmittedScore: number = -1;
+    let lastEmittedScore = -1;
     let emittedResponseCount = 0;
     let emittedScoreCount = 0;
 
@@ -2107,7 +2107,7 @@ describe('Convai checker test', () => {
   }));
 
   it('Test JSON DemoSettings', async(() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerJsonDemoSettings);
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerJsonDemoSettingsComponent);
     fixture.detectChanges();
     const checker = fixture.componentInstance.checker;
 

@@ -38,18 +38,18 @@ export enum Shape {
   CIRCLE,
   SQUARE,
   DIAMOND,
-};
+}
 
 export enum Emoji {
   SMILE,
   NEUTRAL,
   SAD,
-};
+}
 
 // If adding an alternate UI flow, create a new Configuration.
 export enum Configuration {
   DEMO_SITE,
-};
+}
 
 // The keys in ConfigurationInput should match items in the Configuration enum.
 export const ConfigurationInput = {
@@ -843,7 +843,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     } else {
       return this.sadEmoji.nativeElement;
     }
-  };
+  }
 
   getAnimationA11yLabel(loadingIconStyle: string,
                         isPlayingLoadingAnimation: boolean): string {
