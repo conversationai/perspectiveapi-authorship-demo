@@ -23,6 +23,7 @@ import {
   Input,
   NgZone,
   OnChanges,
+  OnInit,
   Output,
   SimpleChanges,
   ViewChild
@@ -37,18 +38,18 @@ export enum Shape {
   CIRCLE,
   SQUARE,
   DIAMOND,
-};
+}
 
 export enum Emoji {
   SMILE,
   NEUTRAL,
   SAD,
-};
+}
 
 // If adding an alternate UI flow, create a new Configuration.
 export enum Configuration {
   DEMO_SITE,
-};
+}
 
 // The keys in ConfigurationInput should match items in the Configuration enum.
 export const ConfigurationInput = {
@@ -69,25 +70,25 @@ export const LoadingIconStyle = {
 
 export const DEFAULT_FEEDBACK_TEXT = 'likely to be perceived as "toxic."';
 
-const FADE_START_LABEL = "fadeStart";
-const LOADING_START_ANIMATIONS_LABEL = "loadingAnimationStart";
+const FADE_START_LABEL = 'fadeStart';
+const LOADING_START_ANIMATIONS_LABEL = 'loadingAnimationStart';
 const SHAPE_MORPH_TIME_SECONDS = 1;
 const FADE_DETAILS_TIME_SECONDS = 0.4;
 const FADE_ANIMATION_TIME_SECONDS = 0.3;
-const GRAYSCALE_ANIMATION_TIME_SECONDS = 0.2
+const GRAYSCALE_ANIMATION_TIME_SECONDS = 0.2;
 const LAYER_TRANSITION_TIME_SECONDS = 0.5;
 const FADE_WIDGET_TIME_SECONDS = 0.4;
 const WIDGET_PADDING_PX = 4;
 const WIDGET_RIGHT_MARGIN_PX = 10;
-const EMOJI_MAIN_LOADING_ANIMATION_LABEL = "emojiMainLoadingAnimation";
+const EMOJI_MAIN_LOADING_ANIMATION_LABEL = 'emojiMainLoadingAnimation';
 const FADE_EMOJI_TIME_SECONDS = 0.5;
 const EMOJI_BOUNCE_IN_TIME_SECONDS = 1;
 const COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.5;
 const FIRST_GRADIENT_RATIO = 0.9;
 const QUICK_COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS = 0.2;
 const NEUTRAL_GRAY_COLOR = '#cccccc';
-const GRAY_COLOR_CIRCLE_LOADING = "rgba(227,229,230,1)";
-const EMOJI_COLOR = "#ffcc4d";
+const GRAY_COLOR_CIRCLE_LOADING = 'rgba(227,229,230,1)';
+const EMOJI_COLOR = '#ffcc4d';
 
 @Component({
   selector: 'perspective-status',
@@ -95,21 +96,21 @@ const EMOJI_COLOR = "#ffcc4d";
   styleUrls: ['./perspective-status.component.css'],
 })
 @Injectable()
-export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChecked {
+export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewInit, AfterViewChecked {
   // TODO: Instead of all these inputs, we should merge the
   // convai-checker component with this one.
-  @Input() indicatorWidth: number = 13;
-  @Input() indicatorHeight: number = 13;
+  @Input() indicatorWidth = 13;
+  @Input() indicatorHeight = 13;
   @Input() configurationInput: string = ConfigurationInput.DEMO_SITE;
   // Since score is zero for both no score and legitimate scores of zero, keep
   // a flag to indicate whether we should show UI for showing score info.
-  @Input() hasScore: boolean = false;
-  @Input() fontSize: number = 12;
-  @Input() gradientColors: string[] = ["#ffffff", "#000000"];
-  @Input() canAcceptFeedback: boolean = false;
-  @Input() feedbackRequestInProgress: boolean = false;
-  @Input() feedbackRequestSubmitted: boolean = false;
-  @Input() feedbackRequestError: boolean = false;
+  @Input() hasScore = false;
+  @Input() fontSize = 12;
+  @Input() gradientColors: string[] = ['#ffffff', '#000000'];
+  @Input() canAcceptFeedback = false;
+  @Input() feedbackRequestInProgress = false;
+  @Input() feedbackRequestSubmitted = false;
+  @Input() feedbackRequestError = false;
   @Input() initializeErrorMessage: string;
   @Input() feedbackText: [string, string, string] = [
      DEFAULT_FEEDBACK_TEXT,
@@ -121,8 +122,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     ScoreThreshold.BORDERLINE,
     ScoreThreshold.UNCIVIL
   ];
-  @Input() showPercentage: boolean = true;
-  @Input() showMoreInfoLink: boolean = true;
+  @Input() showPercentage = true;
+  @Input() showMoreInfoLink = true;
   @Input() analyzeErrorMessage: string|null = null;
   @Input() userFeedbackPromptText: string;
   @Input() hideLoadingIconAfterLoad: boolean;
@@ -140,23 +141,23 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   public configurationEnum = Configuration;
   public configuration = this.configurationEnum.DEMO_SITE;
   public loadingIconStyleConst = LoadingIconStyle;
-  public score: number = 0;
-  public currentLayerIndex: number = 0;
+  public score = 0;
+  public currentLayerIndex = 0;
   private layerAnimationHandles: HTMLElement[] = [];
   private layerAnimationSelectors: string[] = [
-    "#layer1", "#layer2", "#layer3"
+    '#layer1', '#layer2', '#layer3'
   ];
 
-  private showFeedbackQuestion: boolean = false;
-  isLoading: boolean = false;
-  public isPlayingLoadingAnimation: boolean = false;
-  public isPlayingFadeDetailsAnimation: boolean = false;
-  public isPlayingShowOrHideLoadingWidgetAnimation: boolean = false;
-  public shouldHideStatusWidget: boolean = false;
-  public showScore: boolean = true;
+  private showFeedbackQuestion = false;
+  isLoading = false;
+  public isPlayingLoadingAnimation = false;
+  public isPlayingFadeDetailsAnimation = false;
+  public isPlayingShowOrHideLoadingWidgetAnimation = false;
+  public shouldHideStatusWidget = false;
+  public showScore = true;
   public currentShape: Shape = Shape.CIRCLE;
   public currentEmoji: Emoji = Emoji.SMILE;
-  private showingMoreInfo: boolean = false;
+  private showingMoreInfo = false;
   @ViewChild('circleSquareDiamondWidget') private circleSquareDiamondWidget: ElementRef;
   @ViewChild('emojiStatusWidget') private emojiWidget: ElementRef;
   @ViewChild('widgetContainer') private container: ElementRef;
@@ -166,7 +167,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private widgetElement: HTMLElement|null = null;
   private layerTextContainer: HTMLElement;
   private interactiveLayerControlsContainer: HTMLElement;
-  public layersAnimating: boolean = false;
+  public layersAnimating = false;
   private layerHeightPixels: number;
   // Animation being used to update the display settings of the demo. This
   // should not be used for a loading animation.
@@ -189,7 +190,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private isPlayingStateChangeAnimations = false;
   private pendingPostLoadingStateChangeAnimations: TimelineMax|null = null;
   private isPlayingPostLoadingStateChangeAnimations = false;
-  private currentStateChangeAnimationId: number = 0;
+  private currentStateChangeAnimationId = 0;
   private gradientColorScale: string[];
 
   // Promise for any pending animations. New animations will be chained to this
@@ -208,7 +209,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
     // TODO: Investigate changing these to ViewChildren/replacing
     // calls to querySelector, if possible.
-    for (let layerAnimationSelector of this.layerAnimationSelectors) {
+    for (const layerAnimationSelector of this.layerAnimationSelectors) {
       this.layerAnimationHandles.push(
         this.elementRef.nativeElement.querySelector(layerAnimationSelector));
     }
@@ -226,7 +227,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     });
   }
 
-  ngOnChanges(changes: SimpleChanges) : void {
+  ngOnChanges(changes: SimpleChanges): void {
     // Return if ngOnInit has not been called yet, since the animation code
     // cannot run.
     if (this.widgetElement === null
@@ -257,7 +258,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // ngOnChanges will be called for a change in the array reference, not the
       // array values, so check to make sure they're really different.
       let valuesChanged = false;
-      let scoreThresholdChanges = changes['scoreThresholds'];
+      const scoreThresholdChanges = changes['scoreThresholds'];
       for (let i = 0; i < scoreThresholdChanges.previousValue.length; i++) {
         if (scoreThresholdChanges.currentValue[i]
             !== scoreThresholdChanges.previousValue[i]) {
@@ -311,7 +312,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       }
 
       // Animations to run immediately.
-      let afterChangesTimeline = new TimelineMax({
+      const afterChangesTimeline = new TimelineMax({
         onStart: () => {
           this.ngZone.run(() => {
             this.isPlayingStateChangeAnimations = true;
@@ -398,7 +399,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
           }
           console.debug('Setting loadingIconStyleChanged to false');
           this.loadingIconStyleChanged = false;
-          let loadingIconStyleChangedTimeline = new TimelineMax({});
+          const loadingIconStyleChangedTimeline = new TimelineMax({});
           // TODO: Determine whether this covers all cases regarding the correct
           // x position of elements, or if more animations are needed here.
           loadingIconStyleChangedTimeline.add(this.getUpdateWidgetStateAnimation());
@@ -445,7 +446,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     // colors. The first part of the gradient is not linear, and instead moves
     // from color 1 to color 2 with the ratio FIRST_GRADIENT_RATIO.
     // Use Math.floor because control points have to be integers.
-    let gradientPoints = [
+    const gradientPoints = [
       Math.floor(
         gradientPointCount * (
           this.scoreThresholds[0] + FIRST_GRADIENT_RATIO * (
@@ -464,7 +465,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     //   [50, 90, 90] => [50, 89, 90]
     //   [50, 50, 99] => [49, 50, 99]
     //   [50, 50, 50] => [48, 49, 50]
-    let gradientPointDeltas: number[] = [];
+    const gradientPointDeltas: number[] = [];
     for (let i = gradientPoints.length - 1; i >= 0; i--) {
       if (gradientPoints[i] >= gradientPoints[i + 1]) {
         gradientPoints[i] -= (gradientPoints[i] - gradientPoints[i + 1] + 1);
@@ -479,9 +480,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
    */
   updateGradient() {
     // The number of points to use to calculate the gradient.
-    let gradientPointCount = 100;
+    const gradientPointCount = 100;
 
-    let gradientPoints = this.getAdjustedGradientControlPoints(gradientPointCount);
+    const gradientPoints = this.getAdjustedGradientControlPoints(gradientPointCount);
     const sliderGradient = new toxicLibsJS.color.ColorGradient();
 
     for (let i = 0; i < gradientPoints.length; i++) {
@@ -503,12 +504,12 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   interpolateColors(score: number): string {
     // Find the two color indices to interpolate between, and prevent overflow
     // if the score >= 1 by just using the color at the last index.
-    let scoreLowerIndex = Math.min(
+    const scoreLowerIndex = Math.min(
       Math.floor(score * 100), this.gradientColorScale.length - 1);
-    let scoreUpperIndex = Math.min(
+    const scoreUpperIndex = Math.min(
       Math.ceil(score * 100), this.gradientColorScale.length - 1);
 
-    let interpolatorFn = d3.interpolateRgb(
+    const interpolatorFn = d3.interpolateRgb(
       this.gradientColorScale[scoreLowerIndex],
       this.gradientColorScale[scoreUpperIndex]);
     return interpolatorFn((score * 100) - scoreLowerIndex);
@@ -542,7 +543,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getUpdateStatusWidgetVisibilityAnimation(loadStart: boolean): TimelineMax {
-    let hide = this.getShouldHideStatusWidget(loadStart);
+    const hide = this.getShouldHideStatusWidget(loadStart);
 
     let forceAnimation = false;
     if (this.isPlayingShowOrHideLoadingWidgetAnimation) {
@@ -564,7 +565,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
 
     this.isPlayingShowOrHideLoadingWidgetAnimation = true;
-    let updateStatusWidgetVisibilityAnimation = new TimelineMax({
+    const updateStatusWidgetVisibilityAnimation = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
           console.debug('Updating status widget visibility to '
@@ -590,11 +591,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   private getChangeLoadingIconVisibilityAnimation(hide: boolean): TweenMax {
     return TweenMax.to(
-      this.widgetElement, FADE_WIDGET_TIME_SECONDS, { opacity: hide ? 0 : 1})
+      this.widgetElement, FADE_WIDGET_TIME_SECONDS, { opacity: hide ? 0 : 1});
   }
 
   private getSetIconToNeutralStateAnimation(): TimelineMax {
-    let timeline = new TimelineMax({});
+    const timeline = new TimelineMax({});
 
     if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
       timeline.add(this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
@@ -611,8 +612,8 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
 
   private getChangeLoadingIconXValueAnimation(hide: boolean): TimelineMax {
-    let timeline = new TimelineMax({});
-    let translateXAnimations: Animation[] = [];
+    const timeline = new TimelineMax({});
+    const translateXAnimations: Animation[] = [];
     translateXAnimations.push(
       TweenMax.to(this.widgetElement, FADE_WIDGET_TIME_SECONDS,
                   { x: hide ? -1 * (this.indicatorWidth
@@ -624,11 +625,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // as needed. Even though only layer 0 is visible when the score changes,
       // the elements in the rest of the layers need to be adjusted to match
       // for when we transition to other layers.
-      let layer0TextContainer = this.elementRef.nativeElement.querySelector(
+      const layer0TextContainer = this.elementRef.nativeElement.querySelector(
           this.layerAnimationSelectors[0] + ' .layerText');
-      let layer1TextContainer = this.elementRef.nativeElement.querySelector(
+      const layer1TextContainer = this.elementRef.nativeElement.querySelector(
           this.layerAnimationSelectors[1] + ' .layerText');
-      let layer2InteractiveContainer =
+      const layer2InteractiveContainer =
         this.elementRef.nativeElement.querySelector(
           this.layerAnimationSelectors[2] + ' .interactiveElement');
       const translateXSettings = {
@@ -703,7 +704,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       this.feedbackRequestError = true;
     }
     if (this.configuration === Configuration.DEMO_SITE) {
-      let feedbackCompletedTimeline = new TimelineMax({});
+      const feedbackCompletedTimeline = new TimelineMax({});
 
       feedbackCompletedTimeline.add([
         this.getTransitionToLayerAnimation(2, LAYER_TRANSITION_TIME_SECONDS),
@@ -727,7 +728,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   resetLayers() {
     this.resetFeedback();
-    let resetAnimationTimeline = new TimelineMax({});
+    const resetAnimationTimeline = new TimelineMax({});
     resetAnimationTimeline.add(this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
     resetAnimationTimeline.add(this.getUpdateWidgetStateAnimation());
     this.playAnimation(resetAnimationTimeline);
@@ -777,7 +778,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // changed via data binding while the loading animation is active.
       return new TimelineMax({});
     }
-    let updateShapeAnimationTimeline = new TimelineMax({
+    const updateShapeAnimationTimeline = new TimelineMax({
       onStart: () => {
         this.isPlayingUpdateShapeAnimation = true;
       },
@@ -826,11 +827,11 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   getAccessibilityDescriptionForEmoji(emoji: Emoji): string {
     if (emoji === Emoji.SMILE) {
-      return "Smile emoji";
+      return 'Smile emoji';
     } else if (emoji === Emoji.NEUTRAL) {
-      return "Neutral emoji";
+      return 'Neutral emoji';
     } else {
-      return "Sad emoji";
+      return 'Sad emoji';
     }
   }
 
@@ -842,12 +843,12 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     } else {
       return this.sadEmoji.nativeElement;
     }
-  };
+  }
 
   getAnimationA11yLabel(loadingIconStyle: string,
                         isPlayingLoadingAnimation: boolean): string {
     if (isPlayingLoadingAnimation) {
-      return "Computing score animation";
+      return 'Computing score animation';
     } else if (loadingIconStyle === LoadingIconStyle.EMOJI) {
       return this.getAccessibilityDescriptionForEmoji(this.currentEmoji);
     } else {
@@ -860,7 +861,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   getUpdateWidgetStateAnimation(): TimelineMax {
-    let updateScoreCompletedTimeline = new TimelineMax({
+    const updateScoreCompletedTimeline = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
           console.debug('Starting animation for getUpdateWidgetStateAnimation');
@@ -875,20 +876,6 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     });
     if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
       console.debug('Update widget state for default style');
-      let updateScoreCompletedTimeline = new TimelineMax({
-        onComplete: () => {
-          this.ngZone.run(() => {
-            console.debug(this.scoreChangeAnimationCompleted);
-            // TODO: Debug ObjectUnsubscribedError that occurs here.
-            // Seems to happen when animation finishes after changing from emoji
-            // to shape. This only happens when this component is a child of the
-            // conversationai-website. This error does not reproduce reliably
-            // (it was there one day and gone a few days later with no code
-            // changes) and therefore requires more investigation.
-            this.scoreChangeAnimationCompleted.emit();
-          });
-        }
-      });
       updateScoreCompletedTimeline.add(
         this.getUpdateStatusWidgetVisibilityAnimation(false));
       updateScoreCompletedTimeline.add(this.getUpdateShapeAnimation(this.score));
@@ -979,14 +966,14 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     } else {
       emojiType = Emoji.SMILE;
     }
-    let emojiElementToShow = this.getEmojiElementFromEmojiType(emojiType);
-    let showEmojiTimeline = new TimelineMax({
-      onStart:() => {
+    const emojiElementToShow = this.getEmojiElementFromEmojiType(emojiType);
+    const showEmojiTimeline = new TimelineMax({
+      onStart: () => {
         this.ngZone.run(() => {
           this.hideEmojiIconsForLoadingAnimation = false;
         });
       },
-      onComplete:() => {
+      onComplete: () => {
         this.ngZone.run(() => {
           this.currentEmoji = emojiType;
         });
@@ -1007,9 +994,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   getHideEmojisAnimation(): TimelineMax {
-    let hideEmojiTimeline = new TimelineMax({
+    const hideEmojiTimeline = new TimelineMax({
       onComplete: () => {
-        this.ngZone.run(()=> {
+        this.ngZone.run(() => {
           this.hideEmojiIconsForLoadingAnimation = true;
         });
       }
@@ -1027,7 +1014,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   /** Loading animations to play before loading starts for emoji-style loading. */
   getStartAnimationsForEmojiWidgetLoading(): TimelineMax {
-    let loadingStartTimeline = new TimelineMax({});
+    const loadingStartTimeline = new TimelineMax({});
     // Reset to the first layer if we're not already there.
     if (this.currentLayerIndex !== 0) {
       loadingStartTimeline.add(
@@ -1054,7 +1041,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   /** Loopable loading animations to play for emoji-style loading. */
   getLoopAnimationForEmojiWidgetLoading(): TimelineMax {
-    let shrinkAndFadeTimeline = new TimelineMax({
+    const shrinkAndFadeTimeline = new TimelineMax({
       // Apply ease
       ease: Power3.easeInOut
     });
@@ -1065,9 +1052,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   /** Loading animations to play when loading finishes for emoji-style loading. */
   getEndAnimationsForEmojiWidgetLoading(loadingTimeline: TimelineMax): TimelineMax {
-    let loadingEndTimeline = new TimelineMax({
+    const loadingEndTimeline = new TimelineMax({
       onComplete: () => {
-        this.ngZone.run(()=> {
+        this.ngZone.run(() => {
           console.debug('Setting this.isPlayingLoadingAnimation = false (emoji)');
           this.isPlayingLoadingAnimation = false;
           loadingTimeline.clear();
@@ -1087,7 +1074,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         });
       }
     });
-    let scoreCompletedAnimations: Animation[] = [];
+    const scoreCompletedAnimations: Animation[] = [];
     scoreCompletedAnimations.push(this.getShowEmojiAnimation());
     scoreCompletedAnimations.push(
       this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, false, 0));
@@ -1120,16 +1107,16 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
    * circle/square/diamond-style loading.
    */
   getStartAnimationsForCircleSquareDiamondWidgetLoading(): TimelineMax {
-    let startAnimationsTimeline = new TimelineMax({
+    const startAnimationsTimeline = new TimelineMax({
       align: 'sequence',
     });
 
     // Start animations happen in three groups. Group 0 animations before
     // group 1, which animates before group 2. The animations within each
     // group start at the same time.
-    let startAnimationsGroup0: Animation[] = [];
-    let startAnimationsGroup1: Animation[] = [];
-    let startAnimationsGroup2: Animation[] = [];
+    const startAnimationsGroup0: Animation[] = [];
+    const startAnimationsGroup1: Animation[] = [];
+    const startAnimationsGroup2: Animation[] = [];
 
     // Update visibility of the status widget before starting; it could have
     // disappeared due to certain settings, and in some of these cases it
@@ -1159,7 +1146,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
    * loading.
    */
   getLoopAnimationsForCircleSquareDiamondWidgetLoading(): TimelineMax {
-    let shrinkAndFadeTimeline = new TimelineMax({
+    const shrinkAndFadeTimeline = new TimelineMax({
       // Apply ease.
       ease: Power3.easeInOut
     });
@@ -1174,7 +1161,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
    */
   getEndAnimationsForCircleSquareDiamondWidgetLoading(
       loadingTimeline: TimelineMax): TimelineMax {
-    let updateScoreCompletedTimeline = new TimelineMax({
+    const updateScoreCompletedTimeline = new TimelineMax({
       onStart: () => {
         console.debug('Score change animation start');
       },
@@ -1200,7 +1187,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         });
       }
     });
-    let scoreCompletedAnimations: Animation[] = [];
+    const scoreCompletedAnimations: Animation[] = [];
     scoreCompletedAnimations.push(
       this.getUpdateShapeAnimation(this.score));
 
@@ -1237,7 +1224,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   setLoadingForEmojiWidget(loading: boolean): void {
     if (loading && !this.isPlayingLoadingAnimation) {
       this.isPlayingLoadingAnimation = true;
-      let loadingTimeline = new TimelineMax({
+      const loadingTimeline = new TimelineMax({
         ease: Power3.easeInOut,
         onStart: () => {
           this.ngZone.run(() => {
@@ -1273,7 +1260,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       // function gets called twice in rapid succession.
       this.isPlayingLoadingAnimation = true;
 
-      let loadingTimeline = new TimelineMax({
+      const loadingTimeline = new TimelineMax({
         ease: Power3.easeInOut,
         onStart: () => {
           this.ngZone.run(() => {
@@ -1294,7 +1281,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
             } else {
               console.debug('Loading complete');
               console.debug('hasScore:', this.hasScore);
-              let updateScoreCompletedTimeline =
+              const updateScoreCompletedTimeline =
                 this.getEndAnimationsForCircleSquareDiamondWidgetLoading(
                   loadingTimeline);
               this.playAnimation(updateScoreCompletedTimeline);
@@ -1302,7 +1289,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
           });
         },
       });
-      let startAnimationsTimeline =
+      const startAnimationsTimeline =
         this.getStartAnimationsForCircleSquareDiamondWidgetLoading();
       loadingTimeline.add(startAnimationsTimeline, LOADING_START_ANIMATIONS_LABEL);
 
@@ -1313,9 +1300,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getNameFromShape(shape: Shape): string {
-    if (shape == Shape.CIRCLE) {
+    if (shape === Shape.CIRCLE) {
       return 'circle';
-    } else if (shape == Shape.SQUARE) {
+    } else if (shape === Shape.SQUARE) {
       return 'square';
     } else {
       return 'diamond';
@@ -1323,9 +1310,9 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getAccessibilityDescriptionForShape(shape: Shape): string {
-    if (shape == Shape.CIRCLE) {
+    if (shape === Shape.CIRCLE) {
       return 'Low toxicity icon.';
-    } else if (shape == Shape.SQUARE) {
+    } else if (shape === Shape.SQUARE) {
       return 'Medium toxicity icon.';
     } else {
       return 'High toxicity icon.';
@@ -1344,7 +1331,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getTransitionToCircleAnimation(timeSeconds: number, endColor?: string) {
-    let circleAnimationTimeline = new TimelineMax({
+    const circleAnimationTimeline = new TimelineMax({
       align: 'start',
       onStart: () => {
       },
@@ -1359,10 +1346,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getTransitionToSquareAnimation(timeSeconds: number) {
-    let squareAnimationTimeline = new TimelineMax({
+    const squareAnimationTimeline = new TimelineMax({
       onStart: () => {
         let currentRotation = 0;
-        let currentWidgetTransform = (this.widgetElement as any)._gsTransform;
+        const currentWidgetTransform = (this.widgetElement as any)._gsTransform;
         if (currentWidgetTransform !== undefined) {
           currentRotation = currentWidgetTransform.rotation;
         }
@@ -1371,7 +1358,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       onComplete: () => {
       },
     });
-    let previousShape = this.currentShape;
+    const previousShape = this.currentShape;
     squareAnimationTimeline.add([
       this.getSquareAnimation(timeSeconds / 4),
       this.getToFullScaleCompleteRotationAnimation(timeSeconds, previousShape)
@@ -1380,7 +1367,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   }
 
   private getTransitionToDiamondAnimation(timeSeconds: number) {
-    let diamondAnimationTimeline = new TimelineMax({
+    const diamondAnimationTimeline = new TimelineMax({
       onStart: () => {
       },
       onComplete: () => {
@@ -1444,15 +1431,15 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   private getToFullScaleCompleteRotationAnimation(timeSeconds: number, fromShape: Shape) {
     let currentRotation = 0;
-    let currentWidgetTransform = (this.widgetElement as any)._gsTransform;
+    const currentWidgetTransform = (this.widgetElement as any)._gsTransform;
     if (currentWidgetTransform !== undefined) {
       currentRotation = currentWidgetTransform.rotation;
     }
     console.debug('Current rotation:', currentRotation);
     console.debug('From shape:', this.getNameFromShape(fromShape));
-    let rotationDegrees = fromShape === Shape.DIAMOND ? 315 : 360;
+    const rotationDegrees = fromShape === Shape.DIAMOND ? 315 : 360;
     return TweenMax.to(this.widgetElement, timeSeconds, {
-      rotation: "+=" + rotationDegrees + "_ccw",
+      rotation: '+=' + rotationDegrees + '_ccw',
       scaleX: 1,
       scaleY: 1,
       ease: Elastic.easeOut.config(1, 0.3),
@@ -1517,7 +1504,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
               `Animation complete. There are ${this.pendingAnimationCount}`
               + ` pending animations left.`);
           }
-        })
+        });
       });
       animation.play();
     });
@@ -1526,7 +1513,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private getTransitionToLayerAnimation(endLayerIndex: number, timeSeconds: number): Animation {
     this.layerHeightPixels = this.layerAnimationHandles[this.currentLayerIndex].offsetHeight;
 
-    let timeline = new TimelineMax({
+    const timeline = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
           console.debug('Transitioning from layer ' + this.currentLayerIndex
@@ -1549,18 +1536,18 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
       return timeline;
     }
 
-    let startLayer = this.layerAnimationHandles[this.currentLayerIndex];
-    let endLayer = this.layerAnimationHandles[endLayerIndex];
+    const startLayer = this.layerAnimationHandles[this.currentLayerIndex];
+    const endLayer = this.layerAnimationHandles[endLayerIndex];
     if (this.currentLayerIndex < endLayerIndex) {
       timeline.add([
         this.getShiftLayerVerticallyAnimation(startLayer, timeSeconds, 0, -1 * this.layerHeightPixels, false),
         this.getShiftLayerVerticallyAnimation(endLayer, timeSeconds, this.layerHeightPixels, 0, true),
-      ])
+      ]);
     } else {
       timeline.add([
         this.getShiftLayerVerticallyAnimation(startLayer, 1, 0, this.layerHeightPixels, false),
         this.getShiftLayerVerticallyAnimation(endLayer, 1, -1 * this.layerHeightPixels, 0, true),
-      ])
+      ]);
     }
 
     return timeline;
@@ -1569,7 +1556,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private getShiftLayerVerticallyAnimation(layer: HTMLElement, timeSeconds: number,
                                         startY: number, endY: number, fadeIn: boolean) {
     return TweenMax.fromTo(
-      layer, timeSeconds,{y: startY, opacity: fadeIn ? 0 : 1}, {y: endY, opacity: fadeIn ? 1 : 0});
+      layer, timeSeconds, {y: startY, opacity: fadeIn ? 0 : 1}, {y: endY, opacity: fadeIn ? 1 : 0});
   }
 
   private getCircleAnimation(timeSeconds: number, endColor?: string) {
@@ -1578,7 +1565,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
     }
     return TweenMax.to(this.widgetElement, timeSeconds, {
       rotation: 0,
-      borderRadius: "50%",
+      borderRadius: '50%',
       backgroundColor: endColor,
       onStart: () => {
         console.debug('Loading animation: Morphing to circle from '
@@ -1634,7 +1621,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
   private getFadeAndShrinkAnimation(timeSeconds: number, repeat: boolean) {
     return TweenMax.to(this.widgetElement, timeSeconds, {
       repeat: repeat ? 1 : 0,
-      backgroundColor: "rgba(227,229,230,0.54)",
+      backgroundColor: 'rgba(227,229,230,0.54)',
       scaleX: 0.5,
       scaleY: 0.5,
       yoyo: repeat,
@@ -1649,7 +1636,7 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
 
   private getFadeDetailsAnimation(timeSeconds: number, hide: boolean,
                                   layerIndex: number) {
-    let timeline = new TimelineMax({
+    const timeline = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
           console.debug('Calling getFadeDetails animation, fadeOut=' + hide
@@ -1664,10 +1651,10 @@ export class PerspectiveStatus implements OnChanges, AfterViewInit, AfterViewChe
         });
       },
     });
-    let interactiveLayerControlsContainer =
+    const interactiveLayerControlsContainer =
       this.elementRef.nativeElement.querySelector(
         this.layerAnimationSelectors[layerIndex] + ' .interactiveElement');
-    let layerTextContainer = this.elementRef.nativeElement.querySelector(
+    const layerTextContainer = this.elementRef.nativeElement.querySelector(
           this.layerAnimationSelectors[layerIndex] + ' .layerText');
 
     timeline.add([

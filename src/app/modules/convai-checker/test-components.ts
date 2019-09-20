@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { PerspectiveStatus, CommentFeedback, Emoji, LoadingIconStyle, Shape } from './perspective-status.component';
-import { ConvaiChecker, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
+import { PerspectiveStatusComponent, CommentFeedback, Emoji, LoadingIconStyle, Shape } from './perspective-status.component';
+import { ConvaiCheckerComponent, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import * as d3 from 'd3-color';
@@ -18,10 +18,10 @@ import * as d3 from 'd3-color';
                   placeholder="type something here and see how the dot above reacts.">
         </textarea>`,
 })
-export class ConvaiCheckerNoInput {
-  @ViewChild(ConvaiChecker) checker: ConvaiChecker;
+export class ConvaiCheckerNoInputComponent {
+  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
-  serverUrl: string = 'test-url';
+  serverUrl = 'test-url';
 }
 
 @Component({
@@ -37,8 +37,8 @@ export class ConvaiCheckerNoInput {
                   placeholder="type something here and see how the dot above reacts.">
         </textarea>`,
 })
-export class ConvaiCheckerNoDemoSettings {
-  @ViewChild(ConvaiChecker) checker: ConvaiChecker;
+export class ConvaiCheckerNoDemoSettingsComponent {
+  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
   checkerInputId = 'checkerTextarea';
   serverUrl = 'test-url';
@@ -59,8 +59,8 @@ export class ConvaiCheckerNoDemoSettings {
                   placeholder="type something here and see how the dot above reacts.">
         </textarea>`,
 })
-export class ConvaiCheckerInvalidInput {
-  @ViewChild(ConvaiChecker) checker: ConvaiChecker;
+export class ConvaiCheckerInvalidInputComponent {
+  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
   serverUrl = 'test-url';
 }
@@ -80,8 +80,8 @@ export class ConvaiCheckerInvalidInput {
                   placeholder="type something here and see how the dot above reacts.">
         </textarea>`,
 })
-export class ConvaiCheckerWithAttributeInput {
-  @ViewChild(ConvaiChecker) checker: ConvaiChecker;
+export class ConvaiCheckerWithAttributeInputComponent {
+  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
   demoSettings = JSON.parse(JSON.stringify(DEFAULT_DEMO_SETTINGS));
   constructor() {
     this.demoSettings.communityId = 'testCommunityId';
@@ -103,8 +103,8 @@ export class ConvaiCheckerWithAttributeInput {
                   placeholder="type something here and see how the dot above reacts.">
         </textarea>`,
 })
-export class ConvaiCheckerCustomDemoSettings implements OnInit {
-  @ViewChild(ConvaiChecker) checker: ConvaiChecker;
+export class ConvaiCheckerCustomDemoSettingsComponent implements OnInit {
+  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
   checkerInputId = 'checkerTextarea';
   serverUrl = 'test-url';
@@ -134,8 +134,8 @@ export class ConvaiCheckerCustomDemoSettings implements OnInit {
                   placeholder="type something here and see how the dot above reacts.">
         </textarea>`,
 })
-export class ConvaiCheckerJsonDemoSettings implements OnInit {
-  @ViewChild(ConvaiChecker) checker: ConvaiChecker;
+export class ConvaiCheckerJsonDemoSettingsComponent implements OnInit {
+  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
   checkerInputId = 'checkerTextarea';
   serverUrl = 'test-url';

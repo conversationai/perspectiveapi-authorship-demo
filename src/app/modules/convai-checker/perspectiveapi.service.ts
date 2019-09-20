@@ -73,11 +73,11 @@ export class PerspectiveApiService {
     if (makeDirectApiCall) {
       console.debug('Making a direct API call with gapi');
 
-      let requestedAttributes: RequestedAttributes = {};
+      const requestedAttributes: RequestedAttributes = {};
       const attribute = data.modelName || TOXICITY_ATTRIBUTE;
       requestedAttributes[attribute] = {};
 
-      let request: AnalyzeCommentRequest = {
+      const request: AnalyzeCommentRequest = {
         comment: {text: data.comment},
         requested_attributes: requestedAttributes,
         session_id: data.sessionId,
@@ -93,7 +93,7 @@ export class PerspectiveApiService {
                       + ' Defaulting to current hosted address');
       }
 
-      let headers = new HttpHeaders();
+      const headers = new HttpHeaders();
       headers.append('Content-Type', 'application/json');
 
       return this.httpClient.post(
@@ -109,13 +109,13 @@ export class PerspectiveApiService {
       makeDirectApiCall = false;
     }
     if (makeDirectApiCall) {
-      let attributeScores: AttributeScores  = {};
+      const attributeScores: AttributeScores  = {};
 
       const attribute = data.modelName || TOXICITY_ATTRIBUTE;
       attributeScores[attribute] = {
         summaryScore: { value: data.commentMarkedAsToxic ? 1 : 0 }
       };
-      let request: SuggestCommentScoreRequest = {
+      const request: SuggestCommentScoreRequest = {
         comment: {text: data.comment},
         attribute_scores: attributeScores,
         client_token: data.sessionId,
@@ -130,7 +130,7 @@ export class PerspectiveApiService {
         console.error('No server url specified for a non-direct API call.'
                       + ' Defaulting to current hosted address');
       }
-      let headers = new HttpHeaders();
+      const headers = new HttpHeaders();
       headers.append('Content-Type', 'application/json');
 
       return this.httpClient.post(

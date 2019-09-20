@@ -17,6 +17,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  HostListener,
   Input,
   OnChanges,
   OnInit,
@@ -25,7 +26,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { Injectable } from '@angular/core';
-import { PerspectiveStatus, CommentFeedback, LoadingIconStyle } from './perspective-status.component';
+import { PerspectiveStatusComponent, CommentFeedback, LoadingIconStyle } from './perspective-status.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import {
   AnalyzeCommentData,
@@ -140,13 +141,9 @@ const GITHUB_PAGE_LINK =
   templateUrl: './convai-checker.component.html',
   styleUrls: ['./convai-checker.component.css'],
   providers: [PerspectiveApiService],
-  // Allows listening to input events outside of this component.
-  host: {
-    '(document:input)': '_handleInputEvent($event)',
-  },
 })
-export class ConvaiChecker implements OnInit, OnChanges {
-  @ViewChild(PerspectiveStatus) statusWidget: PerspectiveStatus;
+export class ConvaiCheckerComponent implements OnInit, OnChanges {
+  @ViewChild(PerspectiveStatusComponent) statusWidget: PerspectiveStatusComponent;
   @Input() inputId: string;
   @Input() serverUrl: string;
   @Input() fontSize = 12;
@@ -193,7 +190,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
     // Default to '' to use same server as whatever's serving the webapp.
     this.serverUrl =
       this.elementRef.nativeElement.getAttribute('serverUrl') || '';
-  };
+  }
 
   ngOnInit() {
     if (!this.inputId) {
@@ -244,6 +241,7 @@ export class ConvaiChecker implements OnInit, OnChanges {
   // handlers.
   // TODO: Consider using a CSS selector for this instead, for better
   // specificity.
+  @HostListener('document:input', ['$event'])
   private _handleInputEvent(event: InputEvent) {
     if (event.target.id === this.inputId) {
       this._handlePendingCheckRequest(event.target.value);
@@ -473,5 +471,5 @@ export class ConvaiChecker implements OnInit, OnChanges {
       }
     }
     return max;
-  };
+  }
 }

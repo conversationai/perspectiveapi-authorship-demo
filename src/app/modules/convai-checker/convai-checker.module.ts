@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { APP_BASE_HREF } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
 import {
   MatButtonModule,
   MatInputModule,
@@ -11,30 +11,30 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 
-import { PerspectiveStatus } from './perspective-status.component';
+import { PerspectiveStatusComponent } from './perspective-status.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
-import { ConvaiChecker } from './convai-checker.component';
+import { ConvaiCheckerComponent } from './convai-checker.component';
 
 @NgModule({
   declarations: [
-    ConvaiChecker,
-    PerspectiveStatus,
+    ConvaiCheckerComponent,
+    PerspectiveStatusComponent,
   ],
   exports: [
-    ConvaiChecker,
-    PerspectiveStatus
+    ConvaiCheckerComponent,
+    PerspectiveStatusComponent
   ],
   imports: [
     BrowserAnimationsModule,
     BrowserModule,
     FormsModule,
-    HttpModule,
+    HttpClientModule,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
   ],
-  providers: [PerspectiveApiService, {provide: APP_BASE_HREF, useValue: '/'},],
-  bootstrap: [ConvaiChecker]
+  providers: [PerspectiveApiService, {provide: APP_BASE_HREF, useValue: '/'}],
+  bootstrap: [ConvaiCheckerComponent]
 })
 export class ConvaiCheckerModule { }
