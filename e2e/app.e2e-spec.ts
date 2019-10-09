@@ -1,4 +1,4 @@
-import { PerspectiveapiAuthorshipDemo2Page } from './app.po';
+import {PerspectiveapiAuthorshipDemo2Page} from './app.po';
 
 describe('perspectiveapi-authorship-demo2 App', () => {
   let page: PerspectiveapiAuthorshipDemo2Page;
@@ -7,8 +7,10 @@ describe('perspectiveapi-authorship-demo2 App', () => {
     page = new PerspectiveapiAuthorshipDemo2Page();
   });
 
-  it('should display message saying app works', () => {
+  it('should navigate to and render the demo page', () => {
     page.navigateTo();
-    expect(page.getParagraphText()).toEqual('app works!');
+    page.getText('.demoTitle').then((text) => {
+      expect(text).toEqual('Perspective Experiment');
+    });
   });
 });

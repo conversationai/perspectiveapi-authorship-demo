@@ -482,9 +482,9 @@ describe('Convai checker test', () => {
   it('should recognize inputs from attributes', async(() => {
     const fixture = TestBed.createComponent(
       test_components.ConvaiCheckerWithAttributeInputComponent);
+    fixture.detectChanges();
 
     const checker = fixture.componentInstance.checker;
-    fixture.detectChanges();
 
     expect(checker.serverUrl).toEqual('test-url');
     expect(checker.inputId).toEqual('checkerTextarea');

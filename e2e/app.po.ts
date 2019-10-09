@@ -1,11 +1,11 @@
-import { browser, element, by } from 'protractor';
+import {browser, element, by} from 'protractor';
 
 export class PerspectiveapiAuthorshipDemo2Page {
   navigateTo() {
     return browser.get('/');
   }
 
-  getParagraphText() {
-    return element(by.css('app-root h1')).getText();
+  getText(selector: string) {
+    return element(by.css(selector)).getText();
   }
 }
