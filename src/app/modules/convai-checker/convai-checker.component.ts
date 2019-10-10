@@ -143,7 +143,8 @@ const GITHUB_PAGE_LINK =
   providers: [PerspectiveApiService],
 })
 export class ConvaiCheckerComponent implements OnInit, OnChanges {
-  @ViewChild(PerspectiveStatusComponent) statusWidget: PerspectiveStatusComponent;
+  @ViewChild(PerspectiveStatusComponent, {static: false})
+  statusWidget: PerspectiveStatusComponent;
   @Input() inputId: string;
   @Input() serverUrl: string;
   @Input() fontSize = 12;

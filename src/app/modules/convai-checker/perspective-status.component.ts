@@ -158,12 +158,12 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   public currentShape: Shape = Shape.CIRCLE;
   public currentEmoji: Emoji = Emoji.SMILE;
   private showingMoreInfo = false;
-  @ViewChild('circleSquareDiamondWidget') private circleSquareDiamondWidget: ElementRef;
-  @ViewChild('emojiStatusWidget') private emojiWidget: ElementRef;
-  @ViewChild('widgetContainer') private container: ElementRef;
-  @ViewChild('smileEmoji') private smileEmoji: ElementRef;
-  @ViewChild('neutralEmoji') private neutralEmoji: ElementRef;
-  @ViewChild('sadEmoji') private sadEmoji: ElementRef;
+  @ViewChild('circleSquareDiamondWidget', {static: false}) private circleSquareDiamondWidget: ElementRef;
+  @ViewChild('emojiStatusWidget', {static: false}) private emojiWidget: ElementRef;
+  @ViewChild('widgetContainer', {static: false}) private container: ElementRef;
+  @ViewChild('smileEmoji', {static: false}) private smileEmoji: ElementRef;
+  @ViewChild('neutralEmoji', {static: false}) private neutralEmoji: ElementRef;
+  @ViewChild('sadEmoji', {static: false}) private sadEmoji: ElementRef;
   private widgetElement: HTMLElement|null = null;
   private layerTextContainer: HTMLElement;
   private interactiveLayerControlsContainer: HTMLElement;

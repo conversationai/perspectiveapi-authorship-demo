@@ -19,7 +19,7 @@ import * as d3 from 'd3-color';
         </textarea>`,
 })
 export class ConvaiCheckerNoInputComponent {
-  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
+  @ViewChild(ConvaiCheckerComponent, {static: false}) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
   serverUrl = 'test-url';
 }
@@ -38,7 +38,7 @@ export class ConvaiCheckerNoInputComponent {
         </textarea>`,
 })
 export class ConvaiCheckerNoDemoSettingsComponent {
-  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
+  @ViewChild(ConvaiCheckerComponent, {static: false}) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
   checkerInputId = 'checkerTextarea';
   serverUrl = 'test-url';
@@ -60,7 +60,7 @@ export class ConvaiCheckerNoDemoSettingsComponent {
         </textarea>`,
 })
 export class ConvaiCheckerInvalidInputComponent {
-  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
+  @ViewChild(ConvaiCheckerComponent, {static: false}) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
   serverUrl = 'test-url';
 }
@@ -81,7 +81,7 @@ export class ConvaiCheckerInvalidInputComponent {
         </textarea>`,
 })
 export class ConvaiCheckerWithAttributeInputComponent {
-  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
+  @ViewChild(ConvaiCheckerComponent, {static: false}) checker: ConvaiCheckerComponent;
   demoSettings = JSON.parse(JSON.stringify(DEFAULT_DEMO_SETTINGS));
   constructor() {
     this.demoSettings.communityId = 'testCommunityId';
@@ -104,7 +104,7 @@ export class ConvaiCheckerWithAttributeInputComponent {
         </textarea>`,
 })
 export class ConvaiCheckerCustomDemoSettingsComponent implements OnInit {
-  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
+  @ViewChild(ConvaiCheckerComponent, {static: false}) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
   checkerInputId = 'checkerTextarea';
   serverUrl = 'test-url';
@@ -135,7 +135,7 @@ export class ConvaiCheckerCustomDemoSettingsComponent implements OnInit {
         </textarea>`,
 })
 export class ConvaiCheckerJsonDemoSettingsComponent implements OnInit {
-  @ViewChild(ConvaiCheckerComponent) checker: ConvaiCheckerComponent;
+  @ViewChild(ConvaiCheckerComponent, {static: false}) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
   checkerInputId = 'checkerTextarea';
   serverUrl = 'test-url';
