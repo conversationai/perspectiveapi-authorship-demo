@@ -13,32 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import {
-  Component,
-  ElementRef,
-  EventEmitter,
-  HostListener,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-  SimpleChanges,
-  ViewChild,
-} from '@angular/core';
-import { Injectable } from '@angular/core';
-import { PerspectiveStatusComponent, CommentFeedback, LoadingIconStyle } from './perspective-status.component';
-import { PerspectiveApiService } from './perspectiveapi.service';
-import {
-  AnalyzeCommentData,
-  AnalyzeCommentResponse,
-  SpanScores,
-  SuggestCommentScoreData,
-  SuggestCommentScoreResponse,
-} from './perspectiveapi-types';
-import * as rxjs from 'rxjs';
-import { Subscription, Observable, Subject } from 'rxjs';
-import { take } from 'rxjs/operators';
-import { finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import {Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild,} from '@angular/core';
+import {Subscription} from 'rxjs';
+import {take} from 'rxjs/operators';
+import {finalize} from 'rxjs/operators';
+
+import {CommentFeedback, LoadingIconStyle, PerspectiveStatusComponent} from './perspective-status.component';
+import {AnalyzeCommentData, AnalyzeCommentResponse, SpanScores, SuggestCommentScoreData, SuggestCommentScoreResponse,} from './perspectiveapi-types';
+import {PerspectiveApiService} from './perspectiveapi.service';
 
 export interface InputEvent {
   target: HTMLInputElement;
@@ -134,7 +116,7 @@ export const DEFAULT_DEMO_SETTINGS = {
 };
 
 const GITHUB_PAGE_LINK =
-  'https://github.com/conversationai/perspectiveapi/blob/master/api_reference.md#alpha';
+    'https://github.com/conversationai/perspectiveapi/blob/master/api_reference.md#alpha';
 
 @Component({
   selector: 'convai-checker',
@@ -155,11 +137,12 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
   // webcomponent). If working from an Angular context, use |demoSettings|.
   @Input() demoSettingsJson: string|null = null;
   @Input() pluginEndpointUrl = 'http://perspectiveapi.com/plugin';
-  @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
-  @Output() scoreChanged: EventEmitter<number> = new EventEmitter<number>();
-  @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
-  @Output() analyzeCommentResponseChanged: EventEmitter<AnalyzeCommentResponse|null> =
-    new EventEmitter<AnalyzeCommentResponse|null>();
+  @Output() scoreChangeAnimationCompleted = new EventEmitter<void>();
+  @Output() scoreChanged = new EventEmitter<number>();
+  @Output() modelInfoLinkClicked = new EventEmitter<void>();
+  @Output()
+  analyzeCommentResponseChanged =
+      new EventEmitter<AnalyzeCommentResponse|null>();
   analyzeCommentResponse: AnalyzeCommentResponse|null = null;
   private checkInProgress: boolean;
   private mostRecentRequestSubscription: Subscription;
@@ -169,19 +152,16 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
   private pendingRequest: number;
   private lastRequestedText: string;
   private lastPendingRequestedText: string;
-  private inputListener: EventListener;
-  public initializeErrorMessage: string;
-  public analyzeErrorMessage: string|null = null;
-  public canAcceptFeedback = false;
-  public feedbackRequestInProgress = false;
+  initializeErrorMessage: string;
+  analyzeErrorMessage: string|null = null;
+  canAcceptFeedback = false;
+  feedbackRequestInProgress = false;
   private sessionId: string|null = null;
-  private gradientColors: string[] = ['#25C1F9', '#7C4DFF', '#D400F9'];
   private apiKey: string|undefined;
 
   constructor(
       private elementRef: ElementRef,
-      private analyzeApiService: PerspectiveApiService
-  ) {
+      private analyzeApiService: PerspectiveApiService) {
     // Extracts attribute fields from the element declaration. This
     // covers the case where this component is used as a root level
     // component outside an angular component tree and we cannot get
@@ -190,13 +170,13 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
 
     // Default to '' to use same server as whatever's serving the webapp.
     this.serverUrl =
-      this.elementRef.nativeElement.getAttribute('serverUrl') || '';
+        this.elementRef.nativeElement.getAttribute('serverUrl') || '';
   }
 
   ngOnInit() {
     if (!this.inputId) {
-      this.initializeErrorMessage = 'Error initializing: No input element id'
-        + ' specified. Set inputId=<inputElementId> to use this component.';
+      this.initializeErrorMessage = 'Error initializing: No input element id' +
+          ' specified. Set inputId=<inputElementId> to use this component.';
       return;
     }
 
@@ -233,8 +213,8 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
   // this does NOT change the contents of the text box. This is intended to be
   // used for handling programmatic changes to the input box not caused by a
   // user typing.
-  public checkText(text: string) {
-    return this._handlePendingCheckRequest(text);
+  checkText(text: string) {
+    return this.handlePendingCheckRequest(text);
   }
 
   // Listens to input events from elements outside the component, and forwards
@@ -243,13 +223,13 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
   // TODO: Consider using a CSS selector for this instead, for better
   // specificity.
   @HostListener('document:input', ['$event'])
-  private _handleInputEvent(event: InputEvent) {
+  private handleInputEvent(event: InputEvent) {
     if (event.target.id === this.inputId) {
-      this._handlePendingCheckRequest(event.target.value);
+      this.handlePendingCheckRequest(event.target.value);
     }
   }
 
-  private _handlePendingCheckRequest(text: string) {
+  private handlePendingCheckRequest(text: string) {
     // Don't make duplicate requests.
     if (text === this.lastRequestedText ||
         text === this.lastPendingRequestedText) {
@@ -283,7 +263,7 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
     // makes it consistently type number.
     console.debug('Updating this.pendingRequest for text: ', text);
     this.pendingRequest = window.setTimeout(() => {
-      this._checkText(text);
+      this.sendCheckTextRequest(text);
     }, REQUEST_LIMIT_MS);
   }
 
@@ -334,42 +314,42 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
       suggestCommentScoreData.modelName = this.demoSettings.modelName;
     }
 
-    const suggestScoreObservable = this.analyzeApiService.suggestScore(
-      suggestCommentScoreData,
-      this.demoSettings.useGapi /* makeDirectApiCall */,
-      this.serverUrl
-    ).pipe(
-      take(1), // Prevents memory leaks.
-      finalize(() => {
-        console.debug('Feedback request done');
-        this.statusWidget.hideFeedbackQuestion();
-        this.feedbackRequestInProgress = false;
-      })
-    );
+    const suggestScoreObservable =
+        this.analyzeApiService
+            .suggestScore(
+                suggestCommentScoreData,
+                this.demoSettings.useGapi /* makeDirectApiCall */,
+                this.serverUrl)
+            .pipe(
+                take(1),  // Prevents memory leaks.
+                finalize(() => {
+                  console.debug('Feedback request done');
+                  this.statusWidget.hideFeedbackQuestion();
+                  this.feedbackRequestInProgress = false;
+                }));
 
     suggestScoreObservable.subscribe(
-      (response: SuggestCommentScoreResponse) => {
-        this.statusWidget.feedbackCompleted(true);
-        console.log(response);
-      },
-      (error: Error) => {
-        console.error('Error', error);
-        this.statusWidget.feedbackCompleted(false);
-      }
-    );
+        (response: SuggestCommentScoreResponse) => {
+          this.statusWidget.feedbackCompleted(true);
+          console.log(response);
+        },
+        (error: Error) => {
+          console.error('Error', error);
+          this.statusWidget.feedbackCompleted(false);
+        });
   }
 
-  private _getErrorMessage(error: any): string {
+  private getErrorMessage(error: any): string {
     let msg = 'Error scoring text. Please try again.';
     // Look at detailed API error messages for more meaningful error to return.
     try {
-      for (const api_err of error.json().errors) {
+      for (const apiError of error.json().errors) {
         // TODO(jetpack): a small hack to handle the language detection failure
         // case. we should instead change the API to return documented, typeful
         // errors.
-        if (api_err.message.includes('does not support request languages')) {
-          msg = 'Sorry! Perspective needs more training data to work in this '
-            + 'language.';
+        if (apiError.message.includes('does not support request languages')) {
+          msg = 'Sorry! Perspective needs more training data to work in this ' +
+              'language.';
           break;
         }
       }
@@ -379,7 +359,7 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
     return msg;
   }
 
-  private _checkText(text: string) {
+  private sendCheckTextRequest(text: string) {
     // Cancel listening to callbacks of previous requests.
     if (this.mostRecentRequestSubscription) {
       this.mostRecentRequestSubscription.unsubscribe();
@@ -401,47 +381,51 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
       analyzeCommentData.modelName = this.demoSettings.modelName;
     }
 
-    const analyzeCommentObservable = this.analyzeApiService.checkText(
-        analyzeCommentData,
-        this.demoSettings.useGapi /* makeDirectApiCall */,
-        this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
-      .pipe(
-        take(1), // Prevents memory leaks
-        finalize(() => {
-          console.log('Request done');
-          // this.analyzeCommentResponse is updated in the subscribe, which
-          // happens before the finalize() call here. It is either equal to the
-          // last response or null if the last response was an error.
-          const newScore = this.getMaxScore(this.analyzeCommentResponse);
-          // TODO: This will wait until animations finish before notifying any
-          // listening parent containers (e.g. the Perspectiveapi.com website)
-          // that there is a new score, which could cause a lag in some UI
-          // elements that depend on this. Determine if we actually want to wait
-          // for the animations here.
-          this.statusWidget.notifyScoreChange(newScore).then(() => {
-            this.scoreChanged.emit(newScore);
-          });
-          this.mostRecentRequestSubscription = null;
-        })
-      );
+    const analyzeCommentObservable =
+        this.analyzeApiService
+            .checkText(
+                analyzeCommentData,
+                this.demoSettings.useGapi /* makeDirectApiCall */,
+                this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl :
+                                                      this.serverUrl)
+            .pipe(
+                take(1),  // Prevents memory leaks
+                finalize(() => {
+                  console.log('Request done');
+                  // this.analyzeCommentResponse is updated in the subscribe,
+                  // which happens before the finalize() call here. It is either
+                  // equal to the last response or null if the last response was
+                  // an error.
+                  const newScore =
+                      this.getMaxScore(this.analyzeCommentResponse);
+                  // TODO: This will wait until animations finish before
+                  // notifying any listening parent containers (e.g. the
+                  // Perspectiveapi.com website) that there is a new score,
+                  // which could cause a lag in some UI elements that depend on
+                  // this. Determine if we actually want to wait for the
+                  // animations here.
+                  this.statusWidget.notifyScoreChange(newScore).then(() => {
+                    this.scoreChanged.emit(newScore);
+                  });
+                  this.mostRecentRequestSubscription = null;
+                }));
 
     this.mostRecentRequestSubscription = analyzeCommentObservable.subscribe(
-      (response: AnalyzeCommentResponse) => {
-        // Note: This gets called before the finalize();
-        this.analyzeCommentResponse = response;
-        this.analyzeCommentResponseChanged.emit(this.analyzeCommentResponse);
-        console.log(this.analyzeCommentResponse);
-        this.checkInProgress = false;
-        this.canAcceptFeedback = true;
-      },
-      (error) => {
-        console.error('Error', error);
-        this.checkInProgress = false;
-        this.canAcceptFeedback = false;
-        this.analyzeErrorMessage = this._getErrorMessage(error);
-        this.analyzeCommentResponse = null;
-      }
-    );
+        (response: AnalyzeCommentResponse) => {
+          // Note: This gets called before the finalize();
+          this.analyzeCommentResponse = response;
+          this.analyzeCommentResponseChanged.emit(this.analyzeCommentResponse);
+          console.log(this.analyzeCommentResponse);
+          this.checkInProgress = false;
+          this.canAcceptFeedback = true;
+        },
+        (error) => {
+          console.error('Error', error);
+          this.checkInProgress = false;
+          this.canAcceptFeedback = false;
+          this.analyzeErrorMessage = this.getErrorMessage(error);
+          this.analyzeCommentResponse = null;
+        });
   }
 
   getMaxScore(response: AnalyzeCommentResponse): number {
@@ -451,9 +435,9 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
     let max: number;
     Object.keys(response.attributeScores).forEach((key: string) => {
       const maxSpanScoreForAttribute =
-        this.getMaxSpanScore(response.attributeScores[key]);
+          this.getMaxSpanScore(response.attributeScores[key]);
       if (max === undefined || maxSpanScoreForAttribute > max) {
-          max = maxSpanScoreForAttribute;
+        max = maxSpanScoreForAttribute;
       }
     });
 
