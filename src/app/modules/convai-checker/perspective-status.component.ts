@@ -13,25 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import {
-  AfterViewChecked,
-  AfterViewInit,
-  Component,
-  ElementRef,
-  EventEmitter,
-  Injectable,
-  Input,
-  NgZone,
-  OnChanges,
-  OnInit,
-  Output,
-  SimpleChanges,
-  ViewChild
-} from '@angular/core';
+import {AfterViewChecked, AfterViewInit, Component, ElementRef, EventEmitter, Injectable, Input, NgZone, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
 import * as d3 from 'd3-interpolate';
-import * as toxicLibsJS from 'toxiclibsjs';
 import {Animation, Elastic, Power3, TimelineMax, TweenMax} from 'gsap';
-import { take } from 'rxjs/operators';
+import {take} from 'rxjs/operators';
+import * as toxicLibsJS from 'toxiclibsjs';
 import twemoji from 'twemoji';
 
 export enum Shape {
@@ -96,7 +82,9 @@ const EMOJI_COLOR = '#ffcc4d';
   styleUrls: ['./perspective-status.component.css'],
 })
 @Injectable()
-export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewInit, AfterViewChecked {
+export class PerspectiveStatusComponent implements OnChanges, OnInit,
+                                                   AfterViewInit,
+                                                   AfterViewChecked {
   // TODO: Instead of all these inputs, we should merge the
   // convai-checker component with this one.
   @Input() indicatorWidth = 13;
@@ -112,16 +100,12 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   @Input() feedbackRequestSubmitted = false;
   @Input() feedbackRequestError = false;
   @Input() initializeErrorMessage: string;
-  @Input() feedbackText: [string, string, string] = [
-     DEFAULT_FEEDBACK_TEXT,
-     DEFAULT_FEEDBACK_TEXT,
-     DEFAULT_FEEDBACK_TEXT
-  ];
-  @Input() scoreThresholds: [number, number, number] = [
-    ScoreThreshold.OKAY,
-    ScoreThreshold.BORDERLINE,
-    ScoreThreshold.UNCIVIL
-  ];
+  @Input()
+  feedbackText: [string, string, string] =
+      [DEFAULT_FEEDBACK_TEXT, DEFAULT_FEEDBACK_TEXT, DEFAULT_FEEDBACK_TEXT];
+  @Input()
+  scoreThresholds: [number, number, number] =
+      [ScoreThreshold.OKAY, ScoreThreshold.BORDERLINE, ScoreThreshold.UNCIVIL];
   @Input() showPercentage = true;
   @Input() showMoreInfoLink = true;
   @Input() analyzeErrorMessage: string|null = null;
@@ -131,35 +115,34 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   @Input() alwaysHideLoadingIcon: boolean;
   @Input() loadingIconStyle: string;
   @Input() hasLocalAssets = true;
-  @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
-  @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
-  @Output() commentFeedbackSubmitted: EventEmitter<CommentFeedback> =
-    new EventEmitter<CommentFeedback>();
+  @Output() scoreChangeAnimationCompleted = new EventEmitter<void>();
+  @Output() modelInfoLinkClicked = new EventEmitter<void>();
+  @Output() commentFeedbackSubmitted = new EventEmitter<CommentFeedback>();
 
-  @Output() animationsDone: EventEmitter<void> = new EventEmitter<void>();
+  @Output() animationsDone = new EventEmitter<void>();
 
-  public configurationEnum = Configuration;
-  public configuration = this.configurationEnum.DEMO_SITE;
-  public loadingIconStyleConst = LoadingIconStyle;
-  public score = 0;
-  public currentLayerIndex = 0;
+  configurationEnum = Configuration;
+  configuration = this.configurationEnum.DEMO_SITE;
+  loadingIconStyleConst = LoadingIconStyle;
+  score = 0;
+  currentLayerIndex = 0;
   private layerAnimationHandles: HTMLElement[] = [];
-  private layerAnimationSelectors: string[] = [
-    '#layer1', '#layer2', '#layer3'
-  ];
+  private layerAnimationSelectors: string[] = ['#layer1', '#layer2', '#layer3'];
 
   private showFeedbackQuestion = false;
   isLoading = false;
-  public isPlayingLoadingAnimation = false;
-  public isPlayingFadeDetailsAnimation = false;
-  public isPlayingShowOrHideLoadingWidgetAnimation = false;
-  public shouldHideStatusWidget = false;
-  public showScore = true;
-  public currentShape: Shape = Shape.CIRCLE;
-  public currentEmoji: Emoji = Emoji.SMILE;
+  isPlayingLoadingAnimation = false;
+  isPlayingFadeDetailsAnimation = false;
+  isPlayingShowOrHideLoadingWidgetAnimation = false;
+  shouldHideStatusWidget = false;
+  showScore = true;
+  currentShape: Shape = Shape.CIRCLE;
+  currentEmoji: Emoji = Emoji.SMILE;
   private showingMoreInfo = false;
-  @ViewChild('circleSquareDiamondWidget', {static: false}) private circleSquareDiamondWidget: ElementRef;
-  @ViewChild('emojiStatusWidget', {static: false}) private emojiWidget: ElementRef;
+  @ViewChild('circleSquareDiamondWidget', {static: false})
+  private circleSquareDiamondWidget: ElementRef;
+  @ViewChild('emojiStatusWidget', {static: false})
+  private emojiWidget: ElementRef;
   @ViewChild('widgetContainer', {static: false}) private container: ElementRef;
   @ViewChild('smileEmoji', {static: false}) private smileEmoji: ElementRef;
   @ViewChild('neutralEmoji', {static: false}) private neutralEmoji: ElementRef;
@@ -167,14 +150,14 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   private widgetElement: HTMLElement|null = null;
   private layerTextContainer: HTMLElement;
   private interactiveLayerControlsContainer: HTMLElement;
-  public layersAnimating = false;
+  layersAnimating = false;
   private layerHeightPixels: number;
   // Animation being used to update the display settings of the demo. This
   // should not be used for a loading animation.
   private updateDemoSettingsAnimation: any;
   private isPlayingUpdateShapeAnimation: boolean;
   private updateStatusWidgetVisibilityAnimation: TimelineMax;
-  private hideEmojiIconsForLoadingAnimation = false;
+  hideEmojiIconsForLoadingAnimation = false;
   // Promise that should resolve once this.widget has been initialized.
   private widgetReady: Promise<void>;
 
@@ -201,17 +184,17 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
-  constructor(private ngZone: NgZone, private elementRef: ElementRef) {
-  }
+  constructor(private ngZone: NgZone, private elementRef: ElementRef) {}
 
   ngOnInit() {
-    this.configuration = this.getConfigurationFromInputString(this.configurationInput);
+    this.configuration =
+        this.getConfigurationFromInputString(this.configurationInput);
 
     // TODO: Investigate changing these to ViewChildren/replacing
     // calls to querySelector, if possible.
     for (const layerAnimationSelector of this.layerAnimationSelectors) {
       this.layerAnimationHandles.push(
-        this.elementRef.nativeElement.querySelector(layerAnimationSelector));
+          this.elementRef.nativeElement.querySelector(layerAnimationSelector));
     }
     this.updateLayerElementContainers();
 
@@ -230,10 +213,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   ngOnChanges(changes: SimpleChanges): void {
     // Return if ngOnInit has not been called yet, since the animation code
     // cannot run.
-    if (this.widgetElement === null
-      || this.container === undefined
-      || this.layerTextContainer === undefined
-      || this.interactiveLayerControlsContainer === undefined) {
+    if (this.widgetElement === null || this.container === undefined ||
+        this.layerTextContainer === undefined ||
+        this.interactiveLayerControlsContainer === undefined) {
       return;
     }
 
@@ -249,7 +231,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     }
 
     if (changes['configurationInput'] !== undefined) {
-      this.configuration = this.getConfigurationFromInputString(this.configurationInput);
+      this.configuration =
+          this.getConfigurationFromInputString(this.configurationInput);
       this.resetLayers();
     }
 
@@ -260,8 +243,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       let valuesChanged = false;
       const scoreThresholdChanges = changes['scoreThresholds'];
       for (let i = 0; i < scoreThresholdChanges.previousValue.length; i++) {
-        if (scoreThresholdChanges.currentValue[i]
-            !== scoreThresholdChanges.previousValue[i]) {
+        if (scoreThresholdChanges.currentValue[i] !==
+            scoreThresholdChanges.previousValue[i]) {
           valuesChanged = true;
           break;
         }
@@ -295,11 +278,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
    * callback, to ensure that the ViewChild has been updated.
    */
   ngAfterViewChecked() {
-    if (this.scoreThresholdsChanged
-        || this.loadingIconStyleChanged
-        || this.hideLoadingIconAfterLoadChanged
-        || this.alwaysHideLoadingIconChanged) {
-
+    if (this.scoreThresholdsChanged || this.loadingIconStyleChanged ||
+        this.hideLoadingIconAfterLoadChanged ||
+        this.alwaysHideLoadingIconChanged) {
       // Kill any pending state change animations, since those are for an
       // out-of-date state.
       if (this.isPlayingStateChangeAnimations) {
@@ -352,18 +333,20 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       Promise.resolve().then(() => {
         if (this.gradientColorsChanged) {
           this.gradientColorsChanged = false;
-          if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+          if (this.loadingIconStyle ===
+              LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
             const updateGradientAnimation =
-              this.getUpdateGradientColorAnimation(0.1);
+                this.getUpdateGradientColorAnimation(0.1);
             if (this.isLoading) {
-              this.pendingPostLoadingStateChangeAnimations.add(updateGradientAnimation);
+              this.pendingPostLoadingStateChangeAnimations.add(
+                  updateGradientAnimation);
             } else {
               afterChangesTimeline.add(updateGradientAnimation);
             }
           }
         }
-        if (this.hideLoadingIconAfterLoadChanged
-            || this.alwaysHideLoadingIconChanged) {
+        if (this.hideLoadingIconAfterLoadChanged ||
+            this.alwaysHideLoadingIconChanged) {
           if (this.hideLoadingIconAfterLoadChanged) {
             console.debug('Setting hideLoadingIconAfterLoadChanged to false');
             this.hideLoadingIconAfterLoadChanged = false;
@@ -380,10 +363,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
             // position of all elements.
             if (this.isLoading) {
               this.pendingPostLoadingStateChangeAnimations.add(
-                this.getUpdateWidgetStateAnimation());
+                  this.getUpdateWidgetStateAnimation());
             } else {
-              afterChangesTimeline.add(
-                this.getUpdateWidgetStateAnimation());
+              afterChangesTimeline.add(this.getUpdateWidgetStateAnimation());
             }
           }
         }
@@ -394,28 +376,33 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
           // the position of the new one to match, so transition animations
           // work correctly.
           if (this.shouldHideStatusWidget) {
-            this.widgetElement.style.transform =
-              'matrix(1,0,0,1,' + (-1 * (this.indicatorWidth + WIDGET_PADDING_PX + WIDGET_RIGHT_MARGIN_PX)) + ',0)';
+            this.widgetElement.style.transform = 'matrix(1,0,0,1,' +
+                (-1 *
+                 (this.indicatorWidth + WIDGET_PADDING_PX +
+                  WIDGET_RIGHT_MARGIN_PX)) +
+                ',0)';
           }
           console.debug('Setting loadingIconStyleChanged to false');
           this.loadingIconStyleChanged = false;
           const loadingIconStyleChangedTimeline = new TimelineMax({});
           // TODO: Determine whether this covers all cases regarding the correct
           // x position of elements, or if more animations are needed here.
-          loadingIconStyleChangedTimeline.add(this.getUpdateWidgetStateAnimation());
+          loadingIconStyleChangedTimeline.add(
+              this.getUpdateWidgetStateAnimation());
           if (this.isLoading) {
             this.pendingPostLoadingStateChangeAnimations.add(
-              loadingIconStyleChangedTimeline);
+                loadingIconStyleChangedTimeline);
           } else {
             afterChangesTimeline.add(loadingIconStyleChangedTimeline);
           }
         } else if (this.scoreThresholdsChanged) {
           console.debug('Setting scoreThresholdsChanged to false');
           this.scoreThresholdsChanged = false;
-          this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
+          this.updateDemoSettingsAnimation =
+              this.getUpdateWidgetStateAnimation();
           if (this.isLoading) {
             this.pendingPostLoadingStateChangeAnimations.add(
-              this.updateDemoSettingsAnimation);
+                this.updateDemoSettingsAnimation);
           } else {
             afterChangesTimeline.add(this.updateDemoSettingsAnimation);
           }
@@ -433,7 +420,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     if (this.hasLocalAssets) {
       return 'assets/' + imageName;
     } else {
-      return 'https://storage.googleapis.com/checker_source/assets/' + imageName;
+      return 'https://storage.googleapis.com/checker_source/assets/' +
+          imageName;
     }
   }
 
@@ -448,9 +436,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // Use Math.floor because control points have to be integers.
     const gradientPoints = [
       Math.floor(
-        gradientPointCount * (
-          this.scoreThresholds[0] + FIRST_GRADIENT_RATIO * (
-            this.scoreThresholds[1] - this.scoreThresholds[0]))),
+          gradientPointCount *
+          (this.scoreThresholds[0] +
+           FIRST_GRADIENT_RATIO *
+               (this.scoreThresholds[1] - this.scoreThresholds[0]))),
       Math.floor(gradientPointCount * this.scoreThresholds[1]),
       Math.floor(gradientPointCount * this.scoreThresholds[2])
     ];
@@ -465,7 +454,6 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     //   [50, 90, 90] => [50, 89, 90]
     //   [50, 50, 99] => [49, 50, 99]
     //   [50, 50, 50] => [48, 49, 50]
-    const gradientPointDeltas: number[] = [];
     for (let i = gradientPoints.length - 1; i >= 0; i--) {
       if (gradientPoints[i] >= gradientPoints[i + 1]) {
         gradientPoints[i] -= (gradientPoints[i] - gradientPoints[i + 1] + 1);
@@ -482,7 +470,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // The number of points to use to calculate the gradient.
     const gradientPointCount = 100;
 
-    const gradientPoints = this.getAdjustedGradientControlPoints(gradientPointCount);
+    const gradientPoints =
+        this.getAdjustedGradientControlPoints(gradientPointCount);
     const sliderGradient = new toxicLibsJS.color.ColorGradient();
 
     for (let i = 0; i < gradientPoints.length; i++) {
@@ -491,27 +480,26 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       // higher indexed gradient color.
       if (gradientPoints[i] >= 0) {
         sliderGradient.addColorAt(
-          gradientPoints[i],
-          toxicLibsJS.color.TColor.newHex(this.gradientColors[i]));
+            gradientPoints[i],
+            toxicLibsJS.color.TColor.newHex(this.gradientColors[i]));
       }
     }
 
-    this.gradientColorScale =
-      sliderGradient.calcGradient(0, gradientPointCount).colors
-        .map((tColor) => tColor.toRGBCSS());
+    this.gradientColorScale = sliderGradient.calcGradient(0, gradientPointCount)
+                                  .colors.map((tColor) => tColor.toRGBCSS());
   }
 
   interpolateColors(score: number): string {
     // Find the two color indices to interpolate between, and prevent overflow
     // if the score >= 1 by just using the color at the last index.
-    const scoreLowerIndex = Math.min(
-      Math.floor(score * 100), this.gradientColorScale.length - 1);
-    const scoreUpperIndex = Math.min(
-      Math.ceil(score * 100), this.gradientColorScale.length - 1);
+    const scoreLowerIndex =
+        Math.min(Math.floor(score * 100), this.gradientColorScale.length - 1);
+    const scoreUpperIndex =
+        Math.min(Math.ceil(score * 100), this.gradientColorScale.length - 1);
 
     const interpolatorFn = d3.interpolateRgb(
-      this.gradientColorScale[scoreLowerIndex],
-      this.gradientColorScale[scoreUpperIndex]);
+        this.gradientColorScale[scoreLowerIndex],
+        this.gradientColorScale[scoreUpperIndex]);
     return interpolatorFn((score * 100) - scoreLowerIndex);
   }
 
@@ -533,7 +521,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       shouldHide = shouldHide || !loadStart;
     }
     if (this.hideLoadingIconForScoresBelowMinThreshold) {
-      shouldHide = shouldHide || loadStart || (this.score < this.scoreThresholds[0]);
+      shouldHide =
+          shouldHide || loadStart || (this.score < this.scoreThresholds[0]);
     }
     if (this.alwaysHideLoadingIcon) {
       shouldHide = true;
@@ -542,7 +531,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     return shouldHide;
   }
 
-  private getUpdateStatusWidgetVisibilityAnimation(loadStart: boolean): TimelineMax {
+  private getUpdateStatusWidgetVisibilityAnimation(loadStart: boolean):
+      TimelineMax {
     const hide = this.getShouldHideStatusWidget(loadStart);
 
     let forceAnimation = false;
@@ -551,14 +541,16 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       // constructed back to back, before the first has started, or if an
       // animation is killed before it can complete. In these cases we always
       // want to return the full desired animation, not the empty one.
-      console.debug('Calling getUpdateStatusWidgetVisibility while '
-                    + 'isPlayingShowOrHideLoadingWidgetAnimation = true. ');
+      console.debug(
+          'Calling getUpdateStatusWidgetVisibility while ' +
+          'isPlayingShowOrHideLoadingWidgetAnimation = true. ');
       forceAnimation = true;
     }
 
     // If nothing has changed, return an empty animation.
     if (hide === this.shouldHideStatusWidget && !forceAnimation) {
-      console.debug('Returning without update status widget visibility animation.');
+      console.debug(
+          'Returning without update status widget visibility animation.');
       return new TimelineMax({});
     } else {
       console.debug('Getting update status widget visibility animation.');
@@ -568,16 +560,18 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     const updateStatusWidgetVisibilityAnimation = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
-          console.debug('Updating status widget visibility to '
-                        + (hide ? 'hidden' : 'visible') + ' from '
-                        + (this.shouldHideStatusWidget ? 'hidden' : 'visible'));
+          console.debug(
+              'Updating status widget visibility to ' +
+              (hide ? 'hidden' : 'visible') + ' from ' +
+              (this.shouldHideStatusWidget ? 'hidden' : 'visible'));
           // Disable hiding so animations will show up.
           this.shouldHideStatusWidget = false;
         });
       },
       onComplete: () => {
         this.ngZone.run(() => {
-          console.debug('Changing status widget visibility complete, hide=', hide);
+          console.debug(
+              'Changing status widget visibility complete, hide=', hide);
           this.isPlayingShowOrHideLoadingWidgetAnimation = false;
           this.shouldHideStatusWidget = hide;
         });
@@ -585,26 +579,29 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     });
     updateStatusWidgetVisibilityAnimation.add([
       this.getChangeLoadingIconVisibilityAnimation(hide),
-      this.getChangeLoadingIconXValueAnimation(hide)]);
+      this.getChangeLoadingIconXValueAnimation(hide)
+    ]);
     return updateStatusWidgetVisibilityAnimation;
   }
 
   private getChangeLoadingIconVisibilityAnimation(hide: boolean): TweenMax {
     return TweenMax.to(
-      this.widgetElement, FADE_WIDGET_TIME_SECONDS, { opacity: hide ? 0 : 1});
+        this.widgetElement, FADE_WIDGET_TIME_SECONDS, {opacity: hide ? 0 : 1});
   }
 
   private getSetIconToNeutralStateAnimation(): TimelineMax {
     const timeline = new TimelineMax({});
 
     if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
-      timeline.add(this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
+      timeline.add(
+          this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
       timeline.add(this.getTransitionToCircleAnimation(
-        SHAPE_MORPH_TIME_SECONDS, NEUTRAL_GRAY_COLOR));
+          SHAPE_MORPH_TIME_SECONDS, NEUTRAL_GRAY_COLOR));
     } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
       timeline.add(this.getHideEmojisAnimation());
       timeline.add(this.getChangeColorAnimation(
-        QUICK_COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, NEUTRAL_GRAY_COLOR));
+          QUICK_COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS,
+          NEUTRAL_GRAY_COLOR));
     }
 
     return timeline;
@@ -615,11 +612,12 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     const timeline = new TimelineMax({});
     const translateXAnimations: Animation[] = [];
     translateXAnimations.push(
-      TweenMax.to(this.widgetElement, FADE_WIDGET_TIME_SECONDS,
-                  { x: hide ? -1 * (this.indicatorWidth
-                                    + WIDGET_PADDING_PX
-                                    + WIDGET_RIGHT_MARGIN_PX)
-                            : 0}));
+        TweenMax.to(this.widgetElement, FADE_WIDGET_TIME_SECONDS, {
+          x: hide ? -1 *
+                  (this.indicatorWidth + WIDGET_PADDING_PX +
+                   WIDGET_RIGHT_MARGIN_PX) :
+                    0
+        }));
     if (this.configuration === Configuration.DEMO_SITE) {
       // Also shift the text for the leftmost element in each layer left/right
       // as needed. Even though only layer 0 is visible when the score changes,
@@ -630,26 +628,21 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       const layer1TextContainer = this.elementRef.nativeElement.querySelector(
           this.layerAnimationSelectors[1] + ' .layerText');
       const layer2InteractiveContainer =
-        this.elementRef.nativeElement.querySelector(
-          this.layerAnimationSelectors[2] + ' .interactiveElement');
+          this.elementRef.nativeElement.querySelector(
+              this.layerAnimationSelectors[2] + ' .interactiveElement');
       const translateXSettings = {
-        x: hide ? -1 * (this.indicatorWidth
-                        + WIDGET_PADDING_PX
-                        + WIDGET_RIGHT_MARGIN_PX)
-                : 0
+        x: hide ? -1 *
+                (this.indicatorWidth + WIDGET_PADDING_PX +
+                 WIDGET_RIGHT_MARGIN_PX) :
+                  0
       };
-      translateXAnimations.push(
-        TweenMax.to(layer0TextContainer,
-                    FADE_WIDGET_TIME_SECONDS,
-                    translateXSettings));
-      translateXAnimations.push(
-        TweenMax.to(layer1TextContainer,
-                    FADE_WIDGET_TIME_SECONDS,
-                    translateXSettings));
-      translateXAnimations.push(
-        TweenMax.to(layer2InteractiveContainer,
-                    FADE_WIDGET_TIME_SECONDS,
-                    translateXSettings));
+      translateXAnimations.push(TweenMax.to(
+          layer0TextContainer, FADE_WIDGET_TIME_SECONDS, translateXSettings));
+      translateXAnimations.push(TweenMax.to(
+          layer1TextContainer, FADE_WIDGET_TIME_SECONDS, translateXSettings));
+      translateXAnimations.push(TweenMax.to(
+          layer2InteractiveContainer, FADE_WIDGET_TIME_SECONDS,
+          translateXSettings));
     }
     timeline.add(translateXAnimations);
     return timeline;
@@ -661,11 +654,11 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   private updateLayerElementContainers(): void {
     this.layerTextContainer = this.elementRef.nativeElement.querySelector(
-          this.layerAnimationSelectors[this.currentLayerIndex] + ' .layerText');
+        this.layerAnimationSelectors[this.currentLayerIndex] + ' .layerText');
     this.interactiveLayerControlsContainer =
-      this.elementRef.nativeElement.querySelector(
-        this.layerAnimationSelectors[this.currentLayerIndex]
-        + ' .interactiveElement');
+        this.elementRef.nativeElement.querySelector(
+            this.layerAnimationSelectors[this.currentLayerIndex] +
+            ' .interactiveElement');
   }
 
   shouldShowFeedback(score: number) {
@@ -693,7 +686,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   feedbackContainerClicked() {
     if (this.configuration === Configuration.DEMO_SITE) {
       this.playAnimation(
-        this.getTransitionToLayerAnimation(1, LAYER_TRANSITION_TIME_SECONDS));
+          this.getTransitionToLayerAnimation(1, LAYER_TRANSITION_TIME_SECONDS));
     }
   }
 
@@ -729,7 +722,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   resetLayers() {
     this.resetFeedback();
     const resetAnimationTimeline = new TimelineMax({});
-    resetAnimationTimeline.add(this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
+    resetAnimationTimeline.add(
+        this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
     resetAnimationTimeline.add(this.getUpdateWidgetStateAnimation());
     this.playAnimation(resetAnimationTimeline);
   }
@@ -743,7 +737,6 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     return TweenMax.to(this.widgetElement, 0.1, {
       rotation: this.currentShape === Shape.DIAMOND ? 45 : 0,
     });
-
   }
 
   // Gets the shape corresponding to the specified score.
@@ -770,9 +763,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   getUpdateShapeAnimation(score: number): TimelineMax {
     if (this.loadingIconStyle !== LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
-      console.debug('Calling getUpdateShapeAnimation(), but the loading icon'
-                    + 'style is not set to circle/square/diamond. Returning an'
-                    + 'empty timeline.');
+      console.debug(
+          'Calling getUpdateShapeAnimation(), but the loading icon' +
+          'style is not set to circle/square/diamond. Returning an' +
+          'empty timeline.');
       // The loading icon state has been changed; return an empty timeline.
       // This is not an error and can happen when the loading icon state is
       // changed via data binding while the loading animation is active.
@@ -789,11 +783,11 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
     // Shrink before updating to a new shape.
     updateShapeAnimationTimeline.add(
-      this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
+        this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
 
     if (score > this.scoreThresholds[2]) {
       updateShapeAnimationTimeline.add(
-        this.getTransitionToDiamondAnimation(.8 * SHAPE_MORPH_TIME_SECONDS));
+          this.getTransitionToDiamondAnimation(.8 * SHAPE_MORPH_TIME_SECONDS));
     } else if (score > this.scoreThresholds[1]) {
       // Square is a special case, since we rotate based on the current degrees
       // and not to a specific rotation. As a result this can get messed up if
@@ -804,17 +798,18 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       // not just when customizing the demo. It seems to happen occasionally in
       // the wild as well.
       if (this.isPlayingUpdateShapeAnimation) {
-        console.debug('Starting updateShapeAnimation to square while in the'
-                      + ' middle of an existing updateShapeAnimation or before'
-                      + ' the previous animation was able to finish; resetting'
-                      + ' rotation state');
+        console.debug(
+            'Starting updateShapeAnimation to square while in the' +
+            ' middle of an existing updateShapeAnimation or before' +
+            ' the previous animation was able to finish; resetting' +
+            ' rotation state');
         updateShapeAnimationTimeline.add(this.getResetRotationAnimation());
       }
       updateShapeAnimationTimeline.add(
-        this.getTransitionToSquareAnimation(SHAPE_MORPH_TIME_SECONDS));
+          this.getTransitionToSquareAnimation(SHAPE_MORPH_TIME_SECONDS));
     } else {
       updateShapeAnimationTimeline.add(
-        this.getTransitionToCircleAnimation(SHAPE_MORPH_TIME_SECONDS));
+          this.getTransitionToCircleAnimation(SHAPE_MORPH_TIME_SECONDS));
     }
 
     return updateShapeAnimationTimeline;
@@ -822,7 +817,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   setShowMoreInfo(showMoreInfo: boolean) {
     this.playAnimation(this.getTransitionToLayerAnimation(
-      showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS));
+        showMoreInfo ? 1 : 0, LAYER_TRANSITION_TIME_SECONDS));
   }
 
   getAccessibilityDescriptionForEmoji(emoji: Emoji): string {
@@ -845,8 +840,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     }
   }
 
-  getAnimationA11yLabel(loadingIconStyle: string,
-                        isPlayingLoadingAnimation: boolean): string {
+  getAnimationA11yLabel(
+      loadingIconStyle: string, isPlayingLoadingAnimation: boolean): string {
     if (isPlayingLoadingAnimation) {
       return 'Computing score animation';
     } else if (loadingIconStyle === LoadingIconStyle.EMOJI) {
@@ -869,7 +864,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       },
       onComplete: () => {
         this.ngZone.run(() => {
-          console.debug('Completing animation for getUpdateWidgetStateAnimation');
+          console.debug(
+              'Completing animation for getUpdateWidgetStateAnimation');
           this.scoreChangeAnimationCompleted.emit();
         });
       }
@@ -877,18 +873,20 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
       console.debug('Update widget state for default style');
       updateScoreCompletedTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
-      updateScoreCompletedTimeline.add(this.getUpdateShapeAnimation(this.score));
+          this.getUpdateStatusWidgetVisibilityAnimation(false));
+      updateScoreCompletedTimeline.add(
+          this.getUpdateShapeAnimation(this.score));
       return updateScoreCompletedTimeline;
     } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
       console.debug('Update widget state for emoji style');
       updateScoreCompletedTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+          this.getUpdateStatusWidgetVisibilityAnimation(false));
       updateScoreCompletedTimeline.add(this.getShowEmojiAnimation());
       return updateScoreCompletedTimeline;
     } else {
-      console.error('Calling updateWidgetState for unknown loadingIconStyle: '
-                    + this.loadingIconStyle);
+      console.error(
+          'Calling updateWidgetState for unknown loadingIconStyle: ' +
+          this.loadingIconStyle);
       return new TimelineMax({});
     }
   }
@@ -913,7 +911,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       this.playAnimation(this.getUpdateWidgetStateAnimation());
     }
     return new Promise<void>((resolve, reject) => {
-      this.animationsDone.pipe(take(1)).subscribe(() => { resolve(); });
+      this.animationsDone.pipe(take(1)).subscribe(() => {
+        resolve();
+      });
     });
   }
 
@@ -937,22 +937,26 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
           this.setLoadingForEmojiWidget(loading);
         } else {
           console.error(
-            'Calling setLoading for unknown loadingIconStyle: ' + this.loadingIconStyle);
+              'Calling setLoading for unknown loadingIconStyle: ' +
+              this.loadingIconStyle);
         }
-        this.animationsDone.pipe(take(1)).subscribe(() => { resolve(); });
+        this.animationsDone.pipe(take(1)).subscribe(() => {
+          resolve();
+        });
       });
     });
   }
 
-  getChangeOpacityAnimation(element: HTMLElement, timeSeconds: number,
-                            opacity: number): TweenMax {
-    return TweenMax.to(element, timeSeconds, { opacity: opacity});
+  getChangeOpacityAnimation(
+      element: HTMLElement, timeSeconds: number, opacity: number): TweenMax {
+    return TweenMax.to(element, timeSeconds, {opacity});
   }
 
   getShowEmojiAnimation(): TimelineMax {
     if (this.loadingIconStyle !== LoadingIconStyle.EMOJI) {
-      console.debug('Calling getShowEmojiAnimation() but loading icon style is'
-                  + 'not emoji style, returning an empty timeline');
+      console.debug(
+          'Calling getShowEmojiAnimation() but loading icon style is' +
+          'not emoji style, returning an empty timeline');
       // The loading icon state has been changed; return an empty timeline.
       // This is not an error and can happen when the loading icon state is
       // changed via data binding while the loading animation is active.
@@ -983,13 +987,16 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // Updates the background color to yellow (it could be gray from being in a
     // neutral state).
     const resetBackgroundColorAnimation = this.getChangeColorAnimation(
-      QUICK_COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, EMOJI_COLOR);
+        QUICK_COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, EMOJI_COLOR);
 
-    showEmojiTimeline.add(this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
+    showEmojiTimeline.add(
+        this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
     showEmojiTimeline.add([
       resetBackgroundColorAnimation,
       this.getToFullScaleBounceAnimation(EMOJI_BOUNCE_IN_TIME_SECONDS),
-      this.getChangeOpacityAnimation(emojiElementToShow, FADE_EMOJI_TIME_SECONDS, 1)]);
+      this.getChangeOpacityAnimation(
+          emojiElementToShow, FADE_EMOJI_TIME_SECONDS, 1)
+    ]);
     return showEmojiTimeline;
   }
 
@@ -1003,37 +1010,39 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     });
     hideEmojiTimeline.add([
       this.getChangeOpacityAnimation(
-        this.smileEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0),
+          this.smileEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0),
       this.getChangeOpacityAnimation(
-        this.neutralEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0),
+          this.neutralEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0),
       this.getChangeOpacityAnimation(
-        this.sadEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0)
+          this.sadEmoji.nativeElement, FADE_EMOJI_TIME_SECONDS, 0)
     ]);
     return hideEmojiTimeline;
   }
 
-  /** Loading animations to play before loading starts for emoji-style loading. */
+  /**
+   * Loading animations to play before loading starts for emoji-style loading.
+   */
   getStartAnimationsForEmojiWidgetLoading(): TimelineMax {
     const loadingStartTimeline = new TimelineMax({});
     // Reset to the first layer if we're not already there.
     if (this.currentLayerIndex !== 0) {
       loadingStartTimeline.add(
-        this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
+          this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
     }
     // Update visibility of the emoji icon before starting; it could have
     // disappeared due to certain settings, and in some of these cases it
     // needs to reappear before loading animation begins.
     loadingStartTimeline.add(
-      this.getUpdateStatusWidgetVisibilityAnimation(true));
+        this.getUpdateStatusWidgetVisibilityAnimation(true));
 
     loadingStartTimeline.add(
-      this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
+        this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
     loadingStartTimeline.add([
       this.getHideEmojisAnimation(),
       // Change color of the emoji background back to the yellow color before
       // the main loading (it could be gray from being in a neutral state).
       this.getChangeColorAnimation(
-        COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, EMOJI_COLOR)
+          COLOR_CHANGE_LOADING_ANIMATION_TIME_SECONDS, EMOJI_COLOR)
     ]);
 
     return loadingStartTimeline;
@@ -1046,29 +1055,34 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       ease: Power3.easeInOut
     });
     shrinkAndFadeTimeline.add(
-      this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, true));
+        this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, true));
     return shrinkAndFadeTimeline;
   }
 
-  /** Loading animations to play when loading finishes for emoji-style loading. */
-  getEndAnimationsForEmojiWidgetLoading(loadingTimeline: TimelineMax): TimelineMax {
+  /**
+   * Loading animations to play when loading finishes for emoji-style loading.
+   */
+  getEndAnimationsForEmojiWidgetLoading(loadingTimeline: TimelineMax):
+      TimelineMax {
     const loadingEndTimeline = new TimelineMax({
       onComplete: () => {
         this.ngZone.run(() => {
-          console.debug('Setting this.isPlayingLoadingAnimation = false (emoji)');
+          console.debug(
+              'Setting this.isPlayingLoadingAnimation = false (emoji)');
           this.isPlayingLoadingAnimation = false;
           loadingTimeline.clear();
           this.scoreChangeAnimationCompleted.emit();
           if (this.isLoading) {
             // If we finish the end loading animation and we're supposed
             // to be loading again, restart the loading animation!
-            console.debug('Restarting loading from ending animation completion');
+            console.debug(
+                'Restarting loading from ending animation completion');
             this.setLoading(true);
           } else if (this.currentEmoji !== this.getEmojiForScore(this.score)) {
             // The score has changed between now and when the animation
             // started (the emoji is no longer valid).
             console.debug(
-              'Load ending animation completed, found an out of date shape');
+                'Load ending animation completed, found an out of date shape');
             this.notifyScoreChange(this.score);
           }
         });
@@ -1077,13 +1091,13 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     const scoreCompletedAnimations: Animation[] = [];
     scoreCompletedAnimations.push(this.getShowEmojiAnimation());
     scoreCompletedAnimations.push(
-      this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, false, 0));
+        this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, false, 0));
 
     // If we're revealing the status widget, play the reveal animation
     // before the update emoji animation.
     if (!this.getShouldHideStatusWidget(false)) {
       loadingEndTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+          this.getUpdateStatusWidgetVisibilityAnimation(false));
     }
 
     loadingEndTimeline.add(scoreCompletedAnimations);
@@ -1092,12 +1106,11 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // animation after the update emoji animation.
     if (this.getShouldHideStatusWidget(false)) {
       loadingEndTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+          this.getUpdateStatusWidgetVisibilityAnimation(false));
     }
 
     if (this.pendingPostLoadingStateChangeAnimations) {
-      loadingEndTimeline.add(
-        this.pendingPostLoadingStateChangeAnimations);
+      loadingEndTimeline.add(this.pendingPostLoadingStateChangeAnimations);
     }
     return loadingEndTimeline;
   }
@@ -1122,18 +1135,18 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // disappeared due to certain settings, and in some of these cases it
     // needs to reappear before loading animation begins.
     startAnimationsGroup0.push(
-      this.getUpdateStatusWidgetVisibilityAnimation(true));
+        this.getUpdateStatusWidgetVisibilityAnimation(true));
 
     startAnimationsGroup2.push(
-      this.getToGrayScaleAnimation(GRAYSCALE_ANIMATION_TIME_SECONDS));
+        this.getToGrayScaleAnimation(GRAYSCALE_ANIMATION_TIME_SECONDS));
     if (this.showScore) {
       if (this.currentLayerIndex !== 0) {
-        startAnimationsGroup1.push(
-          this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
+        startAnimationsGroup1.push(this.getTransitionToLayerAnimation(
+            0, LAYER_TRANSITION_TIME_SECONDS));
       }
 
       startAnimationsGroup2.push(
-        this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
+          this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
     }
     startAnimationsTimeline.add(startAnimationsGroup0);
     startAnimationsTimeline.add(startAnimationsGroup1);
@@ -1151,7 +1164,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       ease: Power3.easeInOut
     });
     shrinkAndFadeTimeline.add(
-      this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, true));
+        this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, true));
     return shrinkAndFadeTimeline;
   }
 
@@ -1175,33 +1188,32 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
           if (this.isLoading) {
             // If we finish the end loading animation and we're supposed
             // to be loading again, restart the loading animation!
-            console.debug('Restarting loading from ending animation completion');
+            console.debug(
+                'Restarting loading from ending animation completion');
             this.setLoading(true);
           } else if (this.currentShape !== this.getShapeForScore(this.score)) {
             // The score has changed between now and when the animation
             // started (the shape is no longer valid).
             console.debug(
-              'Load ending animation completed, found an out of date shape');
+                'Load ending animation completed, found an out of date shape');
             this.notifyScoreChange(this.score);
           }
         });
       }
     });
     const scoreCompletedAnimations: Animation[] = [];
-    scoreCompletedAnimations.push(
-      this.getUpdateShapeAnimation(this.score));
+    scoreCompletedAnimations.push(this.getUpdateShapeAnimation(this.score));
 
     if (this.showScore) {
       scoreCompletedAnimations.push(
-        this.getFadeDetailsAnimation(
-          FADE_DETAILS_TIME_SECONDS, false, 0));
+          this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, false, 0));
     }
 
     // If we're revealing the status widget, play the reveal animation
     // before the update shape animation.
     if (!this.getShouldHideStatusWidget(false)) {
       updateScoreCompletedTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+          this.getUpdateStatusWidgetVisibilityAnimation(false));
     }
 
     updateScoreCompletedTimeline.add(scoreCompletedAnimations);
@@ -1210,12 +1222,12 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // animation after the update shape animation.
     if (this.getShouldHideStatusWidget(false)) {
       updateScoreCompletedTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+          this.getUpdateStatusWidgetVisibilityAnimation(false));
     }
 
     if (this.pendingPostLoadingStateChangeAnimations) {
       updateScoreCompletedTimeline.add(
-        this.pendingPostLoadingStateChangeAnimations);
+          this.pendingPostLoadingStateChangeAnimations);
     }
 
     return updateScoreCompletedTimeline;
@@ -1236,18 +1248,20 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
             console.debug('Completing timeline (emoji)');
             if (this.isLoading) {
               console.debug('Restarting main emoji loading animation');
-              this.seekPosition(loadingTimeline, EMOJI_MAIN_LOADING_ANIMATION_LABEL);
+              this.seekPosition(
+                  loadingTimeline, EMOJI_MAIN_LOADING_ANIMATION_LABEL);
             } else {
               this.playAnimation(
-                this.getEndAnimationsForEmojiWidgetLoading(loadingTimeline));
+                  this.getEndAnimationsForEmojiWidgetLoading(loadingTimeline));
             }
           });
         }
       });
 
       loadingTimeline.add(this.getStartAnimationsForEmojiWidgetLoading());
-      loadingTimeline.add(this.getLoopAnimationForEmojiWidgetLoading(),
-                          EMOJI_MAIN_LOADING_ANIMATION_LABEL);
+      loadingTimeline.add(
+          this.getLoopAnimationForEmojiWidgetLoading(),
+          EMOJI_MAIN_LOADING_ANIMATION_LABEL);
       this.playAnimation(loadingTimeline);
     }
   }
@@ -1282,19 +1296,21 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
               console.debug('Loading complete');
               console.debug('hasScore:', this.hasScore);
               const updateScoreCompletedTimeline =
-                this.getEndAnimationsForCircleSquareDiamondWidgetLoading(
-                  loadingTimeline);
+                  this.getEndAnimationsForCircleSquareDiamondWidgetLoading(
+                      loadingTimeline);
               this.playAnimation(updateScoreCompletedTimeline);
             }
           });
         },
       });
       const startAnimationsTimeline =
-        this.getStartAnimationsForCircleSquareDiamondWidgetLoading();
-      loadingTimeline.add(startAnimationsTimeline, LOADING_START_ANIMATIONS_LABEL);
+          this.getStartAnimationsForCircleSquareDiamondWidgetLoading();
+      loadingTimeline.add(
+          startAnimationsTimeline, LOADING_START_ANIMATIONS_LABEL);
 
       loadingTimeline.add(
-        this.getLoopAnimationsForCircleSquareDiamondWidgetLoading(), FADE_START_LABEL);
+          this.getLoopAnimationsForCircleSquareDiamondWidgetLoading(),
+          FADE_START_LABEL);
       this.playAnimation(loadingTimeline);
     }
   }
@@ -1321,22 +1337,22 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   private getUpdateGradientColorAnimation(timeSeconds: number): TweenMax {
     return this.getChangeColorAnimation(
-      timeSeconds, this.interpolateColors(this.score));
+        timeSeconds, this.interpolateColors(this.score));
   }
 
-  private getChangeColorAnimation(timeSeconds: number, color: string): TweenMax {
+  private getChangeColorAnimation(timeSeconds: number, color: string):
+      TweenMax {
     return TweenMax.to(this.widgetElement, timeSeconds, {
       backgroundColor: color,
     });
   }
 
-  private getTransitionToCircleAnimation(timeSeconds: number, endColor?: string) {
+  private getTransitionToCircleAnimation(
+      timeSeconds: number, endColor?: string) {
     const circleAnimationTimeline = new TimelineMax({
       align: 'start',
-      onStart: () => {
-      },
-      onComplete: () => {
-      },
+      onStart: () => {},
+      onComplete: () => {},
     });
     circleAnimationTimeline.add([
       this.getCircleAnimation(timeSeconds / 6, endColor),
@@ -1353,10 +1369,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
         if (currentWidgetTransform !== undefined) {
           currentRotation = currentWidgetTransform.rotation;
         }
-        console.debug('getTransitionToSquare; Current rotation:', currentRotation);
+        console.debug(
+            'getTransitionToSquare; Current rotation:', currentRotation);
       },
-      onComplete: () => {
-      },
+      onComplete: () => {},
     });
     const previousShape = this.currentShape;
     squareAnimationTimeline.add([
@@ -1368,25 +1384,23 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   private getTransitionToDiamondAnimation(timeSeconds: number) {
     const diamondAnimationTimeline = new TimelineMax({
-      onStart: () => {
-      },
-      onComplete: () => {
-      },
+      onStart: () => {},
+      onComplete: () => {},
     });
     diamondAnimationTimeline.add([
       this.getDiamondAnimation(timeSeconds / 6),
       this.getToFullScaleAnimation(timeSeconds / 6),
     ]);
     diamondAnimationTimeline.add(
-      this.getRotateBackAndForthAnimation(timeSeconds / 6, 85));
+        this.getRotateBackAndForthAnimation(timeSeconds / 6, 85));
     diamondAnimationTimeline.add(
-      this.getRotateBackAndForthAnimation(timeSeconds / 6, 5));
+        this.getRotateBackAndForthAnimation(timeSeconds / 6, 5));
     diamondAnimationTimeline.add(
-      this.getRotateBackAndForthAnimation(timeSeconds / 6, 65));
+        this.getRotateBackAndForthAnimation(timeSeconds / 6, 65));
     diamondAnimationTimeline.add(
-      this.getRotateBackAndForthAnimation(timeSeconds / 6, 25));
+        this.getRotateBackAndForthAnimation(timeSeconds / 6, 25));
     diamondAnimationTimeline.add(
-      this.getRotateBackAndForthAnimation(timeSeconds / 6, 45));
+        this.getRotateBackAndForthAnimation(timeSeconds / 6, 45));
     return diamondAnimationTimeline;
   }
 
@@ -1429,7 +1443,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     });
   }
 
-  private getToFullScaleCompleteRotationAnimation(timeSeconds: number, fromShape: Shape) {
+  private getToFullScaleCompleteRotationAnimation(
+      timeSeconds: number, fromShape: Shape) {
     let currentRotation = 0;
     const currentWidgetTransform = (this.widgetElement as any)._gsTransform;
     if (currentWidgetTransform !== undefined) {
@@ -1447,7 +1462,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
         console.debug('Starting get to full scale complete rotation animation');
       },
       onComplete: () => {
-        console.debug('Get to full scale complete rotation animation completed');
+        console.debug(
+            'Get to full scale complete rotation animation completed');
       },
     });
   }
@@ -1465,7 +1481,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   private playAnimation(animation: Animation): void {
     this.pendingAnimationCount++;
 
-    console.debug('Increasing pending animation count to', this.pendingAnimationCount);
+    console.debug(
+        'Increasing pending animation count to', this.pendingAnimationCount);
 
     const nextPromise = this.getPlayAnimationPromise(animation);
 
@@ -1501,8 +1518,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
             console.error('Invalid state: this.pendingAnimationCount < 0.');
           } else {
             console.log(
-              `Animation complete. There are ${this.pendingAnimationCount}`
-              + ` pending animations left.`);
+                `Animation complete. There are ${this.pendingAnimationCount}` +
+                ` pending animations left.`);
           }
         });
       });
@@ -1510,14 +1527,17 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     });
   }
 
-  private getTransitionToLayerAnimation(endLayerIndex: number, timeSeconds: number): Animation {
-    this.layerHeightPixels = this.layerAnimationHandles[this.currentLayerIndex].offsetHeight;
+  private getTransitionToLayerAnimation(
+      endLayerIndex: number, timeSeconds: number): Animation {
+    this.layerHeightPixels =
+        this.layerAnimationHandles[this.currentLayerIndex].offsetHeight;
 
     const timeline = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
-          console.debug('Transitioning from layer ' + this.currentLayerIndex
-                        + ' to layer ' + endLayerIndex);
+          console.debug(
+              'Transitioning from layer ' + this.currentLayerIndex +
+              ' to layer ' + endLayerIndex);
           this.layersAnimating = true;
         });
       },
@@ -1525,7 +1545,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
         this.ngZone.run(() => {
           this.layersAnimating = false;
           this.currentLayerIndex = endLayerIndex;
-          console.debug('Finished transitioning to layer ' + this.currentLayerIndex);
+          console.debug(
+              'Finished transitioning to layer ' + this.currentLayerIndex);
           this.showingMoreInfo = this.currentLayerIndex === 1;
           this.updateLayerElementContainers();
         });
@@ -1540,23 +1561,29 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     const endLayer = this.layerAnimationHandles[endLayerIndex];
     if (this.currentLayerIndex < endLayerIndex) {
       timeline.add([
-        this.getShiftLayerVerticallyAnimation(startLayer, timeSeconds, 0, -1 * this.layerHeightPixels, false),
-        this.getShiftLayerVerticallyAnimation(endLayer, timeSeconds, this.layerHeightPixels, 0, true),
+        this.getShiftLayerVerticallyAnimation(
+            startLayer, timeSeconds, 0, -1 * this.layerHeightPixels, false),
+        this.getShiftLayerVerticallyAnimation(
+            endLayer, timeSeconds, this.layerHeightPixels, 0, true),
       ]);
     } else {
       timeline.add([
-        this.getShiftLayerVerticallyAnimation(startLayer, 1, 0, this.layerHeightPixels, false),
-        this.getShiftLayerVerticallyAnimation(endLayer, 1, -1 * this.layerHeightPixels, 0, true),
+        this.getShiftLayerVerticallyAnimation(
+            startLayer, 1, 0, this.layerHeightPixels, false),
+        this.getShiftLayerVerticallyAnimation(
+            endLayer, 1, -1 * this.layerHeightPixels, 0, true),
       ]);
     }
 
     return timeline;
   }
 
-  private getShiftLayerVerticallyAnimation(layer: HTMLElement, timeSeconds: number,
-                                        startY: number, endY: number, fadeIn: boolean) {
+  private getShiftLayerVerticallyAnimation(
+      layer: HTMLElement, timeSeconds: number, startY: number, endY: number,
+      fadeIn: boolean) {
     return TweenMax.fromTo(
-      layer, timeSeconds, {y: startY, opacity: fadeIn ? 0 : 1}, {y: endY, opacity: fadeIn ? 1 : 0});
+        layer, timeSeconds, {y: startY, opacity: fadeIn ? 0 : 1},
+        {y: endY, opacity: fadeIn ? 1 : 0});
   }
 
   private getCircleAnimation(timeSeconds: number, endColor?: string) {
@@ -1568,9 +1595,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       borderRadius: '50%',
       backgroundColor: endColor,
       onStart: () => {
-        console.debug('Loading animation: Morphing to circle from '
-                     + this.getNameFromShape(
-           this.currentShape));
+        console.debug(
+            'Loading animation: Morphing to circle from ' +
+            this.getNameFromShape(this.currentShape));
         this.currentShape = Shape.CIRCLE;
       },
       onComplete: () => {
@@ -1585,15 +1612,15 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       borderRadius: 0,
       backgroundColor: this.interpolateColors(this.score),
       onStart: () => {
-        console.debug('Morphing to square from ' + this.getNameFromShape(
-           this.currentShape));
+        console.debug(
+            'Morphing to square from ' +
+            this.getNameFromShape(this.currentShape));
         this.currentShape = Shape.SQUARE;
       },
       onComplete: () => {
         console.debug('Done morphing to square');
       },
     });
-
   }
 
   private getDiamondAnimation(timeSeconds: number) {
@@ -1602,8 +1629,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       rotation: 45,
       backgroundColor: this.interpolateColors(this.score),
       onStart: () => {
-        console.debug('Morphing to diamond from ' + this.getNameFromShape(
-           this.currentShape));
+        console.debug(
+            'Morphing to diamond from ' +
+            this.getNameFromShape(this.currentShape));
         this.currentShape = Shape.DIAMOND;
       },
       onComplete: () => {
@@ -1634,13 +1662,14 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     });
   }
 
-  private getFadeDetailsAnimation(timeSeconds: number, hide: boolean,
-                                  layerIndex: number) {
+  private getFadeDetailsAnimation(
+      timeSeconds: number, hide: boolean, layerIndex: number) {
     const timeline = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
-          console.debug('Calling getFadeDetails animation, fadeOut=' + hide
-                        + ' and current layer index = ' + this.currentLayerIndex);
+          console.debug(
+              'Calling getFadeDetails animation, fadeOut=' + hide +
+              ' and current layer index = ' + this.currentLayerIndex);
           this.isPlayingFadeDetailsAnimation = true;
         });
       },
@@ -1652,17 +1681,20 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       },
     });
     const interactiveLayerControlsContainer =
-      this.elementRef.nativeElement.querySelector(
-        this.layerAnimationSelectors[layerIndex] + ' .interactiveElement');
+        this.elementRef.nativeElement.querySelector(
+            this.layerAnimationSelectors[layerIndex] + ' .interactiveElement');
     const layerTextContainer = this.elementRef.nativeElement.querySelector(
-          this.layerAnimationSelectors[layerIndex] + ' .layerText');
+        this.layerAnimationSelectors[layerIndex] + ' .layerText');
 
-    timeline.add([
-      TweenMax.to(interactiveLayerControlsContainer, timeSeconds,
-                  { opacity: (hide ? 0 : 1) }),
-      TweenMax.to(layerTextContainer, timeSeconds,
-                  { opacity: (hide ? 0 : 1) }),
-    ], 0, 'normal', 0);
+    timeline.add(
+        [
+          TweenMax.to(
+              interactiveLayerControlsContainer, timeSeconds,
+              {opacity: (hide ? 0 : 1)}),
+          TweenMax.to(
+              layerTextContainer, timeSeconds, {opacity: (hide ? 0 : 1)}),
+        ],
+        0, 'normal', 0);
     return timeline;
   }
 }
@@ -1670,6 +1702,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 export interface CommentFeedback {
   // True if the user clicked "yes" when leaving feedback on whether the comment
   // was toxic after clicking the "Seem wrong?" button. This is used to
-  // differentiate between false positives and false negatives in the comment scores.
+  // differentiate between false positives and false negatives in the comment
+  // scores.
   commentMarkedAsToxic: boolean;
 }
