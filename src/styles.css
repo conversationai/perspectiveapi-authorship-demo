@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
+.grecaptcha-badge { visibility: hidden; }
 
 body {
   background: #CCC;

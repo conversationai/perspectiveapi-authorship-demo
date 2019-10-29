@@ -83,7 +83,7 @@ export interface SuggestCommentScoreData {
 }
 
 export interface AttributeScores {
- [key: string]: SpanScores;
+  [key: string]: SpanScores;
 }
 
 export interface SuggestCommentScoreResponse {
@@ -172,12 +172,12 @@ export interface NodeSuggestCommentScoreRequest {
 
 export interface NodeAnalyzer {
   analyze(obj: NodeAnalyzeCommentRequest,
-          handleFn: (error: Error, response: AnalyzeCommentResponse) => void):
-            Promise<AnalyzeCommentResponse>;
+    handleFn: (error: Error, response: AnalyzeCommentResponse) => void):
+    Promise<AnalyzeCommentResponse>;
   suggestscore(obj: NodeSuggestCommentScoreRequest,
-               handleFn: (error: Error,
-                          response: SuggestCommentScoreResponse) => void):
-                            Promise<SuggestCommentScoreResponse>;
+    handleFn: (error: Error,
+      response: SuggestCommentScoreResponse) => void):
+    Promise<SuggestCommentScoreResponse>;
 }
 
 export interface ResponseError {

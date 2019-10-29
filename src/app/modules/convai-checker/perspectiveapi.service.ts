@@ -13,23 +13,26 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {Injectable} from '@angular/core';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
+import {Injectable, Optional} from '@angular/core';
+import {ReCaptchaV3Service} from 'ng-recaptcha';
 import {from, Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
+import {flatMap, map} from 'rxjs/operators';
 
-import {AnalyzeCommentData, AnalyzeCommentRequest, AnalyzeCommentResponse, AttributeScores, PerspectiveGapiClient, RequestedAttributes, SuggestCommentScoreData, SuggestCommentScoreRequest, SuggestCommentScoreResponse,} from './perspectiveapi-types';
+import {AnalyzeCommentData, AnalyzeCommentRequest, AnalyzeCommentResponse, AttributeScores, PerspectiveGapiClient, RequestedAttributes, SuggestCommentScoreData, SuggestCommentScoreRequest, SuggestCommentScoreResponse, } from './perspectiveapi-types';
 
 // TODO: Make this configurable for dev vs prod.
 const DISCOVERY_URL = 'https://commentanalyzer.googleapis.com/$discovery' +
-    '/rest?version=v1alpha1';
+  '/rest?version=v1alpha1';
 const TOXICITY_ATTRIBUTE = 'TOXICITY';
 
 @Injectable()
 export class PerspectiveApiService {
   private gapiClient: PerspectiveGapiClient = null;
 
-  constructor(private httpClient: HttpClient) {}
+  constructor(
+    private httpClient: HttpClient,
+    @Optional() private recaptchaV3Service: ReCaptchaV3Service) {}
 
   initGapiClient(apiKey: string) {
     if (!apiKey) {
@@ -38,31 +41,31 @@ export class PerspectiveApiService {
     gapi.load('client', () => {
       console.log('Starting to load gapi client');
       (gapi.client as any)
-          .init({
-            'apiKey': apiKey,
-            'discoveryDocs': [DISCOVERY_URL],
-          })
-          .then(
-              () => {
-                console.log('Finished loading gapi client');
-                console.log(gapi.client);
-                this.gapiClient = (gapi.client as any) as PerspectiveGapiClient;
-              },
-              (error: Error) => {
-                console.error('Error loading gapi client:', error);
-              });
+        .init({
+          'apiKey': apiKey,
+          'discoveryDocs': [DISCOVERY_URL],
+        })
+        .then(
+          () => {
+            console.log('Finished loading gapi client');
+            console.log(gapi.client);
+            this.gapiClient = (gapi.client as any) as PerspectiveGapiClient;
+          },
+          (error: Error) => {
+            console.error('Error loading gapi client:', error);
+          });
     });
   }
 
   // TODO: this should be a Single observable, not a general observable because
   // any call to checkText will only give a single result.
   checkText(
-      data: AnalyzeCommentData, makeDirectApiCall: boolean,
-      serverUrl?: string): Observable<AnalyzeCommentResponse> {
+    data: AnalyzeCommentData, makeDirectApiCall: boolean,
+    serverUrl?: string, token?: string): Observable<AnalyzeCommentResponse> {
     if (makeDirectApiCall && this.gapiClient === null) {
       console.error(
-          'No gapi client found; call initGapiClient with your API' +
-          'key to make a direct API call. Using server instead');
+        'No gapi client found; call initGapiClient with your API' +
+        'key to make a direct API call. Using server instead');
       makeDirectApiCall = false;
     }
     if (makeDirectApiCall) {
@@ -79,29 +82,51 @@ export class PerspectiveApiService {
         community_id: data.communityId
       };
       return from(this.gapiClient.commentanalyzer.comments.analyze(request))
-          .pipe(map(response => response.result));
+        .pipe(map(response => response.result));
     } else {
       if (serverUrl === undefined) {
         serverUrl = '';
         console.error(
-            'No server url specified for a non-direct API call.' +
-            ' Defaulting to current hosted address');
+          'No server url specified for a non-direct API call.' +
+          ' Defaulting to current hosted address');
       }
 
+      // TODO: Chain append
       const headers = new HttpHeaders();
       headers.append('Content-Type', 'application/json');
+
+      const action = 'checkText';
+      if (this.recaptchaV3Service) {
+        return this.recaptchaV3Service.execute(action).pipe(flatMap((recaptchaToken) => {
+          const dataWithRecaptchaToken = {
+            ...{action, recaptchaToken},
+            ...data
+          };
+          return this.httpClient.post(
+            serverUrl + '/check', dataWithRecaptchaToken, {headers});
+        }));
+      }
+
+      if (token) {
+        const dataWithRecaptchaToken = {
+          ...{action, 'recaptchaToken': token},
+          ...data
+        };
+        return this.httpClient.post(
+          serverUrl + '/check', dataWithRecaptchaToken, {headers});
+      }
 
       return this.httpClient.post(serverUrl + '/check', data, {headers});
     }
   }
 
   suggestScore(
-      data: SuggestCommentScoreData, makeDirectApiCall: boolean,
-      serverUrl?: string): Observable<SuggestCommentScoreResponse> {
+    data: SuggestCommentScoreData, makeDirectApiCall: boolean,
+    serverUrl?: string, token?: string): Observable<SuggestCommentScoreResponse> {
     if (makeDirectApiCall && this.gapiClient === null) {
       console.error(
-          'No gapi client found; call initGapiClient with your API' +
-          'key to make a direct API call. Using server instead');
+        'No gapi client found; call initGapiClient with your API' +
+        'key to make a direct API call. Using server instead');
       makeDirectApiCall = false;
     }
     if (makeDirectApiCall) {
@@ -118,20 +143,36 @@ export class PerspectiveApiService {
       };
       console.debug('Making a direct API call with gapi');
       return from(
-                 this.gapiClient.commentanalyzer.comments.suggestscore(request))
-          .pipe(map(response => response.result));
+        this.gapiClient.commentanalyzer.comments.suggestscore(request))
+        .pipe(map(response => response.result));
     } else {
       if (serverUrl === undefined) {
         serverUrl = '';
         console.error(
-            'No server url specified for a non-direct API call.' +
-            ' Defaulting to current hosted address');
+          'No server url specified for a non-direct API call.' +
+          ' Defaulting to current hosted address');
       }
       const headers = new HttpHeaders();
       headers.append('Content-Type', 'application/json');
 
+      if (this.recaptchaV3Service) {
+        const action = 'suggestScore';
+        return this.recaptchaV3Service.execute(action)
+          .pipe(flatMap((token) => {
+            const params = new HttpParams().append('action', action).append('recaptchaToken', token);
+            return this.httpClient.post(
+              serverUrl + '/suggest_score', data, {headers, params});
+          }));
+      }
+
+      if (token) {
+        const params = new HttpParams().append('action', 'suggestScore').append('recaptchaToken', token);
+        return this.httpClient.post(
+          serverUrl + '/suggest_score', data, {headers, params});
+      }
+
       return this.httpClient.post(
-          serverUrl + '/suggest_score', data, {headers});
+        serverUrl + '/suggest_score', data, {headers});
     }
   }
 }

@@ -1,11 +1,12 @@
 <div id="checkerContainer">
   <!-- TODO(rachelrosen): merge perspective-status and convai-checker
-       and move a large portion of the convai-checker code to the perspective-api service. 
+       and move a large portion of the convai-checker code to the perspective-api service.
 
        TODO: We're disabling the "learn more" link for the plugin while we decide what to
        allow in terms of link customization. Re-enable if we decide we want to allow
        users to customize the link destination target.
   -->
+  <re-captcha #captchaRef="reCaptcha" size="invisible" (resolved)="sendCheckTextRequest($event)"></re-captcha>
   <perspective-status
     [fontSize]="fontSize"
     [indicatorWidth]="13"
