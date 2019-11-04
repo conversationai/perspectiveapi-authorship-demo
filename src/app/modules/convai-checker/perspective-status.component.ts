@@ -174,7 +174,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   private updateDemoSettingsAnimation: any;
   private isPlayingUpdateShapeAnimation: boolean;
   private updateStatusWidgetVisibilityAnimation: TimelineMax;
-  private hideEmojiIconsForLoadingAnimation = false;
+  hideEmojiIconsForLoadingAnimation = false;
   // Promise that should resolve once this.widget has been initialized.
   private widgetReady: Promise<void>;
 
