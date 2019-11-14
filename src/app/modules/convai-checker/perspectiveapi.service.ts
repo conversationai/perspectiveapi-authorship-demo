@@ -96,7 +96,8 @@ export class PerspectiveApiService {
                       + ' Defaulting to current hosted address');
       }
 
-      return this.sendRequest(data, `${serverUrl}/check`, 'checkText');
+      return this.sendRequest<AnalyzeCommentData, AnalyzeCommentResponse>(
+        data, `${serverUrl}/check`, 'checkText');
     }
   }
 
@@ -130,19 +131,35 @@ export class PerspectiveApiService {
                       + ' Defaulting to current hosted address');
       }
 
-      return this.sendRequest(
+      return this
+        .sendRequest<SuggestCommentScoreData, SuggestCommentScoreResponse>(
           data, `${serverUrl}/suggest_score`, 'suggestScore');
     }
   }
 
+  /**
+   * Issues a POST request to an endpoint.
+   *
+   * This fetches and attaches a reCAPTCHA token if RecaptchaV3Service is
+   * provided in the module.
+   *
+   * @param data The data to send in the POST request body.
+   * @param endpoint The endpoint to issue the PSOT request against.
+   * @param action The action name to attach to the reCATPCHA request for
+   * verification. This is used if the RecaptchaV3Service is provided. See
+   * https://developers.google.com/recaptcha/docs/v3#actions for more details.
+   */
   private sendRequest<T, R>(data: T, endpoint: string, action: string):
     Observable<R> {
-    return this.recaptchaV3Service === undefined ||
-      this.recaptchaV3Service === null ?
-      this.post<T, R>(endpoint, data) :
-      this.recaptchaV3Service.execute(action).pipe(flatMap(
-        recaptchaToken => this.post<T, R>(
-          endpoint, {...{action, recaptchaToken}, ...data})));
+    if (this.recaptchaV3Service == null) {
+      return this.post<T, R>(endpoint, data);
+    } else {
+      return this.recaptchaV3Service.execute(action).pipe(
+        flatMap(recaptchaToken =>
+          this.post<T, R>(endpoint, { ...{ action, recaptchaToken }, ...data })
+        )
+      );
+    }
   }
 
   private post<T, R>(endpoint: string, data: T): Observable<R> {

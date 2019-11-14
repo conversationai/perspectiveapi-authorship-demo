@@ -60,6 +60,12 @@ const appRoutes: Routes = [
     MatSliderModule,
     RouterModule.forRoot(appRoutes, {useHash: true})
   ],
-  bootstrap: [WrapperAppComponent]
+  providers: [
+    // To add reCAPTCHA v3 verification, uncomment the lines below and supply
+    // your reCAPTCHA site key from https://g.co/recaptcha/v3.
+    // ReCaptchaV3Service,
+    // {provide: RECAPTCHA_V3_SITE_KEY, useValue: ']'},
+  ],
+  bootstrap: [WrapperAppComponent],
 })
 export class DemoModule { }
