@@ -144,14 +144,14 @@ export class PerspectiveApiService {
    * provided in the module.
    *
    * @param data The data to send in the POST request body.
-   * @param endpoint The endpoint to issue the PSOT request against.
+   * @param endpoint The endpoint to issue the POST request against.
    * @param action The action name to attach to the reCATPCHA request for
    * verification. This is used if the RecaptchaV3Service is provided. See
    * https://developers.google.com/recaptcha/docs/v3#actions for more details.
    */
   private sendRequest<T, R>(data: T, endpoint: string, action: string):
     Observable<R> {
-    if (this.recaptchaV3Service == null) {
+    if (this.recaptchaV3Service === null) {
       return this.post<T, R>(endpoint, data);
     } else {
       return this.recaptchaV3Service.execute(action).pipe(

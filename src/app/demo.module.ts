@@ -64,7 +64,7 @@ const appRoutes: Routes = [
     // To add reCAPTCHA v3 verification, uncomment the lines below and supply
     // your reCAPTCHA site key from https://g.co/recaptcha/v3.
     // ReCaptchaV3Service,
-    // {provide: RECAPTCHA_V3_SITE_KEY, useValue: ']'},
+    // {provide: RECAPTCHA_V3_SITE_KEY, useValue: ''},
   ],
   bootstrap: [WrapperAppComponent],
 })
