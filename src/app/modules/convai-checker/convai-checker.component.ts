@@ -243,7 +243,7 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
   // TODO: Consider using a CSS selector for this instead, for better
   // specificity.
   @HostListener('document:input', ['$event'])
-  private _handleInputEvent(event: InputEvent) {
+  handleInputEvent(event: InputEvent) {
     if (event.target.id === this.inputId) {
       this._handlePendingCheckRequest(event.target.value);
     }

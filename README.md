@@ -23,12 +23,25 @@ npm install -g yarn typings typescript ts-node mocha protractor angular-cli karm
 Next, you will need to create a
 [Google Cloud Project](http://cloud.google.com) project, and it will need to have access the [PerspectiveAPI](https://www.perspectiveapi.com). Requests to the API will be authenticated using an [cloud project API key](https://support.google.com/cloud/answer/6158862?hl=en).
 
-Am example configuration file template is provided in `config/server_config.template.json`. If one is not present in `build/config`, then the config file will be copied there when you build or start a local server. The config file specifies your google-cloud project API key, and some other details which you can learn more about in the [Documentation for perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server/blob/master/README.md).
+Am example configuration file template is provided in `config/server_config.template.json`. If one is not present in `build/config`, then the config file will be copied there when you build or start a local server. The config file specifies your google-cloud project API key, and some other details which you can learn more about in the [documentation for perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server/blob/master/README.md).
 
 To setup and install the local packages, run:
 
 ```bash
 yarn install
+```
+
+### Adding reCAPTCHA v3 verification
+
+The [perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server) 
+has an optional configuration for enabling reCAPTCHA verification. To enable it in this demo, add the 
+requisite `recaptchaConfig` values to `server_config.json`. Then, provide [ng-recaptcha](https://github.com/DethAriel/ng-recaptcha)'s  `RecaptchaV3Service` and `RECAPTCHA_V3_SITE_KEY` to the module importing this demo, like so:
+
+```js
+providers: [ 
+  ReCaptchaV3Service,
+  {provide: RECAPTCHA_V3_SITE_KEY, useValue: 'your_site_key_for_reCAPTCHA_v3' },
+]
 ```
 
 ## Development server that watches the source code
