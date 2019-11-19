@@ -360,16 +360,16 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
   }
 
   private _getErrorMessage(error: any): string {
-    let msg = 'Error scoring text. Please try again.';
+    let msg =
+      'We\'re sorry, we\'re having trouble at the moment. Please try again later.';
     // Look at detailed API error messages for more meaningful error to return.
     try {
-      for (const api_err of error.json().errors) {
+      for (const api_err of error.error.errors) {
         // TODO(jetpack): a small hack to handle the language detection failure
         // case. we should instead change the API to return documented, typeful
         // errors.
         if (api_err.message.includes('does not support request languages')) {
-          msg = 'Sorry! Perspective needs more training data to work in this '
-            + 'language.';
+          msg = 'We don\'t yet support that language, but we\'re working on it!';
           break;
         }
       }

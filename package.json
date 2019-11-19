@@ -37,7 +37,7 @@
     "gsap": "^1.20.6"
   },
   "dependencies": {
-    "@conversationai/perspectiveapi-simple-server": "^0.1.9",
+    "@conversationai/perspectiveapi-simple-server": "^0.2.0",
     "@types/d3-interpolate": "^1.1.5",
     "@types/gapi": "^0.0.39",
     "@types/gsap": "^1.19.2",
