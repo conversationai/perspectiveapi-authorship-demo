@@ -884,10 +884,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@conversationai/perspectiveapi-simple-server@^0.1.9":
-  version "0.1.9"
-  resolved "https://registry.yarnpkg.com/@conversationai/perspectiveapi-simple-server/-/perspectiveapi-simple-server-0.1.9.tgz#0f3c80973ab8f1c326e79089ae24a1bd2887e6d5"
-  integrity sha512-RGuFM12c6ubb998Fejti/tW73k4Az+3PTTWUyTfIK83wmxLSm3vbv9KVWm6do6pnZlUIpqM3Wsio4FWTOZGEDw==
+"@conversationai/perspectiveapi-simple-server@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@conversationai/perspectiveapi-simple-server/-/perspectiveapi-simple-server-0.2.0.tgz#92c658cc1873c0326ec41553bb81962736a2a7df"
+  integrity sha512-O42YvK+kLE9hOrvscIfkhdgTg+M8jykTVojZOp4zenBx3jj6+lKP6BGsN+N2NssaAd5FZgFVJKJwQOMFF07hjw==
   dependencies:
     "@google-cloud/debug-agent" "^4.0.4"
     "@google-cloud/trace-agent" "^4.2.2"

@@ -639,7 +639,7 @@ describe('Convai checker test', () => {
     fixture.detectChanges();
     // Checks that the error message is displayed.
     expect(checker.analyzeCommentResponse).toBe(null);
-    expect(fixture.nativeElement.textContent).toContain('Error');
+    expect(fixture.nativeElement.textContent).toContain('Please try again later');
 
     // Checks that loading has stopped.
     expect(checker.statusWidget.isLoading).toBe(false);
