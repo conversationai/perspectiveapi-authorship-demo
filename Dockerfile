@@ -11,7 +11,7 @@ RUN apt-get -q update && \
 
 # Install node/npm using LTS version
 #
-RUN install_node 8.9.0
+RUN install_node 10.13.0
 
 # Install Yarn.
 # Note: because this is running as super-user in docker, we need to specify the
