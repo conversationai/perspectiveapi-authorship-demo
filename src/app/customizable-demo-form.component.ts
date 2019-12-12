@@ -167,15 +167,10 @@ export class CustomizableDemoFormComponent implements OnInit {
 
   /** Other settings. */
 
-  // Whether to use gapi to make direct API calls instead of going through the
-  // server. Requires an API key.
-  useGapi = false;
   // Whether to use the endpoint for the plugin.
   usePluginEndpoint = false;
   // URL to use for the plugin endpoint (for debugging and local tests).
   pluginEndpointUrl = '';
-  // API key to use when making gapi calls.
-  apiKey = '';
   // Whether to show the percentage next to the feedback text.
   showPercentage = true;
   // Whether to show a "more info" link next to the feedback text.
@@ -256,8 +251,6 @@ export class CustomizableDemoFormComponent implements OnInit {
 
         this.showPercentage = decodedDemoSettings.showPercentage;
         this.showMoreInfoLink = decodedDemoSettings.showMoreInfoLink;
-        this.useGapi = decodedDemoSettings.useGapi;
-        this.apiKey = decodedDemoSettings.apiKey;
         this.hideLoadingIconAfterLoad = decodedDemoSettings.hideLoadingIconAfterLoad;
         this.hideLoadingIconForScoresBelowMinThreshold =
           decodedDemoSettings.hideLoadingIconForScoresBelowMinThreshold;
@@ -275,13 +268,6 @@ export class CustomizableDemoFormComponent implements OnInit {
   /** Resets the custom color scheme UI to use the default color scheme. */
   resetToDefaultColors() {
     this.customColorScheme = DEFAULT_COLORS.slice();
-  }
-
-  /** Clears the API key field when the "Use gapi" option is toggled off. */
-  updateApiKey(event: MatSlideToggleChange) {
-    if (!event.checked) {
-      this.apiKey = '';
-    }
   }
 
   /**
@@ -343,8 +329,6 @@ export class CustomizableDemoFormComponent implements OnInit {
         this.customFeedbackTextScheme : this.selectedFeedbackTextScheme.feedbackTextSet,
       scoreThresholds: this.customizeScoreThresholds ?
         this.scoreThresholds : this.sliderScoreThresholds,
-      useGapi: this.useGapi,
-      apiKey: this.apiKey,
       hideLoadingIconAfterLoad: this.hideLoadingIconAfterLoad,
       hideLoadingIconForScoresBelowMinThreshold:
         this.hideLoadingIconForScoresBelowMinThreshold,

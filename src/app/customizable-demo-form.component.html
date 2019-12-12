@@ -197,19 +197,6 @@
     </div>
 
     <div class="setting">
-      <mat-slide-toggle [(ngModel)]="useGapi"
-                       (change)="updateApiKey($event); onSettingsChanged()">Use gapi
-      </mat-slide-toggle>
-      <mat-form-field>
-        <input matInput
-               [disabled]="!useGapi"
-               [(ngModel)]="apiKey"
-               (input)="onSettingsChanged()"
-               placeholder="API key"/>
-      </mat-form-field>
-    </div>
-
-    <div class="setting">
       <mat-slide-toggle [(ngModel)]="usePluginEndpoint"
                        (change)="onSettingsChanged()">Use plugin endpoint
       </mat-slide-toggle>
