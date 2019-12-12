@@ -27,11 +27,11 @@ import {
 } from '@angular/core';
 import { Injectable } from '@angular/core';
 import { PerspectiveStatusComponent, CommentFeedback, LoadingIconStyle } from './perspective-status.component';
-import { PerspectiveApiService } from './perspectiveapi.service';
+import { PerspectiveApiService, TOXICITY_ATTRIBUTE } from './perspectiveapi.service';
 import {
   AnalyzeCommentData,
   AnalyzeCommentResponse,
-  SpanScores,
+  AttributeScoresMap,
   SuggestCommentScoreData,
   SuggestCommentScoreResponse,
 } from './perspectiveapi-types';
@@ -412,7 +412,8 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
           // this.analyzeCommentResponse is updated in the subscribe, which
           // happens before the finalize() call here. It is either equal to the
           // last response or null if the last response was an error.
-          const newScore = this.getMaxScore(this.analyzeCommentResponse);
+          const attribute = this.demoSettings.modelName || TOXICITY_ATTRIBUTE;
+          const newScore = this.getSummaryScore(this.analyzeCommentResponse, attribute);
           // TODO: This will wait until animations finish before notifying any
           // listening parent containers (e.g. the Perspectiveapi.com website)
           // that there is a new score, which could cause a lag in some UI
@@ -444,33 +445,8 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
     );
   }
 
-  getMaxScore(response: AnalyzeCommentResponse): number {
-    if (response === null || response.attributeScores == null) {
-      return 0;
-    }
-    let max: number;
-    Object.keys(response.attributeScores).forEach((key: string) => {
-      const maxSpanScoreForAttribute =
-        this.getMaxSpanScore(response.attributeScores[key]);
-      if (max === undefined || maxSpanScoreForAttribute > max) {
-          max = maxSpanScoreForAttribute;
-      }
-    });
-
-    if (max === undefined) {
-      console.error('No "value" field found for score. Returning 0.');
-      max = 0;
-    }
-    return max;
-  }
-
-  getMaxSpanScore(spanScores: SpanScores): number {
-    let max: number;
-    for (const spanScore of spanScores.spanScores) {
-      if (max === undefined || spanScore.score.value > max) {
-        max = spanScore.score.value;
-      }
-    }
-    return max;
+  getSummaryScore(response: AnalyzeCommentResponse, attribute: string) {
+    return response === null || response.attributeScores == null ? 0
+      : response.attributeScores[attribute].summaryScore.value;
   }
 }

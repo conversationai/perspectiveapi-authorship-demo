@@ -55,33 +55,23 @@ import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import { take } from 'rxjs/operators';
 import * as d3 from 'd3-color';
 
-const getMockCheckerResponse = function(score: number, token?: string):
+const getMockCheckerResponse = function(toxicityScore: number,
+                                        token: string,
+                                        otherAttributeScore?: number):
   AnalyzeCommentResponse {
   return {
     attributeScores: {
-      'TOXICITY_ATTRIBUTE': {
-        spanScores: [
-            {
-              begin: 0,
-              end: 25,
-              score: {
-                value: score,
-                type: 'PROBABILITY'
-              }
-            }
-          ]
+      'TOXICITY': {
+        summaryScore: {
+          value: toxicityScore,
+          type: 'PROBABILITY'
+        },
       },
       'OTHER_ATTRIBUTE': {
-        spanScores: [
-          {
-            begin: 0,
-            end: 25,
-            score: {
-              value: score,
-              type: 'PROBABILITY'
-            }
-          }
-        ]
+        summaryScore: {
+          value: otherAttributeScore || toxicityScore,
+          type: 'PROBABILITY'
+        },
       }
     },
     languages: ['en'],
@@ -610,6 +600,75 @@ describe('Convai checker test', () => {
 
     // Checks that the score was emitted.
     expect(lastEmittedScore).toEqual(mockScore);
+    expect(emittedScoreCount).toEqual(1);
+
+    // Checks that loading has stopped.
+    expect(checker.statusWidget.isLoading).toBe(false);
+  });
+
+  it('Should analyze comment and store and emit response, custom model', async () => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.modelName = 'OTHER_ATTRIBUTE';
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    const checker = fixture.componentInstance.checker;
+    const queryText = 'Your mother was a hamster';
+
+    const mockScore = 0.3;
+    const customModelScore = 0.2;
+    const mockResponse: AnalyzeCommentResponse =
+      getMockCheckerResponse(mockScore, queryText, customModelScore);
+
+    let lastEmittedResponse: AnalyzeCommentResponse|null = null;
+    let lastEmittedScore = -1;
+    let emittedResponseCount = 0;
+    let emittedScoreCount = 0;
+
+    // Records when the response is emitted.
+    checker.analyzeCommentResponseChanged.subscribe(
+      (emittedItem: AnalyzeCommentResponse|null) => {
+        lastEmittedResponse = emittedItem;
+        emittedResponseCount++;
+    });
+
+    // Records when the score is emitted.
+    checker.scoreChanged.subscribe((emittedScore: number) => {
+      lastEmittedScore = emittedScore;
+      emittedScoreCount++;
+    });
+
+    const textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryText, textArea);
+
+    await waitForTimeout(REQUEST_LIMIT_MS);
+
+    // Expect a request to have been sent.
+    const mockReq = httpMock.expectOne('test-url/check');
+
+    // Once a request is in flight, loading is set to true.
+    expect(checker.analyzeCommentResponse).toBe(null);
+    expect(checker.statusWidget.isLoading).toBe(true);
+
+    // Now we have checked the expectations before the response is sent, we
+    // send back the response.
+    mockReq.flush(mockResponse);
+
+    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+
+    // Checks that the response is received and stored.
+    expect(checker.analyzeCommentResponse).not.toBe(null);
+    expect(checker.analyzeCommentResponse).toEqual(mockResponse);
+
+    // Checks that the response was emitted.
+    expect(lastEmittedResponse).toEqual(mockResponse);
+    expect(emittedResponseCount).toEqual(1);
+
+    // Checks that the score was emitted.
+    expect(lastEmittedScore).toEqual(customModelScore);
     expect(emittedScoreCount).toEqual(1);
 
     // Checks that loading has stopped.
