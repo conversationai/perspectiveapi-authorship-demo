@@ -157,14 +157,6 @@ export class CustomizableDemoFormComponent implements OnInit {
   customFeedbackTextScheme: [string, string, string] = DEFAULT_FEEDBACK_TEST_SET;
   useCustomFeedbackText = false;
 
-  /** Configuration (correction UI) options. */
-
-  // Configuration options for the checker that determine the style of the UI
-  // for submitting corrections for bad scores.
-  configurations = [ConfigurationInput.DEMO_SITE];
-  // Configuration selected from the dropdown menu.
-  configuration = 'default';
-
   /** Other settings. */
 
   // Whether to use the endpoint for the plugin.
@@ -209,7 +201,6 @@ export class CustomizableDemoFormComponent implements OnInit {
         const decodedDemoSettings: DemoSettings = JSON.parse(
             decodeURIComponent(params['encodedDemoSettings'] as string));
         console.debug('I see demo settings in the url:', decodedDemoSettings);
-        this.configuration = decodedDemoSettings.configuration;
         if (this.useCustomColorScheme) {
           this.customColorScheme = decodedDemoSettings.gradientColors;
         } else {
@@ -320,7 +311,6 @@ export class CustomizableDemoFormComponent implements OnInit {
    */
   private getDemoSettings(): DemoSettings {
     return JSON.parse(JSON.stringify({
-      configuration: this.configuration,
       gradientColors: this.useCustomColorScheme ?
         this.customColorScheme : this.selectedColorScheme.colors,
       showPercentage: this.showPercentage,

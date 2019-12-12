@@ -508,25 +508,6 @@ describe('Convai checker test', () => {
 
   }));
 
-  it('should default to demo configuration when an invalid configuration is specified', async(() => {
-    const fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.configuration = 'foo';
-    fixture.componentInstance.setDemoSettings(demoSettings);
-
-    fixture.detectChanges();
-
-    const checker = fixture.componentInstance.checker;
-
-    expect(checker.serverUrl).toEqual('test-url');
-    expect(checker.inputId).toEqual('checkerTextarea');
-    expect(checker.statusWidget.configuration).toEqual(
-      checker.statusWidget.configurationEnum.DEMO_SITE);
-
-  }));
-
   it('should show an error if no textarea id is specified', async(() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerNoInputComponent);
     fixture.detectChanges();

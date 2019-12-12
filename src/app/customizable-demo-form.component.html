@@ -52,20 +52,6 @@
       </mat-form-field>
     </div>
 
-    <!-- Configuration for user suggestions. -->
-    <div class="setting">
-      <mat-form-field>
-        <mat-select placeholder="Correction style"
-                   shouldPlaceholderFloat="true"
-                   [(ngModel)]="configuration"
-                   (change)="onSettingsChanged()">
-          <mat-option *ngFor="let configuration of configurations" [value]="configuration">
-            {{ configuration }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-
     <!-- Loading icon/widget style. -->
     <div class="setting">
       <mat-form-field>

@@ -47,9 +47,6 @@ export interface InputEvent {
 // TODO: Make more of these parameters optional, especially the ones we don't
 // want to expose to users in the public launch.
 export interface DemoSettings {
-  // DEPRECATED. Value is ignored.
-  configuration?: string;
-
   // An array of colors to use as the gradient for the animated loading widget.
   // Minimum length is two, but there is no maximum length.
   gradientColors: string[];
