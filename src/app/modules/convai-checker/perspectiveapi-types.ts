@@ -45,7 +45,7 @@ export interface FloatValue {
 }
 
 export interface AnalyzeCommentResponse {
-  attributeScores?: AttributeScores;
+  attributeScores?: AttributeScoresMap;
   languages?: string[];
   clientToken?: string;
 }
@@ -54,7 +54,7 @@ export interface SuggestCommentScoreRequest {
   comment: TextEntry;
   context?: Context;
   languages?: string[];
-  attribute_scores?: AttributeScores;
+  attribute_scores?: AttributeScoresMap;
   community_id?: string;
   user_id?: string;
   client_token?: string;
@@ -82,8 +82,8 @@ export interface SuggestCommentScoreData {
   modelName?: string;
 }
 
-export interface AttributeScores {
- [key: string]: SpanScores;
+export interface AttributeScoresMap {
+ [key: string]: AttributeScores;
 }
 
 export interface SuggestCommentScoreResponse {
@@ -105,7 +105,7 @@ export interface ArticleAndParentComment {
   parent_comment?: TextEntry;
 }
 
-export interface SpanScores {
+export interface AttributeScores {
   spanScores?: SpanScore[];
   summaryScore?: Score;
 }

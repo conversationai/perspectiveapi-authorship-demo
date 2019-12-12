@@ -23,7 +23,7 @@ import {
   AnalyzeCommentData,
   AnalyzeCommentRequest,
   AnalyzeCommentResponse,
-  AttributeScores,
+  AttributeScoresMap,
   PerspectiveGapiClient,
   RequestedAttributes,
   SuggestCommentScoreData,
@@ -34,7 +34,7 @@ import {
 // TODO: Make this configurable for dev vs prod.
 const DISCOVERY_URL = 'https://commentanalyzer.googleapis.com/$discovery'
     + '/rest?version=v1alpha1';
-const TOXICITY_ATTRIBUTE = 'TOXICITY';
+export const TOXICITY_ATTRIBUTE = 'TOXICITY';
 
 @Injectable()
 export class PerspectiveApiService {
@@ -109,7 +109,7 @@ export class PerspectiveApiService {
       makeDirectApiCall = false;
     }
     if (makeDirectApiCall) {
-      const attributeScores: AttributeScores  = {};
+      const attributeScores: AttributeScoresMap  = {};
 
       const attribute = data.modelName || TOXICITY_ATTRIBUTE;
       attributeScores[attribute] = {
