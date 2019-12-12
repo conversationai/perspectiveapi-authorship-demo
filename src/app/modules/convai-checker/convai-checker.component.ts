@@ -47,19 +47,9 @@ export interface InputEvent {
 // TODO: Make more of these parameters optional, especially the ones we don't
 // want to expose to users in the public launch.
 export interface DemoSettings {
-  // DEPRECATED. Value is ignored.
-  configuration?: string;
-
   // An array of colors to use as the gradient for the animated loading widget.
   // Minimum length is two, but there is no maximum length.
   gradientColors: string[];
-
-  // Optional. API key to use when using the Gapi endpoint. Should be empty or
-  // omitted when not using the Gapi endpoint.
-  apiKey?: string;
-
-  // Whether to use the Gapi endpoint.
-  useGapi: boolean;
 
   // Whether to use the plugin endpoint.
   usePluginEndpoint: boolean;
@@ -115,8 +105,6 @@ const LOCAL_STORAGE_SESSION_ID_KEY = 'sessionId';
 
 export const DEFAULT_DEMO_SETTINGS = {
   gradientColors: ['#25C1F9', '#7C4DFF', '#D400F9'],
-  apiKey: '',
-  useGapi: false,
   usePluginEndpoint: false,
   showPercentage: true,
   showMoreInfoLink: true,
@@ -142,7 +130,7 @@ const GITHUB_PAGE_LINK =
   styleUrls: ['./convai-checker.component.css'],
   providers: [PerspectiveApiService],
 })
-export class ConvaiCheckerComponent implements OnInit, OnChanges {
+export class ConvaiCheckerComponent implements OnInit {
   @ViewChild(PerspectiveStatusComponent, {static: false})
   statusWidget: PerspectiveStatusComponent;
   @Input() inputId: string;
@@ -176,7 +164,6 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
   public feedbackRequestInProgress = false;
   private sessionId: string|null = null;
   private gradientColors: string[] = ['#25C1F9', '#7C4DFF', '#D400F9'];
-  private apiKey: string|undefined;
 
   constructor(
       private elementRef: ElementRef,
@@ -202,30 +189,12 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
 
     if (this.demoSettingsJson) {
       this.demoSettings = JSON.parse(this.demoSettingsJson);
-      if (this.demoSettings.apiKey) {
-        this.apiKey = this.demoSettings.apiKey;
-      }
-    }
-
-    if (this.apiKey) {
-      this.analyzeApiService.initGapiClient(this.apiKey);
     }
 
     this.sessionId = window.localStorage.getItem(LOCAL_STORAGE_SESSION_ID_KEY);
     if (this.sessionId === null) {
       this.sessionId = Math.round(Date.now() * Math.random()).toString();
       window.localStorage.setItem(LOCAL_STORAGE_SESSION_ID_KEY, this.sessionId);
-    }
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['demoSettings']) {
-      if (this.demoSettings && this.demoSettings.apiKey &&
-          this.apiKey !== this.demoSettings.apiKey) {
-        console.debug('Api key changes detected in demoSettings');
-        this.apiKey = this.demoSettings.apiKey;
-        this.analyzeApiService.initGapiClient(this.apiKey);
-      }
     }
   }
 
@@ -336,7 +305,6 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
 
     const suggestScoreObservable = this.analyzeApiService.suggestScore(
       suggestCommentScoreData,
-      this.demoSettings.useGapi /* makeDirectApiCall */,
       this.serverUrl
     ).pipe(
       take(1), // Prevents memory leaks.
@@ -403,7 +371,6 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
 
     const analyzeCommentObservable = this.analyzeApiService.checkText(
         analyzeCommentData,
-        this.demoSettings.useGapi /* makeDirectApiCall */,
         this.demoSettings.usePluginEndpoint ? this.pluginEndpointUrl : this.serverUrl)
       .pipe(
         take(1), // Prevents memory leaks

@@ -52,20 +52,6 @@
       </mat-form-field>
     </div>
 
-    <!-- Configuration for user suggestions. -->
-    <div class="setting">
-      <mat-form-field>
-        <mat-select placeholder="Correction style"
-                   shouldPlaceholderFloat="true"
-                   [(ngModel)]="configuration"
-                   (change)="onSettingsChanged()">
-          <mat-option *ngFor="let configuration of configurations" [value]="configuration">
-            {{ configuration }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-
     <!-- Loading icon/widget style. -->
     <div class="setting">
       <mat-form-field>
@@ -194,19 +180,6 @@
       <mat-slide-toggle [(ngModel)]="hideLoadingIconForScoresBelowMinThreshold"
         (change)="onSettingsChanged()">Hide loading icon for scores below the minimum threshold.
       </mat-slide-toggle>
-    </div>
-
-    <div class="setting">
-      <mat-slide-toggle [(ngModel)]="useGapi"
-                       (change)="updateApiKey($event); onSettingsChanged()">Use gapi
-      </mat-slide-toggle>
-      <mat-form-field>
-        <input matInput
-               [disabled]="!useGapi"
-               [(ngModel)]="apiKey"
-               (input)="onSettingsChanged()"
-               placeholder="API key"/>
-      </mat-form-field>
     </div>
 
     <div class="setting">

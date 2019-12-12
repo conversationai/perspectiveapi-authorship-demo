@@ -157,25 +157,12 @@ export class CustomizableDemoFormComponent implements OnInit {
   customFeedbackTextScheme: [string, string, string] = DEFAULT_FEEDBACK_TEST_SET;
   useCustomFeedbackText = false;
 
-  /** Configuration (correction UI) options. */
-
-  // Configuration options for the checker that determine the style of the UI
-  // for submitting corrections for bad scores.
-  configurations = [ConfigurationInput.DEMO_SITE];
-  // Configuration selected from the dropdown menu.
-  configuration = 'default';
-
   /** Other settings. */
 
-  // Whether to use gapi to make direct API calls instead of going through the
-  // server. Requires an API key.
-  useGapi = false;
   // Whether to use the endpoint for the plugin.
   usePluginEndpoint = false;
   // URL to use for the plugin endpoint (for debugging and local tests).
   pluginEndpointUrl = '';
-  // API key to use when making gapi calls.
-  apiKey = '';
   // Whether to show the percentage next to the feedback text.
   showPercentage = true;
   // Whether to show a "more info" link next to the feedback text.
@@ -214,7 +201,6 @@ export class CustomizableDemoFormComponent implements OnInit {
         const decodedDemoSettings: DemoSettings = JSON.parse(
             decodeURIComponent(params['encodedDemoSettings'] as string));
         console.debug('I see demo settings in the url:', decodedDemoSettings);
-        this.configuration = decodedDemoSettings.configuration;
         if (this.useCustomColorScheme) {
           this.customColorScheme = decodedDemoSettings.gradientColors;
         } else {
@@ -256,8 +242,6 @@ export class CustomizableDemoFormComponent implements OnInit {
 
         this.showPercentage = decodedDemoSettings.showPercentage;
         this.showMoreInfoLink = decodedDemoSettings.showMoreInfoLink;
-        this.useGapi = decodedDemoSettings.useGapi;
-        this.apiKey = decodedDemoSettings.apiKey;
         this.hideLoadingIconAfterLoad = decodedDemoSettings.hideLoadingIconAfterLoad;
         this.hideLoadingIconForScoresBelowMinThreshold =
           decodedDemoSettings.hideLoadingIconForScoresBelowMinThreshold;
@@ -275,13 +259,6 @@ export class CustomizableDemoFormComponent implements OnInit {
   /** Resets the custom color scheme UI to use the default color scheme. */
   resetToDefaultColors() {
     this.customColorScheme = DEFAULT_COLORS.slice();
-  }
-
-  /** Clears the API key field when the "Use gapi" option is toggled off. */
-  updateApiKey(event: MatSlideToggleChange) {
-    if (!event.checked) {
-      this.apiKey = '';
-    }
   }
 
   /**
@@ -334,7 +311,6 @@ export class CustomizableDemoFormComponent implements OnInit {
    */
   private getDemoSettings(): DemoSettings {
     return JSON.parse(JSON.stringify({
-      configuration: this.configuration,
       gradientColors: this.useCustomColorScheme ?
         this.customColorScheme : this.selectedColorScheme.colors,
       showPercentage: this.showPercentage,
@@ -343,8 +319,6 @@ export class CustomizableDemoFormComponent implements OnInit {
         this.customFeedbackTextScheme : this.selectedFeedbackTextScheme.feedbackTextSet,
       scoreThresholds: this.customizeScoreThresholds ?
         this.scoreThresholds : this.sliderScoreThresholds,
-      useGapi: this.useGapi,
-      apiKey: this.apiKey,
       hideLoadingIconAfterLoad: this.hideLoadingIconAfterLoad,
       hideLoadingIconForScoresBelowMinThreshold:
         this.hideLoadingIconForScoresBelowMinThreshold,

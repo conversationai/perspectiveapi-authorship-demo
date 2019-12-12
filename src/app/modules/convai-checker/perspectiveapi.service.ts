@@ -39,102 +39,35 @@ export const TOXICITY_ATTRIBUTE = 'TOXICITY';
 @Injectable()
 export class PerspectiveApiService {
 
-  private gapiClient: PerspectiveGapiClient = null;
-
   constructor(
     private httpClient: HttpClient,
     @Optional() private recaptchaV3Service: ReCaptchaV3Service) {}
 
-  initGapiClient(apiKey: string) {
-    if (!apiKey) {
-      this.gapiClient = null;
-    }
-    gapi.load('client', () => {
-      console.log('Starting to load gapi client');
-      (gapi.client as any).init({
-        'apiKey': apiKey,
-        'discoveryDocs': [ DISCOVERY_URL ],
-      }).then(() => {
-        console.log('Finished loading gapi client');
-        console.log(gapi.client);
-        this.gapiClient = (gapi.client as any) as PerspectiveGapiClient;
-      }, (error: Error) => {
-        console.error('Error loading gapi client:', error);
-      });
-    });
-  }
-
   // TODO: this should be a Single observable, not a general observable because
   // any call to checkText will only give a single result.
-  checkText(data: AnalyzeCommentData, makeDirectApiCall: boolean,
-            serverUrl?: string): Observable<AnalyzeCommentResponse> {
-    if (makeDirectApiCall && this.gapiClient === null) {
-      console.error('No gapi client found; call initGapiClient with your API'
-                    + 'key to make a direct API call. Using server instead');
-      makeDirectApiCall = false;
+  checkText(data: AnalyzeCommentData, serverUrl?: string)
+      : Observable<AnalyzeCommentResponse> {
+    if (serverUrl === undefined) {
+      serverUrl = '';
+      console.error('No server url specified for a non-direct API call.'
+                    + ' Defaulting to current hosted address');
     }
-    if (makeDirectApiCall) {
-      console.debug('Making a direct API call with gapi');
 
-      const requestedAttributes: RequestedAttributes = {};
-      const attribute = data.modelName || TOXICITY_ATTRIBUTE;
-      requestedAttributes[attribute] = {};
-
-      const request: AnalyzeCommentRequest = {
-        comment: {text: data.comment},
-        requested_attributes: requestedAttributes,
-        session_id: data.sessionId,
-        community_id: data.communityId
-      };
-      return from(
-         this.gapiClient.commentanalyzer.comments.analyze(request))
-         .pipe(map(response => response.result));
-    } else {
-      if (serverUrl === undefined) {
-        serverUrl = '';
-        console.error('No server url specified for a non-direct API call.'
-                      + ' Defaulting to current hosted address');
-      }
-
-      return this.sendRequest<AnalyzeCommentData, AnalyzeCommentResponse>(
-        data, `${serverUrl}/check`, 'checkText');
-    }
+    return this.sendRequest<AnalyzeCommentData, AnalyzeCommentResponse>(
+      data, `${serverUrl}/check`, 'checkText');
   }
 
-  suggestScore(data: SuggestCommentScoreData, makeDirectApiCall: boolean,
-               serverUrl?: string): Observable<SuggestCommentScoreResponse> {
-    if (makeDirectApiCall && this.gapiClient === null) {
-      console.error('No gapi client found; call initGapiClient with your API'
-                    + 'key to make a direct API call. Using server instead');
-      makeDirectApiCall = false;
+  suggestScore(data: SuggestCommentScoreData, serverUrl?: string)
+      : Observable<SuggestCommentScoreResponse> {
+    if (serverUrl === undefined) {
+      serverUrl = '';
+      console.error('No server url specified for a non-direct API call.'
+                    + ' Defaulting to current hosted address');
     }
-    if (makeDirectApiCall) {
-      const attributeScores: AttributeScoresMap  = {};
 
-      const attribute = data.modelName || TOXICITY_ATTRIBUTE;
-      attributeScores[attribute] = {
-        summaryScore: { value: data.commentMarkedAsToxic ? 1 : 0 }
-      };
-      const request: SuggestCommentScoreRequest = {
-        comment: {text: data.comment},
-        attribute_scores: attributeScores,
-        client_token: data.sessionId,
-      };
-      console.debug('Making a direct API call with gapi');
-      return from(
-         this.gapiClient.commentanalyzer.comments.suggestscore(request))
-         .pipe(map(response => response.result));
-    } else {
-      if (serverUrl === undefined) {
-        serverUrl = '';
-        console.error('No server url specified for a non-direct API call.'
-                      + ' Defaulting to current hosted address');
-      }
-
-      return this
-        .sendRequest<SuggestCommentScoreData, SuggestCommentScoreResponse>(
-          data, `${serverUrl}/suggest_score`, 'suggestScore');
-    }
+    return this
+      .sendRequest<SuggestCommentScoreData, SuggestCommentScoreResponse>(
+        data, `${serverUrl}/suggest_score`, 'suggestScore');
   }
 
   /**
