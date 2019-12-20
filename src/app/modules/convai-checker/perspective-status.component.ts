@@ -199,6 +199,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   // Keeps track of the number of animations that are queued or in progress.
   private pendingAnimationCount = 0;
 
+  // Copy enum to class for data binding.
+  readonly Emoji = Emoji;
+
   // Inject ngZone so that we can call ngZone.run() to re-enter the angular
   // zone inside gsap animation callbacks.
   constructor(private ngZone: NgZone, private elementRef: ElementRef) {
