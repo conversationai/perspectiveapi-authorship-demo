@@ -29,13 +29,19 @@
            [attr.aria-label]="getAnimationA11yLabel(loadingIconStyle, isPlayingLoadingAnimation)">
         <img #smileEmoji id="smileEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score >= scoreThresholds[1]}"
-             [src]="getImageResourcePath('grinning_face.png')">
+             [src]="getImageResourcePath('grinning_face.png')"
+             [title]="getAccessibilityDescriptionForEmoji(Emoji.SMILE)"
+             [alt]="getAccessibilityDescriptionForEmoji(Emoji.SMILE)">
         <img #neutralEmoji id="neutralEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || (score < scoreThresholds[1] || score >= scoreThresholds[2])}"
-             [src]="getImageResourcePath('thinking_face.png')">
+             [src]="getImageResourcePath('thinking_face.png')"
+             [title]="getAccessibilityDescriptionForEmoji(Emoji.NEUTRAL)"
+             [alt]="getAccessibilityDescriptionForEmoji(Emoji.NEUTRAL)">
         <img #sadEmoji id="sadEmoji" class="iconEmoji"
              [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score < scoreThresholds[2]}"
-             [src]="getImageResourcePath('disappointed_face.png')">
+             [src]="getImageResourcePath('disappointed_face.png')"
+             [title]="getAccessibilityDescriptionForEmoji(Emoji.SAD)"
+             [alt]="getAccessibilityDescriptionForEmoji(Emoji.SAD)">
       </div>
     </div>
   </div>
