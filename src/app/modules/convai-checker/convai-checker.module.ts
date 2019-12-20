@@ -1,7 +1,8 @@
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
 import { APP_BASE_HREF } from '@angular/common';
-import { NgModule } from '@angular/core';
+import { NgModule, Injector } from '@angular/core';
+import { createCustomElement } from '@angular/elements';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import {
@@ -35,6 +36,14 @@ import { ConvaiCheckerComponent } from './convai-checker.component';
     MatSelectModule,
   ],
   providers: [PerspectiveApiService, {provide: APP_BASE_HREF, useValue: '/'}],
-  bootstrap: [ConvaiCheckerComponent]
+  entryComponents: [ConvaiCheckerComponent]
 })
-export class ConvaiCheckerModule { }
+export class ConvaiCheckerModule {
+  constructor(private injector: Injector) {}
+
+  ngDoBootstrap() {
+    // Create custom element to use as a webcomponent.
+    const checkerElement = createCustomElement(ConvaiCheckerComponent, { injector: this.injector });
+    customElements.define('convai-checker', checkerElement);
+  }
+}
