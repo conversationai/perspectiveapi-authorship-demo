@@ -437,17 +437,10 @@ describe('Convai checker test', () => {
   /** Set up the test bed */
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
-        PerspectiveStatusComponent,
-        test_components.ConvaiCheckerInvalidInputComponent,
-        test_components.ConvaiCheckerNoDemoSettingsComponent,
-        test_components.ConvaiCheckerNoInputComponent,
-        test_components.ConvaiCheckerCustomDemoSettingsComponent,
-        test_components.ConvaiCheckerWithAttributeInputComponent,
-        test_components.ConvaiCheckerJsonDemoSettingsComponent,
-        ConvaiCheckerComponent
+      imports: [
+        HttpClientTestingModule,
+        test_components.TestComponentsModule
       ],
-      imports: [HttpClientTestingModule],
       providers: [PerspectiveApiService],
     });
 
@@ -515,8 +508,8 @@ describe('Convai checker test', () => {
     expect(fixture.nativeElement.textContent).toContain('Error');
   }));
 
-  it('should show an error if an invalid textarea id is specified', async(() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerInvalidInputComponent);
+  it('should show an error if textarea id is missing', async(() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerMissingInputIdComponent);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Error');

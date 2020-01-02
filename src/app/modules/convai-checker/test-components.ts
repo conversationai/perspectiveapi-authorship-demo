@@ -1,7 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, NgModule, OnInit, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { PerspectiveStatusComponent, CommentFeedback, Emoji, LoadingIconStyle, Shape } from './perspective-status.component';
 import { ConvaiCheckerComponent, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
+import { ConvaiCheckerModule } from './convai-checker.module';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import * as d3 from 'd3-color';
@@ -47,11 +48,10 @@ export class ConvaiCheckerNoDemoSettingsComponent {
 }
 
 @Component({
-  selector: 'checker-invalid-input-id-specified',
+  selector: 'checker-missing-input-id',
   template: `
         <convai-checker
            id="checker"
-           [inputId]="thereIsNoTextAreaWithThisId"
            [serverUrl]="serverUrl">
           Loading...
         </convai-checker>
@@ -59,7 +59,7 @@ export class ConvaiCheckerNoDemoSettingsComponent {
                   placeholder="type something here and see how the dot above reacts.">
         </textarea>`,
 })
-export class ConvaiCheckerInvalidInputComponent {
+export class ConvaiCheckerMissingInputIdComponent {
   @ViewChild(ConvaiCheckerComponent, {static: false}) checker: ConvaiCheckerComponent;
   textArea: HTMLTextAreaElement;
   serverUrl = 'test-url';
@@ -156,3 +156,18 @@ export class ConvaiCheckerJsonDemoSettingsComponent implements OnInit {
     return this.demoSettingsJson;
   }
 }
+@NgModule({
+  declarations: [
+    ConvaiCheckerNoInputComponent,
+    ConvaiCheckerNoDemoSettingsComponent,
+    ConvaiCheckerMissingInputIdComponent,
+    ConvaiCheckerWithAttributeInputComponent,
+    ConvaiCheckerCustomDemoSettingsComponent,
+    ConvaiCheckerJsonDemoSettingsComponent
+  ],
+  imports: [
+    ConvaiCheckerModule
+  ]
+})
+export class TestComponentsModule {}
+
