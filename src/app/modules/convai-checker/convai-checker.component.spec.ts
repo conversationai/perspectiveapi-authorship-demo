@@ -955,67 +955,14 @@ describe('Convai checker test', () => {
     await verifyLayerTransitionsWorkForDemoSiteConfig(fixture, httpMock);
   });
 
-  it('Test loading icon visibility with setting hideLoadingIconAfterLoad', async () => {
-    const fixture =
-      TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.hideLoadingIconAfterLoad = true;
-    fixture.componentInstance.setDemoSettings(demoSettings);
-
-    fixture.detectChanges();
-    const checker = fixture.componentInstance.checker;
-    const queryTexts = [
-      'Your mother was a hamster',
-      'Your father smelled of elderberries',
-      'What is the air velocity of an unladen swallow?'
-    ];
-
-    const mockResponses = [
-      getMockCheckerResponse(0.2, queryTexts[0]),
-      getMockCheckerResponse(0.5, queryTexts[1]),
-      getMockCheckerResponse(0.2, queryTexts[2])
-    ];
-
-    const textArea = fixture.debugElement.query(
-      By.css('#' + checker.inputId)).nativeElement;
-
-
-    for (let callCount = 0; callCount < mockResponses.length; callCount++) {
-      // Send an input event to trigger the service call.
-      setTextAndFireInputEvent(queryTexts[callCount], textArea);
-
-      await waitForTimeout(REQUEST_LIMIT_MS);
-
-      const mockReq = httpMock.expectOne('test-url/check');
-      fixture.detectChanges();
-      expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(true);
-      expect(checker.statusWidget.isLoading).toBe(true);
-
-      mockReq.flush(mockResponses[callCount]);
-
-      await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
-      fixture.detectChanges();
-
-      // Checks that loading has stopped.
-      expect(checker.statusWidget.isLoading).toBe(false);
-      expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
-
-      setTextAndFireInputEvent('', textArea);
-
-      fixture.detectChanges();
-      expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
-    }
-  });
-
-  it('Test loading icon visibility with setting hideLoadingIconForScoresBelowMinThreshold',
+  it('Test loading icon visibility with setting showFeedbackForLowScores = false',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
+    demoSettings.scoreThresholds = [0.4, 0.8];
+    demoSettings.showFeedbackForLowScores = false;
     fixture.componentInstance.setDemoSettings(demoSettings);
 
     fixture.detectChanges();
@@ -1056,8 +1003,8 @@ describe('Convai checker test', () => {
       expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
 
       let statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
-      // The first and fourth responses (indices 0 and 2) have a score below
-      // the min threshold, so the loading widget should only be visible for
+      // The first and third responses (indices 0 and 2) have a score below
+      // the neutral threshold, so the loading widget should only be visible for
       // the second one (index 1).
       expect(statusWidgetVisible).toBe(callCount === 1);
 
@@ -1071,12 +1018,76 @@ describe('Convai checker test', () => {
     }
   });
 
+  it('Test loading icon visibility with setting showFeedbackForNeutralScores = false',
+     async() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+
+    // Configure settings.
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.scoreThresholds = [0.4, 0.8];
+    demoSettings.showFeedbackForNeutralScores = false;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+
+    fixture.detectChanges();
+    const checker = fixture.componentInstance.checker;
+    const queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?',
+      'She\'s a witch!'
+    ];
+
+    const mockResponses = [
+      getMockCheckerResponse(0.2, queryTexts[0]),
+      getMockCheckerResponse(0.4, queryTexts[1]),
+      getMockCheckerResponse(0.8, queryTexts[2]),
+      getMockCheckerResponse(0.5, queryTexts[3])
+    ];
+
+    const textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    for (let callCount = 0; callCount < mockResponses.length; callCount++) {
+      // Send an input event to trigger the service call.
+      setTextAndFireInputEvent(queryTexts[callCount], textArea);
+
+      await waitForTimeout(REQUEST_LIMIT_MS);
+
+      const mockReq = httpMock.expectOne('test-url/check');
+      fixture.detectChanges();
+      expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
+      expect(checker.statusWidget.isLoading).toBe(true);
+
+      mockReq.flush(mockResponses[callCount]);
+
+      await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+      fixture.detectChanges();
+
+      // Checks that loading has stopped.
+      expect(checker.statusWidget.isLoading).toBe(false);
+      expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+      let statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
+      // The second and fourth responses (indices 1 and 3) have scores in the
+      // neutral range and should be hidden.
+      expect(statusWidgetVisible).toBe(callCount === 0 || callCount === 2);
+
+      setTextAndFireInputEvent('', textArea);
+
+      // Checks that clearing the textbox does not hide the status widget.
+      await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+      fixture.detectChanges();
+      statusWidgetVisible = getIsElementWithIdVisible('circleSquareDiamondWidget');
+      expect(statusWidgetVisible).toBe(true);
+    }
+  });
+
   it('Test circle square diamond change for score thresholds', async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.scoreThresholds = [0.6, 0.8];
     demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
     fixture.componentInstance.setDemoSettings(demoSettings);
 
@@ -1140,8 +1151,9 @@ describe('Convai checker test', () => {
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.scoreThresholds = [0.6, 0.8];
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+    console.log(demoSettings);
     fixture.componentInstance.setDemoSettings(demoSettings);
 
     fixture.detectChanges();
@@ -1211,7 +1223,7 @@ describe('Convai checker test', () => {
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.scoreThresholds = [0.6, 0.8];
     demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
     fixture.componentInstance.setDemoSettings(demoSettings);
 
@@ -1293,7 +1305,7 @@ describe('Convai checker test', () => {
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0, 0.6, 0.8];
+    demoSettings.scoreThresholds = [0.6, 0.8];
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
     fixture.componentInstance.setDemoSettings(demoSettings);
 
@@ -1369,142 +1381,19 @@ describe('Convai checker test', () => {
     }
   });
 
-  it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold of 0',
+  // TODO: Add a test for hiding feedback for both low and neutral scores.
+  it('Test loading icon visibility, shows feedback for low and neutral scores ',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
-
-    // Always show feedback, but never show the loading icon.
+    // Always show feedback (the loading icon should always display).
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = true;
-    demoSettings.hideLoadingIconAfterLoad = false;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
-
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading);
-  });
-
-  it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold of 0, emoji icon',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-
-    // Always show feedback, but never show the loading icon.
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = true;
-    demoSettings.hideLoadingIconAfterLoad = false;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
-    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
-    const widgetId = 'emojiStatusWidget';
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading,
-      widgetId);
-  });
-
-  it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold > 0',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Show feedback above a minimum threshold, but never show the loading icon.
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = true;
-    demoSettings.hideLoadingIconAfterLoad = false;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading);
-  });
-
-  it('Test loading icon visibility, alwaysHideLoadingIcon = true, min threshold > 0, emoji icon',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Show feedback above a minimum threshold, but never show the loading icon.
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = true;
-    demoSettings.hideLoadingIconAfterLoad = false;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
-    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
-    const widgetId = 'emojiStatusWidget';
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading,
-      widgetId);
-  });
-
-  it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
-     + ' min threshold = 0',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Always show feedback, and only show loading icon above the min threshold
-    // (Implied that the loading icon should always display).
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = false;
-    demoSettings.hideLoadingIconAfterLoad = false;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
+    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.showFeedbackForLowScores = true;
+    demoSettings.showFeedbackForNeutralScores = true;
     const mockResponseScores = [0.6, 0, 0.9];
     const expectedWidgetVisibilitiesBeforeLoading = [true, true, true];
-    // TODO(rachelrosen): This reflects the current behavior (loading icon is
-    // invisible during loading when hideLoadingIconForScoresBelowMinThreshold =
-    // true), but is this really the correct behavior?
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [true, true, true];
     const expectedWidgetVisibilitiesAfterLoading = [true, true, true];
     const expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
     const widgetId = 'circleSquareDiamondWidget';
@@ -1520,25 +1409,19 @@ describe('Convai checker test', () => {
       expectedFeedbackTextVisibilitiesAfterLoading);
   });
 
-  it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
-     + ' min threshold = 0, emoji icon',
+  it('Test loading icon visibility, shows feedback for low and neutral scores, emoji icon',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
-    // Always show feedback, and only show loading icon above the min threshold
-    // (Implied that the loading icon should always display).
+    // Always show feedback, (the loading icon should always display).
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = false;
-    demoSettings.hideLoadingIconAfterLoad = false;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
+    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.showFeedbackForLowScores = true;
+    demoSettings.showFeedbackForNeutralScores = true;
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
     const mockResponseScores = [0.6, 0, 0.9];
     const expectedWidgetVisibilitiesBeforeLoading = [true, true, true];
-    // TODO(rachelrosen): This reflects the current behavior (loading icon is
-    // invisible during loading when hideLoadingIconForScoresBelowMinThreshold =
-    // true), but is this really the correct behavior?
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [true, true, true];
     const expectedWidgetVisibilitiesAfterLoading = [true, true, true];
     const expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
     const widgetId = 'emojiStatusWidget';
@@ -1555,18 +1438,15 @@ describe('Convai checker test', () => {
       widgetId);
   });
 
-  it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
-     + 'min threshold > 0',
+  it('Test loading icon visibility, showFeedbackForLowScores = false, ',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
-    // Show feedback above a minimum threshold, and only show loading
-    // icon above the min threshold.
+    // Hide feedback and loading icon for low scores.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = false;
-    demoSettings.hideLoadingIconAfterLoad = false;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
+    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.showFeedbackForLowScores = false;
+    demoSettings.showFeedbackForNeutralScores = true;
 
     const mockResponseScores = [0.6, 0, 0.9];
     const expectedWidgetVisibilitiesBeforeLoading = [
@@ -1574,9 +1454,9 @@ describe('Convai checker test', () => {
       true,
       false
     ];
-    // TODO(rachelrosen): This reflects the current behavior (loading icon is
-    // invisible during loading when hideLoadingIconForScoresBelowMinThreshold =
-    // true), but is this really the correct behavior?
+    // TODO: This reflects the current behavior (loading icon is invisible
+    // during loading when showFeedbackForLowScores = false, but is this
+    // really the correct behavior?
     const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
     const expectedWidgetVisibilitiesAfterLoading = [true, false, true];
     const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
@@ -1592,18 +1472,16 @@ describe('Convai checker test', () => {
       expectedFeedbackTextVisibilitiesAfterLoading);
   });
 
-  it('Test loading icon visibility, hideLoadingIconForScoresBelowMinThreshold = true, '
-     + 'min threshold > 0, emoji icon',
+  it('Test loading icon visibility, showFeedbackForLowScores = false, emoji icon',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Show feedback above a minimum threshold, and only show loading
     // icon above the min threshold.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = false;
-    demoSettings.hideLoadingIconAfterLoad = false;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
+    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.showFeedbackForLowScores = false;
+    demoSettings.showFeedbackForNeutralScores = true;
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
 
     const mockResponseScores = [0.6, 0, 0.9];
@@ -1612,9 +1490,9 @@ describe('Convai checker test', () => {
       true,
       false
     ];
-    // TODO(rachelrosen): This reflects the current behavior (loading icon is
-    // invisible during loading when hideLoadingIconForScoresBelowMinThreshold =
-    // true), but is this really the correct behavior?
+    // TODO: This reflects the current behavior (loading icon is invisible
+    // during loading when showFeedbackForLowScores = false, but is this
+    // really the correct behavior?
     const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
     const expectedWidgetVisibilitiesAfterLoading = [true, false, true];
     const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
@@ -1632,22 +1510,28 @@ describe('Convai checker test', () => {
       widgetId);
   });
 
-  it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold = 0',
+  it('TODO: ***** Test loading icon visibility, showFeedbackForNeutralScores = false, ',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
-
-    // Always show feedback, but hide the loading icon after load.
+    // Hide feedback and loading icon for low scores.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = false;
-    demoSettings.hideLoadingIconAfterLoad = true;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
+    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.showFeedbackForLowScores = true;
+    demoSettings.showFeedbackForNeutralScores = false;
+
     const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [true, true, true];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
+    const expectedWidgetVisibilitiesBeforeLoading = [
+      true, // The default score is 0, so at the start it will be visible.
+      false,
+      true
+    ];
+    // TODO: This reflects the current behavior (loading icon is invisible
+    // during loading when showFeedbackForNeutralScores = false, but is this
+    // really the correct behavior?
+    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesAfterLoading = [false, true, true];
+    const expectedFeedbackTextVisibilitiesAfterLoading = [false, true, true];
 
     await verifyWidgetVisibilityForDemoSettings(
       fixture,
@@ -1660,289 +1544,30 @@ describe('Convai checker test', () => {
       expectedFeedbackTextVisibilitiesAfterLoading);
   });
 
-  it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold = 0, emoji icon',
+  it('Test loading icon visibility, showFeedbackForNeutralScores = false, emoji icon',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
-
-    // Always show feedback, but hide the loading icon after load.
+    // Show feedback above a minimum threshold, and only show loading
+    // icon above the min threshold.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = false;
-    demoSettings.hideLoadingIconAfterLoad = true;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
-    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [true, true, true];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
-    const widgetId = 'emojiStatusWidget';
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading,
-      widgetId);
-  });
-
-  it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold > 0',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Show feedback above a minimum threshold, and hide the loading
-    // icon after load.
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = false;
-    demoSettings.hideLoadingIconAfterLoad = true;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
-
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [true, true, true];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading);
-  });
-
-  it('Test loading icon visibility, hideLoadingIconAfterLoad = true, min threshold > 0, emoji icon',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Show feedback above a minimum threshold, and hide the loading
-    // icon after load.
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = false;
-    demoSettings.hideLoadingIconAfterLoad = true;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
+    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.showFeedbackForLowScores = true;
+    demoSettings.showFeedbackForNeutralScores = false;
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
 
     const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [true, true, true];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
-    const widgetId = 'emojiStatusWidget';
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading,
-      widgetId);
-  });
-
-  it('Test loading icon visibility, hideLoadingIconAfterLoad = true, '
-     + 'hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Show feedback above a minimum threshold, hide the loading icon
-    // after loading compconstes, and hide the loading icon for scores below the
-    // minimum threshold. (hideLoadingIconAfterLoad should override
-    // hideLoadingIconForScoresBelowMinThreshold).
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = false;
-    demoSettings.hideLoadingIconAfterLoad = true;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
-
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    // TODO(rachelrosen): This reflects the current behavior (loading icon is
-    // invisible during loading when hideLoadingIconForScoresBelowMinThreshold =
-    // true), but is this really the correct behavior?
+    const expectedWidgetVisibilitiesBeforeLoading = [
+      true, // The default score is 0, so at the start it will be visible.
+      false,
+      true
+    ];
+    // TODO: This reflects the current behavior (loading icon is invisible
+    // during loading when showFeedbackForNeutralScores = false, but is this
+    // really the correct behavior?
     const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading);
-  });
-
-  it('Test loading icon visibility, hideLoadingIconAfterLoad = true, '
-     + 'hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0 '
-     + 'emoji icon',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Show feedback above a minimum threshold, hide the loading icon
-    // after loading compconstes, and hide the loading icon for scores below the
-    // minimum threshold. (hideLoadingIconAfterLoad should override
-    // hideLoadingIconForScoresBelowMinThreshold).
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = false;
-    demoSettings.hideLoadingIconAfterLoad = true;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
-    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    // TODO(rachelrosen): This reflects the current behavior (loading icon is
-    // invisible during loading when hideLoadingIconForScoresBelowMinThreshold =
-    // true), but is this really the correct behavior?
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
-    const widgetId = 'emojiStatusWidget';
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading,
-      widgetId);
-  });
-
-  it('Test loading icon visibility, alwaysHideLoadingIcon = true, '
-     + ' hideLoadingIconAfterLoad = true, min threshold > 0',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Show feedback above a minimum threshold, hide the loading icon
-    // after loading compconstes, and always hide the loading icon.
-    // (alwaysHideLoadingIcon should override hideLoadingIconAfterLoad).
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = true;
-    demoSettings.hideLoadingIconAfterLoad = true;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading);
-  });
-
-  it('Test loading icon visibility, alwaysHideLoadingIcon = true, '
-     + ' hideLoadingIconAfterLoad = true, min threshold > 0, emoji icon',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Show feedback above a minimum threshold, hide the loading icon
-    // after loading compconstes, and always hide the loading icon.
-    // (alwaysHideLoadingIcon should override hideLoadingIconAfterLoad).
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = true;
-    demoSettings.hideLoadingIconAfterLoad = true;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = false;
-    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
-    const widgetId = 'emojiStatusWidget';
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading,
-      widgetId);
-
-  });
-
-  it('Test loading icon visibility, alwaysHideLoadingIcon = true, hideLoadingIconAfterLoad = true, '
-     + 'and hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Show feedback above a minimum threshold, hide the loading icon
-    // after loading compconstes, hide the loading icon for scores below the
-    // minimum threshold, and always hide the loading icon.
-    // (alwaysHideLoadingIcon should override hideLoadingIconAfterLoad and
-    // hideLoadingIconForScoresBelowMinThreshold).
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = true;
-    demoSettings.hideLoadingIconAfterLoad = true;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
-
-    await verifyWidgetVisibilityForDemoSettings(
-      fixture,
-      httpMock,
-      demoSettings,
-      mockResponseScores,
-      expectedWidgetVisibilitiesBeforeLoading,
-      expectedWidgetVisibilitiesWhileLoading,
-      expectedWidgetVisibilitiesAfterLoading,
-      expectedFeedbackTextVisibilitiesAfterLoading);
-  });
-
-  it('Test loading icon visibility, alwaysHideLoadingIcon = true, hideLoadingIconAfterLoad = true, '
-     + 'and hideLoadingIconForScoresBelowMinThreshold = true, min threshold > 0, emoji icon',
-     async() => {
-    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
-    fixture.detectChanges();
-    // Show feedback above a minimum threshold, hide the loading icon
-    // after loading compconstes, hide the loading icon for scores below the
-    // minimum threshold, and always hide the loading icon.
-    // (alwaysHideLoadingIcon should override hideLoadingIconAfterLoad and
-    // hideLoadingIconForScoresBelowMinThreshold).
-    const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.6, 0.8];
-    demoSettings.alwaysHideLoadingIcon = true;
-    demoSettings.hideLoadingIconAfterLoad = true;
-    demoSettings.hideLoadingIconForScoresBelowMinThreshold = true;
-    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
+    const expectedWidgetVisibilitiesAfterLoading = [false, true, true];
+    const expectedFeedbackTextVisibilitiesAfterLoading = [false, true, true];
     const widgetId = 'emojiStatusWidget';
 
     await verifyWidgetVisibilityForDemoSettings(
@@ -1972,13 +1597,13 @@ describe('Convai checker test', () => {
     // Test different low, mid, and high thresholds.
     let demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.2, 0.6, 0.8];
+    demoSettings.scoreThresholds = [0.6, 0.8];
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
 
     const checker = fixture.componentInstance.checker;
 
-    let expectedGradientControlPoints = [Math.floor(20 + (checker.statusWidget.getFirstGradientRatio() * 40)), 60, 80];
+    let expectedGradientControlPoints = [Math.floor(checker.statusWidget.getFirstGradientRatio() * 60), 60, 80];
     let actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
     expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
 
@@ -1996,13 +1621,13 @@ describe('Convai checker test', () => {
     // places.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.23456, 0.6789, 0.89990];
+    demoSettings.scoreThresholds = [0.6789, 0.89990];
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();
 
     expectedGradientControlPoints = [
-      Math.floor(23.456 + checker.statusWidget.getFirstGradientRatio() * 44.434), 67, 89];
+      Math.floor(checker.statusWidget.getFirstGradientRatio() * 67.89), 67, 89];
     actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
     expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
     verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
@@ -2010,45 +1635,15 @@ describe('Convai checker test', () => {
     verifyInterpolateColorsForControlPointsAndGradientColors(
       checker, actualGradientControlPoints, testGradientColorsRgb);
 
-    // Test equal low and mid score thresholds.
-    demoSettings.scoreThresholds = [0.5, 0.5, 0.8];
-    fixture.componentInstance.setDemoSettings(demoSettings);
-    fixture.detectChanges();
-    checker.statusWidget.updateGradient();
-    fixture.detectChanges();
-
-    expectedGradientControlPoints = [49, 50, 80];
-    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
-    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
-    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
-                            testGradientColorsRgb[0]);
-    verifyInterpolateColorsForControlPointsAndGradientColors(
-      checker, actualGradientControlPoints, testGradientColorsRgb);
-
-    // Test equal low and mid score thresholds with several decimal places.
-    demoSettings.scoreThresholds = [0.56789, 0.56789, 0.8];
-    fixture.componentInstance.setDemoSettings(demoSettings);
-    fixture.detectChanges();
-    checker.statusWidget.updateGradient();
-    fixture.detectChanges();
-
-    expectedGradientControlPoints = [55, 56, 80];
-    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
-    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
-    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
-                            testGradientColorsRgb[0]);
-    verifyInterpolateColorsForControlPointsAndGradientColors(
-      checker, actualGradientControlPoints, testGradientColorsRgb);
-
-    // Test equal mid and high score thresholds.
+    // Test equal neutral and toxic thresholds.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.5, 0.75, 0.75];
+    demoSettings.scoreThresholds = [0.75, 0.75];
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();
 
-    expectedGradientControlPoints = [Math.floor(50 + checker.statusWidget.getFirstGradientRatio() * 25), 74, 75];
+    expectedGradientControlPoints = [Math.floor(checker.statusWidget.getFirstGradientRatio() * 75), 74, 75];
     actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
     expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
     verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
@@ -2056,15 +1651,15 @@ describe('Convai checker test', () => {
     verifyInterpolateColorsForControlPointsAndGradientColors(
       checker, actualGradientControlPoints, testGradientColorsRgb);
 
-    // Test equal mid and high score thresholds with several decimal places.
+    // Test equal neutral and toxic score thresholds with several decimal places.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.5, 0.7511111, 0.7511111];
+    demoSettings.scoreThresholds = [0.7511111, 0.7511111];
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();
 
-    expectedGradientControlPoints = [Math.floor(50 + checker.statusWidget.getFirstGradientRatio() * 25.11111), 74, 75];
+    expectedGradientControlPoints = [Math.floor(checker.statusWidget.getFirstGradientRatio() * 75.11111), 74, 75];
     actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
     expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
     verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
@@ -2072,15 +1667,16 @@ describe('Convai checker test', () => {
     verifyInterpolateColorsForControlPointsAndGradientColors(
       checker, actualGradientControlPoints, testGradientColorsRgb);
 
-    // Test equal low, mid, and high score thresholds.
+    // Test almost equal neutral and toxic score thresholds.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.75, 0.75, 0.75];
+    demoSettings.scoreThresholds = [0.752, 0.753];
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();
 
-    expectedGradientControlPoints = [73, 74, 75];
+    expectedGradientControlPoints = [
+      Math.floor(checker.statusWidget.getFirstGradientRatio() * 75.2), 74, 75];
     actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
     expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
     verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
@@ -2088,26 +1684,10 @@ describe('Convai checker test', () => {
     verifyInterpolateColorsForControlPointsAndGradientColors(
       checker, actualGradientControlPoints, testGradientColorsRgb);
 
-    // Test almost equal low, mid, and high score thresholds.
+    // Test neutral threshold of 0.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.751, 0.752, 0.753];
-    fixture.componentInstance.setDemoSettings(demoSettings);
-    fixture.detectChanges();
-    checker.statusWidget.updateGradient();
-
-    expectedGradientControlPoints = [73, 74, 75];
-    actualGradientControlPoints = checker.statusWidget.getAdjustedGradientControlPoints(100);
-    expect(actualGradientControlPoints).toEqual(expectedGradientControlPoints);
-    verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(0),
-                            testGradientColorsRgb[0]);
-    verifyInterpolateColorsForControlPointsAndGradientColors(
-      checker, actualGradientControlPoints, testGradientColorsRgb);
-
-    // Test equal low and mid thresholds of 0.
-    demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.0, 0.0, 0.75];
+    demoSettings.scoreThresholds = [0.0, 0.75];
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();
@@ -2121,10 +1701,10 @@ describe('Convai checker test', () => {
     verifyColorsAlmostEqual(checker.statusWidget.interpolateColors(.75),
                             testGradientColorsRgb[2]);
 
-    // Test equal low, mid, and high thresholds of 0.
+    // Test equal neutral and toxic thresholds of 0.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.0, 0.0, 0.0];
+    demoSettings.scoreThresholds = [0.0, 0.0];
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();

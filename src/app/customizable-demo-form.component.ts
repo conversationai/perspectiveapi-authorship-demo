@@ -116,18 +116,16 @@ export class CustomizableDemoFormComponent implements OnInit {
   /** Score threshold options. */
   // Value of the slider; note that the slider is inverted for stylistic
   // reasons, so when using this value take 100 - sliderValue.
-  sliderValue: number = (1 - ScoreThreshold.BORDERLINE) * 100;
+  sliderValue: number = (1 - ScoreThreshold.NEUTRAL) * 100;
   // Score thresholds determined from the slider value.
-  sliderScoreThresholds: [number, number, number] = [
-    ScoreThreshold.BORDERLINE,
-    ScoreThreshold.BORDERLINE,
-    ScoreThreshold.UNCIVIL
+  sliderScoreThresholds: [number, number] = [
+    ScoreThreshold.NEUTRAL,
+    ScoreThreshold.TOXIC
   ];
   // Custom score thresholds.
-  scoreThresholds: [number, number, number] = [
-    ScoreThreshold.OKAY,
-    ScoreThreshold.BORDERLINE,
-    ScoreThreshold.UNCIVIL
+  scoreThresholds: [number, number] = [
+    ScoreThreshold.NEUTRAL,
+    ScoreThreshold.TOXIC
   ];
   customizeScoreThresholds = false;
 
@@ -169,13 +167,11 @@ export class CustomizableDemoFormComponent implements OnInit {
   showMoreInfoLink = true;
   // The text to use to prompt users to submit feedback.
   userFeedbackPromptText = 'Seem wrong?';
-  // Whether to hide the loading icon after loading completes.
-  hideLoadingIconAfterLoad = false;
-  // Whether to hide the loading icon when the score is below the minimum
-  // threshold to show feedback.
-  hideLoadingIconForScoresBelowMinThreshold = false;
-  // Whether to always hide the loading icon.
-  alwaysHideLoadingIcon = false;
+  // Whether to show feedback for scores below the neutral threshold.
+  showFeedbackForLowScores = true;
+  // Whether to show feedback for scores above the neutral threshold and below
+  // the toxic threshold.
+  showFeedbackForNeutralScores = true;
   // The id of the community using the widget.
   communityId = '';
   // The name of the model to use.
@@ -237,16 +233,14 @@ export class CustomizableDemoFormComponent implements OnInit {
           this.scoreThresholds = decodedDemoSettings.scoreThresholds;
         } else {
           this.sliderScoreThresholds = decodedDemoSettings.scoreThresholds;
-          this.sliderValue = (1 - this.sliderScoreThresholds[1]) * 100;
+          this.sliderValue = (1 - this.sliderScoreThresholds[0]) * 100;
         }
 
         this.showPercentage = decodedDemoSettings.showPercentage;
         this.showMoreInfoLink = decodedDemoSettings.showMoreInfoLink;
-        this.hideLoadingIconAfterLoad = decodedDemoSettings.hideLoadingIconAfterLoad;
-        this.hideLoadingIconForScoresBelowMinThreshold =
-          decodedDemoSettings.hideLoadingIconForScoresBelowMinThreshold;
+        this.showFeedbackForLowScores = decodedDemoSettings.showFeedbackForLowScores;
+        this.showFeedbackForNeutralScores = decodedDemoSettings.showFeedbackForNeutralScores;
         this.userFeedbackPromptText = decodedDemoSettings.userFeedbackPromptText;
-        this.alwaysHideLoadingIcon = decodedDemoSettings.alwaysHideLoadingIcon;
         this.selectedLoadingIconStyle = decodedDemoSettings.loadingIconStyle;
       }
     });
@@ -263,11 +257,10 @@ export class CustomizableDemoFormComponent implements OnInit {
 
   /**
    * Updates the score thresholds from the slider value.
-   * When using the slider, the first two thresholds should be the same, as the
-   * minimum score to show feedback is also the threshold for medium toxicity
-   * (by default that there is no desired feedback text for low toxicity). The
-   * threshold for high toxicity is the average of the threshold for medium
-   * toxicity and the max toxicity score.
+   * When using the slider, the position of the slider value equals the
+   * threshold for a neutral toxicity score. The threshold for high toxicity is
+   * the average of the threshold for neutral toxicity and the max toxicity
+   * score.
    *
    * Note that the slider is inverted for UI reasons, which is why each value
    * is subtracted from the max slider value. Values are also divided by 100 to
@@ -275,8 +268,7 @@ export class CustomizableDemoFormComponent implements OnInit {
    */
   onSliderValueChange(change: MatSliderChange) {
     this.sliderScoreThresholds[0] = (change.source.max - change.value) / 100;
-    this.sliderScoreThresholds[1] = (change.source.max - change.value) / 100;
-    this.sliderScoreThresholds[2] = (1 + this.sliderScoreThresholds[1]) / 2;
+    this.sliderScoreThresholds[1] = (1 + this.sliderScoreThresholds[0]) / 2;
   }
 
   onSettingsChanged() {
@@ -319,11 +311,9 @@ export class CustomizableDemoFormComponent implements OnInit {
         this.customFeedbackTextScheme : this.selectedFeedbackTextScheme.feedbackTextSet,
       scoreThresholds: this.customizeScoreThresholds ?
         this.scoreThresholds : this.sliderScoreThresholds,
-      hideLoadingIconAfterLoad: this.hideLoadingIconAfterLoad,
-      hideLoadingIconForScoresBelowMinThreshold:
-        this.hideLoadingIconForScoresBelowMinThreshold,
+      showFeedbackForLowScores: this.showFeedbackForLowScores,
+      showFeedbackForNeutralScores: this.showFeedbackForNeutralScores,
       userFeedbackPromptText: this.userFeedbackPromptText,
-      alwaysHideLoadingIcon: this.alwaysHideLoadingIcon,
       loadingIconStyle: this.selectedLoadingIconStyle,
       communityId: this.communityId,
       usePluginEndpoint: this.usePluginEndpoint,

@@ -58,9 +58,8 @@ export const ConfigurationInput = {
 
 export const ScoreThreshold = {
   OKAY: 0,
-  BORDERLINE: 0.20,
-  UNCIVIL: 0.76,
-  MAX: 1,
+  NEUTRAL: 0.20,
+  TOXIC: 0.76,
 };
 
 export const LoadingIconStyle = {
@@ -117,18 +116,16 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
      DEFAULT_FEEDBACK_TEXT,
      DEFAULT_FEEDBACK_TEXT
   ];
-  @Input() scoreThresholds: [number, number, number] = [
-    ScoreThreshold.OKAY,
-    ScoreThreshold.BORDERLINE,
-    ScoreThreshold.UNCIVIL
+  @Input() scoreThresholds: [number, number] = [
+    ScoreThreshold.NEUTRAL,
+    ScoreThreshold.TOXIC
   ];
   @Input() showPercentage = true;
   @Input() showMoreInfoLink = true;
   @Input() analyzeErrorMessage: string|null = null;
   @Input() userFeedbackPromptText: string;
-  @Input() hideLoadingIconAfterLoad: boolean;
-  @Input() hideLoadingIconForScoresBelowMinThreshold: boolean;
-  @Input() alwaysHideLoadingIcon: boolean;
+  @Input() showFeedbackForLowScores: boolean;
+  @Input() showFeedbackForNeutralScores: boolean;
   @Input() loadingIconStyle: string;
   @Input() hasLocalAssets = true;
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
@@ -182,8 +179,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   private loadingIconStyleChanged = false;
   private scoreThresholdsChanged = false;
 
-  private hideLoadingIconAfterLoadChanged = false;
-  private alwaysHideLoadingIconChanged = false;
+  private showFeedbackChanged = false;
   private gradientColorsChanged = false;
 
   private stateChangeAnimations: TimelineMax|null = null;
@@ -284,12 +280,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       }
     }
 
-    if (changes['hideLoadingIconAfterLoad'] !== undefined) {
-      this.hideLoadingIconAfterLoadChanged = true;
-    }
-
-    if (changes['alwaysHideLoadingIcon'] !== undefined) {
-      this.alwaysHideLoadingIconChanged = true;
+    if (changes['showFeedbackForLowScores']
+        || changes['showFeedbackForNeutralScors']) {
+      this.showFeedbackChanged = true;
     }
   }
 
@@ -300,8 +293,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   ngAfterViewChecked() {
     if (this.scoreThresholdsChanged
         || this.loadingIconStyleChanged
-        || this.hideLoadingIconAfterLoadChanged
-        || this.alwaysHideLoadingIconChanged) {
+        || this.showFeedbackChanged) {
 
       // Kill any pending state change animations, since those are for an
       // out-of-date state.
@@ -365,16 +357,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
             }
           }
         }
-        if (this.hideLoadingIconAfterLoadChanged
-            || this.alwaysHideLoadingIconChanged) {
-          if (this.hideLoadingIconAfterLoadChanged) {
-            console.debug('Setting hideLoadingIconAfterLoadChanged to false');
-            this.hideLoadingIconAfterLoadChanged = false;
-          }
-          if (this.alwaysHideLoadingIconChanged) {
-            console.debug('Setting alwaysHideLoadingIconChanged to false');
-            this.alwaysHideLoadingIconChanged = false;
-          }
+        if (this.showFeedbackChanged) {
+          this.showFeedbackChanged = false;
+          console.debug('Setting showFeedbackChanged to false');
 
           // Don't do anything if the loadingIconStyle has also changed, since
           // that animation will override animations to do here.
@@ -451,11 +436,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // Use Math.floor because control points have to be integers.
     const gradientPoints = [
       Math.floor(
-        gradientPointCount * (
-          this.scoreThresholds[0] + FIRST_GRADIENT_RATIO * (
-            this.scoreThresholds[1] - this.scoreThresholds[0]))),
-      Math.floor(gradientPointCount * this.scoreThresholds[1]),
-      Math.floor(gradientPointCount * this.scoreThresholds[2])
+        gradientPointCount * (FIRST_GRADIENT_RATIO * this.scoreThresholds[0])),
+      Math.floor(gradientPointCount * this.scoreThresholds[0]),
+      Math.floor(gradientPointCount * this.scoreThresholds[1])
     ];
 
     // If two gradient colors are added at the same point (which happens when
@@ -532,14 +515,14 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   private getShouldHideStatusWidget(loadStart: boolean): boolean {
     let shouldHide = false;
 
-    if (this.hideLoadingIconAfterLoad) {
-      shouldHide = shouldHide || !loadStart;
+    if (!this.showFeedbackForLowScores) {
+      shouldHide = shouldHide || loadStart || this.score < this.scoreThresholds[0];
     }
-    if (this.hideLoadingIconForScoresBelowMinThreshold) {
-      shouldHide = shouldHide || loadStart || (this.score < this.scoreThresholds[0]);
-    }
-    if (this.alwaysHideLoadingIcon) {
-      shouldHide = true;
+
+    if (!this.showFeedbackForNeutralScores) {
+      shouldHide = shouldHide || loadStart || (
+        this.score >= this.scoreThresholds[0]
+        && this.score < this.scoreThresholds[1]);
     }
 
     return shouldHide;
@@ -672,7 +655,16 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   }
 
   shouldShowFeedback(score: number) {
-    return score >= this.scoreThresholds[0];
+    console.log('***shouldShowFeedback for score ', score, this.showFeedbackForLowScores, this.showFeedbackForNeutralScores);
+    if (score < this.scoreThresholds[0]) {
+      console.log(this.showFeedbackForLowScores);
+      return this.showFeedbackForLowScores;
+    } else if (score < this.scoreThresholds[1]) {
+      console.log(this.showFeedbackForNeutralScores);
+      return this.showFeedbackForNeutralScores;
+    }
+    console.log(true);
+    return true;
   }
 
   // Wrapper for twemoji.parse() to use in data binding. Parses text, replacing
@@ -682,14 +674,12 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   }
 
   getFeedbackTextForScore(score: number): string {
-    if (score >= this.scoreThresholds[2]) {
+    if (score >= this.scoreThresholds[1]) {
       return this.feedbackText[2];
-    } else if (score >= this.scoreThresholds[1]) {
-      return this.feedbackText[1];
     } else if (score >= this.scoreThresholds[0]) {
-      return this.feedbackText[0];
+      return this.feedbackText[1];
     } else {
-      return '';
+      return this.feedbackText[0];
     }
   }
 
@@ -751,9 +741,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   // Gets the shape corresponding to the specified score.
   getShapeForScore(score: number): Shape {
-    if (score > this.scoreThresholds[2]) {
+    if (score > this.scoreThresholds[1]) {
       return Shape.DIAMOND;
-    } else if (score > this.scoreThresholds[1]) {
+    } else if (score > this.scoreThresholds[0]) {
       return Shape.SQUARE;
     } else {
       return Shape.CIRCLE;
@@ -762,9 +752,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   // Gets the emoji corresponding to the specified score.
   getEmojiForScore(score: number): Emoji {
-    if (score > this.scoreThresholds[2]) {
+    if (score > this.scoreThresholds[1]) {
       return Emoji.SAD;
-    } else if (score > this.scoreThresholds[1]) {
+    } else if (score > this.scoreThresholds[0]) {
       return Emoji.NEUTRAL;
     } else {
       return Emoji.SMILE;
@@ -794,10 +784,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     updateShapeAnimationTimeline.add(
       this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
 
-    if (score > this.scoreThresholds[2]) {
+    if (score > this.scoreThresholds[1]) {
       updateShapeAnimationTimeline.add(
         this.getTransitionToDiamondAnimation(.8 * SHAPE_MORPH_TIME_SECONDS));
-    } else if (score > this.scoreThresholds[1]) {
+    } else if (score > this.scoreThresholds[0]) {
       // Square is a special case, since we rotate based on the current degrees
       // and not to a specific rotation. As a result this can get messed up if
       // we're in the middle of an existing rotation, so reset the rotation
@@ -955,16 +945,16 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   getShowEmojiAnimation(): TimelineMax {
     if (this.loadingIconStyle !== LoadingIconStyle.EMOJI) {
       console.debug('Calling getShowEmojiAnimation() but loading icon style is'
-                  + 'not emoji style, returning an empty timeline');
+                    + 'not emoji style, returning an empty timeline');
       // The loading icon state has been changed; return an empty timeline.
       // This is not an error and can happen when the loading icon state is
       // changed via data binding while the loading animation is active.
       return new TimelineMax({});
     }
     let emojiType: Emoji|null = null;
-    if (this.score > this.scoreThresholds[2]) {
+    if (this.score > this.scoreThresholds[1]) {
       emojiType = Emoji.SAD;
-    } else if (this.score > this.scoreThresholds[1]) {
+    } else if (this.score > this.scoreThresholds[0]) {
       emojiType = Emoji.NEUTRAL;
     } else {
       emojiType = Emoji.SMILE;
@@ -1572,8 +1562,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       backgroundColor: endColor,
       onStart: () => {
         console.debug('Loading animation: Morphing to circle from '
-                     + this.getNameFromShape(
-           this.currentShape));
+                      + this.getNameFromShape(this.currentShape));
         this.currentShape = Shape.CIRCLE;
       },
       onComplete: () => {

@@ -64,25 +64,18 @@ export interface DemoSettings {
   // unicode. This must be length 3.
   feedbackText: [string, string, string];
 
-  // The numeric thresholds for showing each severity. Index 0 contains the
-  // minimum threshold to show scores. Index 1 is the threshold for medium
-  // severity, and index 2 is the threshold for high severity. Note that if you
-  // want only scores with medium severity to be shown (and never scores for
-  // low severity), indices 0 and 1 should have the same value.
-  scoreThresholds: [number, number, number];
+  // The numeric thresholds for showing scores of neutral and high severity.
+  // Index 0 is the threshold for neutral severity, and index 1 is the threshold
+  // for high severity.
+  scoreThresholds: [number, number];
 
-  // Whether to hide the loading icon after loading completes; this will allow
-  // for loading animation to play, but no circle/square/diamond will be
-  // present after the loading finishes.
-  hideLoadingIconAfterLoad: boolean;
+  // Whether to show the loading icon and the score for low scores
+  // (scores < scoreThresholds[0]).
+  showFeedbackForLowScores: boolean;
 
-  // Whether to hide the loading icon when the score is below the minimum
-  // threshold to show feedback (index 0 of scoreThresholds).
-  hideLoadingIconForScoresBelowMinThreshold: boolean;
-
-  // Whether to always hide the loading icon (results in only showing the text
-  // feedback and never showing loading animation).
-  alwaysHideLoadingIcon: boolean;
+  // Whether to show the loading icon and the score for neutral scores
+  // (scoresThresholds[0] < scores < scoreThresholds[1]).
+  showFeedbackForNeutralScores: boolean;
 
   // The loading icon style. See perspective-status.LoadingIconStyle for
   // options.
@@ -113,10 +106,9 @@ export const DEFAULT_DEMO_SETTINGS = {
     'Unsure if this will be perceived as toxic',
     'Likely to be perceived as toxic'
   ] as [string, string, string],
-  scoreThresholds: [0, 0.4, 0.7] as [number, number, number],
-  hideLoadingIconAfterLoad: false,
-  hideLoadingIconForScoresBelowMinThreshold: false,
-  alwaysHideLoadingIcon: false,
+  scoreThresholds: [0.4, 0.7] as [number, number],
+  showFeedbackForLowScores: true,
+  showFeedbackForNeutralScores: true,
   loadingIconStyle: LoadingIconStyle.CIRCLE_SQUARE_DIAMOND,
   userFeedbackPromptText: 'Seem wrong?'
 };

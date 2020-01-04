@@ -34,18 +34,11 @@
                [(ngModel)]="scoreThresholds[0]"
                (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
                type="number"
-               placeholder="Min threshold for displaying feedback"/>
-      </mat-form-field>
-      <mat-form-field shouldPlaceholderFloat="true">
-        <input matInput
-               [(ngModel)]="scoreThresholds[1]"
-               (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
-               type="number"
                placeholder="Threshold for medium toxicity"/>
       </mat-form-field>
       <mat-form-field shouldPlaceholderFloat="true">
         <input matInput
-               [(ngModel)]="scoreThresholds[2]"
+               [(ngModel)]="scoreThresholds[1]"
                (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
                type="number"
                placeholder="Threshold for high toxicity"/>
@@ -164,21 +157,14 @@
     </div>
 
     <div class="setting">
-      <mat-slide-toggle [(ngModel)]="hideLoadingIconAfterLoad"
-                       (change)="onSettingsChanged()">Hide loading icon after load
+      <mat-slide-toggle [(ngModel)]="showFeedbackForLowScores"
+        (change)="onSettingsChanged()">Show feedback for low scores.
       </mat-slide-toggle>
     </div>
 
     <div class="setting">
-      <mat-slide-toggle [(ngModel)]="alwaysHideLoadingIcon"
-        (change)="onSettingsChanged()">Always hide the loading icon.
-      </mat-slide-toggle>
-    </div>
-
-
-    <div class="setting">
-      <mat-slide-toggle [(ngModel)]="hideLoadingIconForScoresBelowMinThreshold"
-        (change)="onSettingsChanged()">Hide loading icon for scores below the minimum threshold.
+      <mat-slide-toggle [(ngModel)]="showFeedbackForNeutralScores"
+        (change)="onSettingsChanged()">Show feedback for neutal scores.
       </mat-slide-toggle>
     </div>
 
