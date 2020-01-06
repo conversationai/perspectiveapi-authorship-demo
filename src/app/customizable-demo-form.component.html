@@ -31,22 +31,15 @@
     <div class="setting customizableSetting" *ngIf="customizeScoreThresholds">
       <mat-form-field shouldPlaceholderFloat="true">
         <input matInput
-               [(ngModel)]="scoreThresholds[0]"
-               (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
-               type="number"
-               placeholder="Min threshold for displaying feedback"/>
-      </mat-form-field>
-      <mat-form-field shouldPlaceholderFloat="true">
-        <input matInput
-               [(ngModel)]="scoreThresholds[1]"
-               (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
+               [(ngModel)]="neutralScoreThreshold"
+               (input)="onSettingsChanged()"
                type="number"
                placeholder="Threshold for medium toxicity"/>
       </mat-form-field>
       <mat-form-field shouldPlaceholderFloat="true">
         <input matInput
-               [(ngModel)]="scoreThresholds[2]"
-               (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
+               [(ngModel)]="toxicScoreThreshold"
+               (input)="onSettingsChanged()"
                type="number"
                placeholder="Threshold for high toxicity"/>
       </mat-form-field>
@@ -58,7 +51,7 @@
         <mat-select placeholder="Loading icon style"
                    shouldPlaceholderFloat="true"
                    [(ngModel)]="selectedLoadingIconStyle"
-                   (change)="onSettingsChanged()">
+                   (selectionChange)="onSettingsChanged()">
           <mat-option *ngFor="let loadingIconStyle of loadingIconStyles"
                      [value]="loadingIconStyle">
             {{loadingIconStyle}}
@@ -74,7 +67,7 @@
                    shouldPlaceholderFloat="true"
                    [disabled]="useCustomFeedbackText"
                    [(ngModel)]="selectedFeedbackTextScheme"
-                   (change)="onSettingsChanged()">
+                   (selectionChange)="onSettingsChanged()">
           <mat-option *ngFor="let feedbackTextScheme of feedbackTextSchemes"
                      [value]="feedbackTextScheme">
             {{feedbackTextScheme.name}}
@@ -122,7 +115,7 @@
                    shouldPlaceholderFloat="true"
                    [(ngModel)]="selectedColorScheme"
                    [disabled]="useCustomColorScheme"
-                   (change)="onSettingsChanged()">
+                   (selectionChange)="onSettingsChanged()">
           <mat-option *ngFor="let colorScheme of colorSchemes" [value]="colorScheme">
             {{colorScheme.name}}
           </mat-option>
@@ -164,21 +157,14 @@
     </div>
 
     <div class="setting">
-      <mat-slide-toggle [(ngModel)]="hideLoadingIconAfterLoad"
-                       (change)="onSettingsChanged()">Hide loading icon after load
+      <mat-slide-toggle [(ngModel)]="showFeedbackForLowScores"
+        (change)="onSettingsChanged()">Show feedback for low scores.
       </mat-slide-toggle>
     </div>
 
     <div class="setting">
-      <mat-slide-toggle [(ngModel)]="alwaysHideLoadingIcon"
-        (change)="onSettingsChanged()">Always hide the loading icon.
-      </mat-slide-toggle>
-    </div>
-
-
-    <div class="setting">
-      <mat-slide-toggle [(ngModel)]="hideLoadingIconForScoresBelowMinThreshold"
-        (change)="onSettingsChanged()">Hide loading icon for scores below the minimum threshold.
+      <mat-slide-toggle [(ngModel)]="showFeedbackForNeutralScores"
+        (change)="onSettingsChanged()">Show feedback for neutral scores.
       </mat-slide-toggle>
     </div>
 

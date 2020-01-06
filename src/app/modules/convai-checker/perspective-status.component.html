@@ -14,8 +14,8 @@
            class="dot"
            [style.width]="indicatorWidth"
            [style.height]="indicatorHeight"
-           [hidden]="shouldHideStatusWidget || alwaysHideLoadingIcon"
-           [attr.aria-hidden]="shouldHideStatusWidget || isPlayingShowOrHideLoadingWidgetAnimation || alwaysHideLoadingIcon"
+           [hidden]="shouldHideStatusWidget"
+           [attr.aria-hidden]="shouldHideStatusWidget || isPlayingShowOrHideLoadingWidgetAnimation"
            [attr.aria-label]="getAnimationA11yLabel(loadingIconStyle, isPlayingLoadingAnimation)"
            tabindex=0>
       </div>
@@ -28,17 +28,17 @@
            tabindex=0
            [attr.aria-label]="getAnimationA11yLabel(loadingIconStyle, isPlayingLoadingAnimation)">
         <img #smileEmoji id="smileEmoji" class="iconEmoji"
-             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score >= scoreThresholds[1]}"
+             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score >= neutralScoreThreshold}"
              [src]="getImageResourcePath('grinning_face.png')"
              [title]="getAccessibilityDescriptionForEmoji(Emoji.SMILE)"
              [alt]="getAccessibilityDescriptionForEmoji(Emoji.SMILE)">
         <img #neutralEmoji id="neutralEmoji" class="iconEmoji"
-             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || (score < scoreThresholds[1] || score >= scoreThresholds[2])}"
+             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || (score < neutralScoreThreshold || score >= toxicScoreThreshold)}"
              [src]="getImageResourcePath('thinking_face.png')"
              [title]="getAccessibilityDescriptionForEmoji(Emoji.NEUTRAL)"
              [alt]="getAccessibilityDescriptionForEmoji(Emoji.NEUTRAL)">
         <img #sadEmoji id="sadEmoji" class="iconEmoji"
-             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score < scoreThresholds[2]}"
+             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score < toxicScoreThreshold}"
              [src]="getImageResourcePath('disappointed_face.png')"
              [title]="getAccessibilityDescriptionForEmoji(Emoji.SAD)"
              [alt]="getAccessibilityDescriptionForEmoji(Emoji.SAD)">
