@@ -14,8 +14,8 @@
            class="dot"
            [style.width]="indicatorWidth"
            [style.height]="indicatorHeight"
-           [hidden]="shouldHideStatusWidget || alwaysHideLoadingIcon"
-           [attr.aria-hidden]="shouldHideStatusWidget || isPlayingShowOrHideLoadingWidgetAnimation || alwaysHideLoadingIcon"
+           [hidden]="shouldHideStatusWidget"
+           [attr.aria-hidden]="shouldHideStatusWidget || isPlayingShowOrHideLoadingWidgetAnimation"
            [attr.aria-label]="getAnimationA11yLabel(loadingIconStyle, isPlayingLoadingAnimation)"
            tabindex=0>
       </div>
