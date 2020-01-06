@@ -118,15 +118,11 @@ export class CustomizableDemoFormComponent implements OnInit {
   // reasons, so when using this value take 100 - sliderValue.
   sliderValue: number = (1 - ScoreThreshold.NEUTRAL) * 100;
   // Score thresholds determined from the slider value.
-  sliderScoreThresholds: [number, number] = [
-    ScoreThreshold.NEUTRAL,
-    ScoreThreshold.TOXIC
-  ];
+  sliderScoreNeutralThreshold = ScoreThreshold.NEUTRAL;
+  sliderScoreToxicThreshold = ScoreThreshold.TOXIC;
   // Custom score thresholds.
-  scoreThresholds: [number, number] = [
-    ScoreThreshold.NEUTRAL,
-    ScoreThreshold.TOXIC
-  ];
+  neutralScoreThreshold = ScoreThreshold.NEUTRAL;
+  toxicScoreThreshold = ScoreThreshold.TOXIC;
   customizeScoreThresholds = false;
 
   /** Loading icon style options. */
@@ -230,10 +226,14 @@ export class CustomizableDemoFormComponent implements OnInit {
         }
 
         if (this.customizeScoreThresholds) {
-          this.scoreThresholds = decodedDemoSettings.scoreThresholds;
+          this.neutralScoreThreshold = decodedDemoSettings.neutralScoreThreshold;
+          this.toxicScoreThreshold = decodedDemoSettings.toxicScoreThreshold;
         } else {
-          this.sliderScoreThresholds = decodedDemoSettings.scoreThresholds;
-          this.sliderValue = (1 - this.sliderScoreThresholds[0]) * 100;
+          this.sliderScoreNeutralThreshold =
+            decodedDemoSettings.neutralScoreThreshold;
+          this.sliderScoreToxicThreshold =
+            decodedDemoSettings.toxicScoreThreshold;
+          this.sliderValue = (1 - this.sliderScoreNeutralThreshold) * 100;
         }
 
         this.showPercentage = decodedDemoSettings.showPercentage;
@@ -267,8 +267,8 @@ export class CustomizableDemoFormComponent implements OnInit {
    * fall between 0 and 1.
    */
   onSliderValueChange(change: MatSliderChange) {
-    this.sliderScoreThresholds[0] = (change.source.max - change.value) / 100;
-    this.sliderScoreThresholds[1] = (1 + this.sliderScoreThresholds[0]) / 2;
+    this.sliderScoreNeutralThreshold = (change.source.max - change.value) / 100;
+    this.sliderScoreToxicThreshold = (1 + this.sliderScoreNeutralThreshold) / 2;
   }
 
   onSettingsChanged() {
@@ -302,6 +302,7 @@ export class CustomizableDemoFormComponent implements OnInit {
    * default.
    */
   private getDemoSettings(): DemoSettings {
+    console.log('selected color scheme', this.selectedColorScheme);
     return JSON.parse(JSON.stringify({
       gradientColors: this.useCustomColorScheme ?
         this.customColorScheme : this.selectedColorScheme.colors,
@@ -309,8 +310,10 @@ export class CustomizableDemoFormComponent implements OnInit {
       showMoreInfoLink: this.showMoreInfoLink,
       feedbackText: this.useCustomFeedbackText ?
         this.customFeedbackTextScheme : this.selectedFeedbackTextScheme.feedbackTextSet,
-      scoreThresholds: this.customizeScoreThresholds ?
-        this.scoreThresholds : this.sliderScoreThresholds,
+      neutralScoreThreshold: this.customizeScoreThresholds ?
+        this.neutralScoreThreshold : this.sliderScoreNeutralThreshold,
+      toxicScoreThreshold: this.customizeScoreThresholds ?
+        this.toxicScoreThreshold : this.sliderScoreToxicThreshold,
       showFeedbackForLowScores: this.showFeedbackForLowScores,
       showFeedbackForNeutralScores: this.showFeedbackForNeutralScores,
       userFeedbackPromptText: this.userFeedbackPromptText,

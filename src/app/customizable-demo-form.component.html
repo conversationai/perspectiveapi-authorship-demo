@@ -31,15 +31,15 @@
     <div class="setting customizableSetting" *ngIf="customizeScoreThresholds">
       <mat-form-field shouldPlaceholderFloat="true">
         <input matInput
-               [(ngModel)]="scoreThresholds[0]"
-               (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
+               [(ngModel)]="neutralScoreThreshold"
+               (input)="onSettingsChanged()"
                type="number"
                placeholder="Threshold for medium toxicity"/>
       </mat-form-field>
       <mat-form-field shouldPlaceholderFloat="true">
         <input matInput
-               [(ngModel)]="scoreThresholds[1]"
-               (input)="scoreThresholds = scoreThresholds.slice(); onSettingsChanged()"
+               [(ngModel)]="toxicScoreThreshold"
+               (input)="onSettingsChanged()"
                type="number"
                placeholder="Threshold for high toxicity"/>
       </mat-form-field>
@@ -51,7 +51,7 @@
         <mat-select placeholder="Loading icon style"
                    shouldPlaceholderFloat="true"
                    [(ngModel)]="selectedLoadingIconStyle"
-                   (change)="onSettingsChanged()">
+                   (selectionChange)="onSettingsChanged()">
           <mat-option *ngFor="let loadingIconStyle of loadingIconStyles"
                      [value]="loadingIconStyle">
             {{loadingIconStyle}}
@@ -67,7 +67,7 @@
                    shouldPlaceholderFloat="true"
                    [disabled]="useCustomFeedbackText"
                    [(ngModel)]="selectedFeedbackTextScheme"
-                   (change)="onSettingsChanged()">
+                   (selectionChange)="onSettingsChanged()">
           <mat-option *ngFor="let feedbackTextScheme of feedbackTextSchemes"
                      [value]="feedbackTextScheme">
             {{feedbackTextScheme.name}}
@@ -115,7 +115,7 @@
                    shouldPlaceholderFloat="true"
                    [(ngModel)]="selectedColorScheme"
                    [disabled]="useCustomColorScheme"
-                   (change)="onSettingsChanged()">
+                   (selectionChange)="onSettingsChanged()">
           <mat-option *ngFor="let colorScheme of colorSchemes" [value]="colorScheme">
             {{colorScheme.name}}
           </mat-option>

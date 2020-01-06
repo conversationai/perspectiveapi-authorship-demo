@@ -28,17 +28,17 @@
            tabindex=0
            [attr.aria-label]="getAnimationA11yLabel(loadingIconStyle, isPlayingLoadingAnimation)">
         <img #smileEmoji id="smileEmoji" class="iconEmoji"
-             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score >= scoreThresholds[0]}"
+             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score >= neutralScoreThreshold}"
              [src]="getImageResourcePath('grinning_face.png')"
              [title]="getAccessibilityDescriptionForEmoji(Emoji.SMILE)"
              [alt]="getAccessibilityDescriptionForEmoji(Emoji.SMILE)">
         <img #neutralEmoji id="neutralEmoji" class="iconEmoji"
-             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || (score < scoreThresholds[0] || score >= scoreThresholds[1])}"
+             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || (score < neutralScoreThreshold || score >= toxicScoreThreshold)}"
              [src]="getImageResourcePath('thinking_face.png')"
              [title]="getAccessibilityDescriptionForEmoji(Emoji.NEUTRAL)"
              [alt]="getAccessibilityDescriptionForEmoji(Emoji.NEUTRAL)">
         <img #sadEmoji id="sadEmoji" class="iconEmoji"
-             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score < scoreThresholds[1]}"
+             [ngClass]="{hiddenEmoji: hideEmojiIconsForLoadingAnimation || score < toxicScoreThreshold}"
              [src]="getImageResourcePath('disappointed_face.png')"
              [title]="getAccessibilityDescriptionForEmoji(Emoji.SAD)"
              [alt]="getAccessibilityDescriptionForEmoji(Emoji.SAD)">

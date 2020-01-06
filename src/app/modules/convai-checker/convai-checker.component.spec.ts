@@ -115,8 +115,8 @@ const setTextAndFireInputEvent = function(text: string,
   }));
 };
 
-// TODO(rachelrosen): Add variations of this for accessibility testing (enter
-// key and spacebar instead of click events) to make sure things work correctly
+// TODO: Add variations of this for accessibility testing (enter key and
+// spacebar instead of click events) to make sure things work correctly
 // when a user navigates through the app using the keyboard.
 const sendClickEvent = function(item: HTMLElement): void {
   const event = document.createEvent('HTMLEvents');
@@ -189,7 +189,7 @@ function waitForTimeout(ms: number): Promise<void> {
 // Checks that the transitions between UI layers (score information, feedback
 // prompt, and feedback thanks) behave correctly during user interaction with
 // the demo.
-// TODO(rachelrosen): Refactor this into smaller functions.
+// TODO: Refactor this into smaller functions.
 async function verifyLayerTransitionsWorkForDemoSiteConfig(
     fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettingsComponent>,
     httpMock: HttpTestingController) {
@@ -331,9 +331,9 @@ function verifyInterpolateColorsForControlPointsAndGradientColors(
 // Checks that the loading icon/widget visibility and feedback visibility are
 // correct given the settings.
 //
-// TODO(rachelrosen): If this function is called more than once from within an
-// individual test, we get an error: 'Connection has already been resolved.'
-// Investigate why.
+// TODO: If this function is called more than once from within an individual
+// test, we get an error: 'Connection has already been resolved.' Investigate
+// why.
 async function verifyWidgetVisibilityForDemoSettings(
     fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettingsComponent>,
     httpMock: HttpTestingController,
@@ -961,7 +961,8 @@ describe('Convai checker test', () => {
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.8];
+    demoSettings.neutralScoreThreshold = 0.4;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.showFeedbackForLowScores = false;
     fixture.componentInstance.setDemoSettings(demoSettings);
 
@@ -1024,7 +1025,8 @@ describe('Convai checker test', () => {
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.4, 0.8];
+    demoSettings.neutralScoreThreshold = 0.4;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.showFeedbackForNeutralScores = false;
     fixture.componentInstance.setDemoSettings(demoSettings);
 
@@ -1087,7 +1089,8 @@ describe('Convai checker test', () => {
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
     fixture.componentInstance.setDemoSettings(demoSettings);
 
@@ -1151,7 +1154,8 @@ describe('Convai checker test', () => {
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
     console.log(demoSettings);
     fixture.componentInstance.setDemoSettings(demoSettings);
@@ -1194,10 +1198,9 @@ describe('Convai checker test', () => {
 
       verifyEmojiWidgetVisible();
 
-      // TODO(rachelrosen): Figure out how to 'fast-forward' the state of the
-      // animation in the test environment without messing up the other test
-      // state, and then uncomment the code below to check the opacity of the
-      // emoji icons here.
+      // TODO: Figure out how to 'fast-forward' the state of the animation in
+      // the test environment without messing up the other test state, and then
+      // uncomment the code below to check the opacity of the emoji icons here.
       // verifyEmojiIconsInDomWithZeroOpacity();
 
       expect(checker.statusWidget.isLoading).toBe(true);
@@ -1223,7 +1226,8 @@ describe('Convai checker test', () => {
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
     fixture.componentInstance.setDemoSettings(demoSettings);
 
@@ -1305,7 +1309,8 @@ describe('Convai checker test', () => {
 
     // Configure settings.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
     fixture.componentInstance.setDemoSettings(demoSettings);
 
@@ -1381,14 +1386,14 @@ describe('Convai checker test', () => {
     }
   });
 
-  // TODO: Add a test for hiding feedback for both low and neutral scores.
   it('Test loading icon visibility, shows feedback for low and neutral scores ',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Always show feedback (the loading icon should always display).
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.showFeedbackForLowScores = true;
     demoSettings.showFeedbackForNeutralScores = true;
     const mockResponseScores = [0.6, 0, 0.9];
@@ -1415,7 +1420,8 @@ describe('Convai checker test', () => {
     fixture.detectChanges();
     // Always show feedback, (the loading icon should always display).
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.showFeedbackForLowScores = true;
     demoSettings.showFeedbackForNeutralScores = true;
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
@@ -1438,13 +1444,70 @@ describe('Convai checker test', () => {
       widgetId);
   });
 
+  it('Test loading icon visibility, hides feedback for low and neutral scores ',
+     async() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+    fixture.detectChanges();
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
+    demoSettings.showFeedbackForLowScores = false;
+    demoSettings.showFeedbackForNeutralScores = false;
+    const mockResponseScores = [0.6, 0, 0.9];
+    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesAfterLoading = [false, false, true];
+    const expectedFeedbackTextVisibilitiesAfterLoading = [false, false, true];
+    const widgetId = 'circleSquareDiamondWidget';
+
+    await verifyWidgetVisibilityForDemoSettings(
+      fixture,
+      httpMock,
+      demoSettings,
+      mockResponseScores,
+      expectedWidgetVisibilitiesBeforeLoading,
+      expectedWidgetVisibilitiesWhileLoading,
+      expectedWidgetVisibilitiesAfterLoading,
+      expectedFeedbackTextVisibilitiesAfterLoading);
+  });
+
+  it('Test loading icon visibility, hides feedback for low and neutral scores, emoji icon',
+     async() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+    fixture.detectChanges();
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
+    demoSettings.showFeedbackForLowScores = false;
+    demoSettings.showFeedbackForNeutralScores = false;
+    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+    const mockResponseScores = [0.6, 0, 0.9];
+    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesAfterLoading = [false, false, true];
+    const expectedFeedbackTextVisibilitiesAfterLoading = [false, false, true];
+    const widgetId = 'emojiStatusWidget';
+
+    await verifyWidgetVisibilityForDemoSettings(
+      fixture,
+      httpMock,
+      demoSettings,
+      mockResponseScores,
+      expectedWidgetVisibilitiesBeforeLoading,
+      expectedWidgetVisibilitiesWhileLoading,
+      expectedWidgetVisibilitiesAfterLoading,
+      expectedFeedbackTextVisibilitiesAfterLoading,
+      widgetId);
+  });
+
   it('Test loading icon visibility, showFeedbackForLowScores = false, ',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Hide feedback and loading icon for low scores.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.showFeedbackForLowScores = false;
     demoSettings.showFeedbackForNeutralScores = true;
 
@@ -1479,7 +1542,8 @@ describe('Convai checker test', () => {
     // Show feedback above a minimum threshold, and only show loading
     // icon above the min threshold.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.showFeedbackForLowScores = false;
     demoSettings.showFeedbackForNeutralScores = true;
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
@@ -1510,13 +1574,14 @@ describe('Convai checker test', () => {
       widgetId);
   });
 
-  it('TODO: ***** Test loading icon visibility, showFeedbackForNeutralScores = false, ',
+  it('Test loading icon visibility, showFeedbackForNeutralScores = false, ',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
     fixture.detectChanges();
     // Hide feedback and loading icon for low scores.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.showFeedbackForLowScores = true;
     demoSettings.showFeedbackForNeutralScores = false;
 
@@ -1551,7 +1616,8 @@ describe('Convai checker test', () => {
     // Show feedback above a minimum threshold, and only show loading
     // icon above the min threshold.
     const demoSettings = getCopyOfDefaultDemoSettings();
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.showFeedbackForLowScores = true;
     demoSettings.showFeedbackForNeutralScores = false;
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
@@ -1597,7 +1663,8 @@ describe('Convai checker test', () => {
     // Test different low, mid, and high thresholds.
     let demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.6, 0.8];
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
 
@@ -1612,16 +1679,17 @@ describe('Convai checker test', () => {
     verifyInterpolateColorsForControlPointsAndGradientColors(
       checker, actualGradientControlPoints, testGradientColorsRgb);
 
-    // TODO(rachelrosen): Figure out why ngOnChanges in PerspectiveStatus
-    // doesn't get called between calls to setDemoSettings in this test (and why
-    // it does in the above tests for 'Test loading icon style setting change'.
-    // When this is fixed, remove calls to updateGradient() in this test.
+    // TODO: Figure out why ngOnChanges in PerspectiveStatus doesn't get called
+    // between calls to setDemoSettings in this test (and why it does in the
+    // above tests for 'Test loading icon style setting change'. When this is
+    // fixed, remove calls to updateGradient() in this test.
 
     // Test different low, mid, and high score thresholds with several decimal
     // places.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.6789, 0.89990];
+    demoSettings.neutralScoreThreshold = 0.6789;
+    demoSettings.toxicScoreThreshold = 0.89990;
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();
@@ -1638,7 +1706,8 @@ describe('Convai checker test', () => {
     // Test equal neutral and toxic thresholds.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.75, 0.75];
+    demoSettings.neutralScoreThreshold = 0.75;
+    demoSettings.toxicScoreThreshold = 0.75;
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();
@@ -1654,7 +1723,8 @@ describe('Convai checker test', () => {
     // Test equal neutral and toxic score thresholds with several decimal places.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.7511111, 0.7511111];
+    demoSettings.neutralScoreThreshold = 0.7511111;
+    demoSettings.toxicScoreThreshold = 0.7511111;
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();
@@ -1670,7 +1740,8 @@ describe('Convai checker test', () => {
     // Test almost equal neutral and toxic score thresholds.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.752, 0.753];
+    demoSettings.neutralScoreThreshold = 0.752;
+    demoSettings.toxicScoreThreshold = 0.753;
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();
@@ -1687,7 +1758,8 @@ describe('Convai checker test', () => {
     // Test neutral threshold of 0.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.0, 0.75];
+    demoSettings.neutralScoreThreshold = 0.0;
+    demoSettings.toxicScoreThreshold = 0.75;
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();
@@ -1704,7 +1776,8 @@ describe('Convai checker test', () => {
     // Test equal neutral and toxic thresholds of 0.
     demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.gradientColors = testGradientColorsHex;
-    demoSettings.scoreThresholds = [0.0, 0.0];
+    demoSettings.neutralScoreThreshold = 0.0;
+    demoSettings.toxicScoreThreshold = 0.0;
     fixture.componentInstance.setDemoSettings(demoSettings);
     fixture.detectChanges();
     checker.statusWidget.updateGradient();

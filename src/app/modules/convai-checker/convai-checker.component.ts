@@ -64,17 +64,18 @@ export interface DemoSettings {
   // unicode. This must be length 3.
   feedbackText: [string, string, string];
 
-  // The numeric thresholds for showing scores of neutral and high severity.
-  // Index 0 is the threshold for neutral severity, and index 1 is the threshold
-  // for high severity.
-  scoreThresholds: [number, number];
+  // Threshold for neutral scores. Must be >= 0.
+  neutralScoreThreshold: number;
+
+  // Threshold for toxic scores. Must be >= neutralScoreThreshold.
+  toxicScoreThreshold: number;
 
   // Whether to show the loading icon and the score for low scores
-  // (scores < scoreThresholds[0]).
+  // (score < neutralScoreThreshold).
   showFeedbackForLowScores: boolean;
 
   // Whether to show the loading icon and the score for neutral scores
-  // (scoresThresholds[0] < scores < scoreThresholds[1]).
+  // (neutralScoreThreshold <= score < toxicScoreThreshold).
   showFeedbackForNeutralScores: boolean;
 
   // The loading icon style. See perspective-status.LoadingIconStyle for
@@ -106,7 +107,8 @@ export const DEFAULT_DEMO_SETTINGS = {
     'Unsure if this will be perceived as toxic',
     'Likely to be perceived as toxic'
   ] as [string, string, string],
-  scoreThresholds: [0.4, 0.7] as [number, number],
+  neutralScoreThreshold: 0.4,
+  toxicScoreThreshold: 0.7,
   showFeedbackForLowScores: true,
   showFeedbackForNeutralScores: true,
   loadingIconStyle: LoadingIconStyle.CIRCLE_SQUARE_DIAMOND,

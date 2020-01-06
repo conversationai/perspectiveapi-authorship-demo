@@ -116,10 +116,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
      DEFAULT_FEEDBACK_TEXT,
      DEFAULT_FEEDBACK_TEXT
   ];
-  @Input() scoreThresholds: [number, number] = [
-    ScoreThreshold.NEUTRAL,
-    ScoreThreshold.TOXIC
-  ];
+  @Input() neutralScoreThreshold = ScoreThreshold.NEUTRAL;
+  @Input() toxicScoreThreshold = ScoreThreshold.TOXIC;
   @Input() showPercentage = true;
   @Input() showMoreInfoLink = true;
   @Input() analyzeErrorMessage: string|null = null;
@@ -252,32 +250,19 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       this.resetLayers();
     }
 
-    if (changes['scoreThresholds'] !== undefined) {
+    if (changes['neutralScoreThreshold'] || changes['toxicScoreThreshold']) {
       console.debug('Change in scoreThresholds');
-      // ngOnChanges will be called for a change in the array reference, not the
-      // array values, so check to make sure they're really different.
-      let valuesChanged = false;
-      const scoreThresholdChanges = changes['scoreThresholds'];
-      for (let i = 0; i < scoreThresholdChanges.previousValue.length; i++) {
-        if (scoreThresholdChanges.currentValue[i]
-            !== scoreThresholdChanges.previousValue[i]) {
-          valuesChanged = true;
-          break;
-        }
-      }
 
-      if (valuesChanged) {
-        this.updateGradient();
+      this.updateGradient();
 
-        // Kill any prior animations so that the resetting any animation state
-        // will not get overridden by the old animation before the new one can
-        // begin; this can lead to bugs.
-        if (this.updateDemoSettingsAnimation) {
-          console.debug('Killing update demo settings animation');
-          this.updateDemoSettingsAnimation.kill();
-        }
-        this.scoreThresholdsChanged = true;
+      // Kill any prior animations so that the resetting any animation state
+      // will not get overridden by the old animation before the new one can
+      // begin; this can lead to bugs.
+      if (this.updateDemoSettingsAnimation) {
+        console.debug('Killing update demo settings animation');
+        this.updateDemoSettingsAnimation.kill();
       }
+      this.scoreThresholdsChanged = true;
     }
 
     if (changes['showFeedbackForLowScores']
@@ -292,6 +277,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
    */
   ngAfterViewChecked() {
     if (this.scoreThresholdsChanged
+        || this.gradientColorsChanged
         || this.loadingIconStyleChanged
         || this.showFeedbackChanged) {
 
@@ -436,16 +422,17 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // Use Math.floor because control points have to be integers.
     const gradientPoints = [
       Math.floor(
-        gradientPointCount * (FIRST_GRADIENT_RATIO * this.scoreThresholds[0])),
-      Math.floor(gradientPointCount * this.scoreThresholds[0]),
-      Math.floor(gradientPointCount * this.scoreThresholds[1])
+        gradientPointCount * (FIRST_GRADIENT_RATIO * this.neutralScoreThreshold)),
+      Math.floor(gradientPointCount * this.neutralScoreThreshold),
+      Math.floor(gradientPointCount * this.toxicScoreThreshold)
     ];
 
-    // If two gradient colors are added at the same point (which happens when
-    // scoreThresholds[i] === scoreThresholds[i + 1]), the toxiclibsjs library
-    // does not automatically favor the correct color. Add deltas to the
-    // gradient points that favor the color for the higher threshold at that
-    // point.
+    // If two gradient colors are added at the same point (e.g.
+    // gradientPoints[i] === gradientPoints[i + 1], which happens when
+    // neutralScoreThreshold === toxicScoreThreshold or
+    // neutralScoreThreshold === 0), the toxiclibsjs library does not
+    // automatically favor the correct color. Add deltas to the gradient points
+    // that favor the color for the higher threshold at that point.
     //
     // Examples:
     //   [50, 90, 90] => [50, 89, 90]
@@ -462,7 +449,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   /**
    * Updates the gradient color scale for the shape based on the
-   * scoreThresholds.
+   * score thresholds.
    */
   updateGradient() {
     // The number of points to use to calculate the gradient.
@@ -472,9 +459,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     const sliderGradient = new toxicLibsJS.color.ColorGradient();
 
     for (let i = 0; i < gradientPoints.length; i++) {
-      // If the gradient point is less than 0, it measn scoresThresholds[i] ===
-      // scoreThresholds[i + 1] === 0, in which case we start at the second
-      // higher indexed gradient color.
+      // If the gradient point is less than 0, it means neutralScoreThreshold
+      // === 0 or toxicScoreThreshold === neutralScoreThreshold === 0, in
+      // which case we start at the higher indexed gradient color since it has
+      // effectively been overridden by the higher toxicity threshold.
       if (gradientPoints[i] >= 0) {
         sliderGradient.addColorAt(
           gradientPoints[i],
@@ -516,13 +504,13 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     let shouldHide = false;
 
     if (!this.showFeedbackForLowScores) {
-      shouldHide = shouldHide || loadStart || this.score < this.scoreThresholds[0];
+      shouldHide = shouldHide || loadStart || this.score < this.neutralScoreThreshold;
     }
 
     if (!this.showFeedbackForNeutralScores) {
       shouldHide = shouldHide || loadStart || (
-        this.score >= this.scoreThresholds[0]
-        && this.score < this.scoreThresholds[1]);
+        this.score >= this.neutralScoreThreshold
+        && this.score < this.toxicScoreThreshold);
     }
 
     return shouldHide;
@@ -656,10 +644,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   shouldShowFeedback(score: number) {
     console.log('***shouldShowFeedback for score ', score, this.showFeedbackForLowScores, this.showFeedbackForNeutralScores);
-    if (score < this.scoreThresholds[0]) {
+    if (score < this.neutralScoreThreshold) {
       console.log(this.showFeedbackForLowScores);
       return this.showFeedbackForLowScores;
-    } else if (score < this.scoreThresholds[1]) {
+    } else if (score < this.toxicScoreThreshold) {
       console.log(this.showFeedbackForNeutralScores);
       return this.showFeedbackForNeutralScores;
     }
@@ -674,9 +662,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   }
 
   getFeedbackTextForScore(score: number): string {
-    if (score >= this.scoreThresholds[1]) {
+    if (score >= this.toxicScoreThreshold) {
       return this.feedbackText[2];
-    } else if (score >= this.scoreThresholds[0]) {
+    } else if (score >= this.neutralScoreThreshold) {
       return this.feedbackText[1];
     } else {
       return this.feedbackText[0];
@@ -741,9 +729,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   // Gets the shape corresponding to the specified score.
   getShapeForScore(score: number): Shape {
-    if (score > this.scoreThresholds[1]) {
+    if (score >= this.toxicScoreThreshold) {
       return Shape.DIAMOND;
-    } else if (score > this.scoreThresholds[0]) {
+    } else if (score >= this.neutralScoreThreshold) {
       return Shape.SQUARE;
     } else {
       return Shape.CIRCLE;
@@ -752,9 +740,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   // Gets the emoji corresponding to the specified score.
   getEmojiForScore(score: number): Emoji {
-    if (score > this.scoreThresholds[1]) {
+    if (score >= this.toxicScoreThreshold) {
       return Emoji.SAD;
-    } else if (score > this.scoreThresholds[0]) {
+    } else if (score >= this.neutralScoreThreshold) {
       return Emoji.NEUTRAL;
     } else {
       return Emoji.SMILE;
@@ -784,10 +772,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     updateShapeAnimationTimeline.add(
       this.getFadeAndShrinkAnimation(FADE_ANIMATION_TIME_SECONDS, false));
 
-    if (score > this.scoreThresholds[1]) {
+    if (score >= this.toxicScoreThreshold) {
       updateShapeAnimationTimeline.add(
         this.getTransitionToDiamondAnimation(.8 * SHAPE_MORPH_TIME_SECONDS));
-    } else if (score > this.scoreThresholds[0]) {
+    } else if (score >= this.neutralScoreThreshold) {
       // Square is a special case, since we rotate based on the current degrees
       // and not to a specific rotation. As a result this can get messed up if
       // we're in the middle of an existing rotation, so reset the rotation
@@ -952,9 +940,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       return new TimelineMax({});
     }
     let emojiType: Emoji|null = null;
-    if (this.score > this.scoreThresholds[1]) {
+    if (this.score >= this.toxicScoreThreshold) {
       emojiType = Emoji.SAD;
-    } else if (this.score > this.scoreThresholds[0]) {
+    } else if (this.score >= this.neutralScoreThreshold) {
       emojiType = Emoji.NEUTRAL;
     } else {
       emojiType = Emoji.SMILE;
@@ -1306,7 +1294,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     if (shape === Shape.CIRCLE) {
       return 'Low toxicity icon.';
     } else if (shape === Shape.SQUARE) {
-      return 'Medium toxicity icon.';
+      return 'Neutral toxicity icon.';
     } else {
       return 'High toxicity icon.';
     }
