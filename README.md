@@ -1,31 +1,32 @@
 [![Travis CI](https://travis-ci.org/conversationai/perspectiveapi-authorship-demo.svg?branch=master)](https://travis-ci.org/conversationai/perspectiveapi-authorship-demo) [![npm version](https://badge.fury.io/js/%40conversationai%2Fperspectiveapi-authorship-demo.svg)](https://badge.fury.io/js/%40conversationai%2Fperspectiveapi-authorship-demo)
 
-# An authorship experience demo of the perspective API
+# An authorship experience demo for Perspective API
 
-This repository contains example code for an authorship experience that provides feedback as you type using the [Perspective API](http://www.perspectiveapi.com/). It is a web app written in
-[Angular2](https://angular.io/)/[TypeScript](https://www.typescriptlang.org/) and uses a [node express server](https://expressjs.com/). This project shows how to have a development and a production
-build environment with deployment tools based on [Docker](https://www.docker.com/). This makes it easy be deployed to cloud services such as Google Cloud's flexible appengine environment, as well as other cloud computing providers.
+This repository contains example code for an authorship experience that provides feedback as you type using [Perspective API](http://www.perspectiveapi.com/). It is a web app written in
+[Angular2](https://angular.io/)/[TypeScript](https://www.typescriptlang.org/) and uses a [Node Express server](https://expressjs.com/). This project shows how to have a development and a production
+build environment with deployment tools based on [Docker](https://www.docker.com/). You can then deploy to cloud services such as [Google Cloud's App Engine](https://cloud.google.com/appengine/),
+as well as other cloud computing providers.
 
-The app uses the [Perspective API](http://www.perspectiveapi.com/) to score text, via a
-the [perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server).
+The app uses the [Perspective API](http://www.perspectiveapi.com/) to score text, via
+[Simple Server for Perspective API](https://github.com/conversationai/perspectiveapi-simple-server).
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.0.0.
 
 ## Requirements & Setup
 
-To run code using your local machine (not via the docker
-environment), you will need to install `nodejs` (e.g., by [installing NVM](https://github.com/creationix/nvm)). You'll also need some global packages which you can install using the `npm` command:
+To run code using your local machine (not via the Docker
+environment), you will need to install `nodejs` (e.g., by [installing NVM](https://github.com/creationix/nvm)). You'll also need some global packages, which you can install using the `npm` command:
 
 ```bash
 npm install -g yarn typings typescript ts-node mocha protractor angular-cli karma-cli
 ```
 
 Next, you will need to create a
-[Google Cloud Project](http://cloud.google.com) project, and it will need to have access the [PerspectiveAPI](https://www.perspectiveapi.com). Requests to the API will be authenticated using an [cloud project API key](https://support.google.com/cloud/answer/6158862?hl=en).
+[Google Cloud (GCS)](http://cloud.google.com) project, and it will need to have access to [Perspective API](https://www.perspectiveapi.com). Requests to the API will be authenticated using a [Cloud project API key](https://support.google.com/cloud/answer/6158862?hl=en).
 
-An example configuration file template is provided in `config/server_config.template.json`. If one is not present in `build/config`, then the config file will be copied there when you build or start a local server. The config file specifies your google-cloud project API key, and some other details which you can learn more about in the [documentation for perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server/blob/master/README.md).
+An example configuration file template is provided in `config/server_config.template.json`. If one is not present in `build/config`, then the config file will be copied there when you build or start a local server. The config file specifies your Google Cloud project API key, and some other details which you can learn more about in the [documentation for Simple Server for Perspective API](https://github.com/conversationai/perspectiveapi-simple-server/blob/master/README.md).
 
-To setup and install the local packages, run:
+To setup and install the local packages, use [install yarn](https://yarnpkg.com/en/docs/install) and then run:
 
 ```bash
 yarn install
@@ -33,7 +34,7 @@ yarn install
 
 ### Adding reCAPTCHA v3 verification
 
-The [perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server) 
+The [Simple Server for Perspective API](https://github.com/conversationai/perspectiveapi-simple-server) 
 has an optional configuration for enabling reCAPTCHA verification. To enable it in this demo, add the 
 requisite `recaptchaConfig` values to `server_config.json`. Then, provide [ng-recaptcha](https://github.com/DethAriel/ng-recaptcha)'s  `RecaptchaV3Service` and `RECAPTCHA_V3_SITE_KEY` to the module importing this demo, like so:
 
@@ -50,7 +51,7 @@ Run `yarn run serve` for a dev server. Navigate to `http://localhost:4200/`.
 The app will automatically reload if you change any of the source files.
 API requests to the server (`http://localhost:4200/check` and
 `http://localhost:4200/suggest_score`) will be redirected to an underlying nodejs server,
-based on [perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server),
+based on [Simple Server for Perspective API](https://github.com/conversationai/perspectiveapi-simple-server),
 which is started at `http://localhost:8080/`.
 
 ## Development server that uses compiled sources
@@ -88,18 +89,19 @@ When run using the Dockerfile, e.g. on [Google Cloud](https://cloud.google.com/s
 yarn run start:prod-server
 ```
 
-If you run this locally, you'll need to [login to google cloud and set your project id](https://cloud.google.com/sdk/docs/initializing).
-If you run this locally, you'll need to [login to google cloud and set your project id](https://cloud.google.com/sdk/docs/initializing).
+If you run this locally, you'll need to [login to Google Cloud and set your project ID](https://cloud.google.com/sdk/docs/initializing).
+If you run this locally, you'll need to [login to Google Cloud and set your project ID](https://cloud.google.com/sdk/docs/initializing).
 
 ## Production server using docker file
 
-Assuming you have [docker](https://www.docker.com/) installed and setup, you can create a docker-image for the prod server with:
+Assuming you have [Docker](https://www.docker.com/) installed and setup, you can create a Docker image for the
+production server with:
 
 ```bash
 docker build -t perspectiveapi-authorship-demo .
 ```
 
-To start a shell in the docker environment for debugging and to manually start
+To start a shell in the Docker environment for debugging and to manually start
 the server there, you can run:
 
 ```bash
@@ -131,10 +133,10 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 
 Angular Elements is a new experimental API that allows exporting Angular
 components as webcomponents. This repo includes a demo of this functionality
-with the convai-checker component. To
-see it, do the following:
-1. Build with the command yarn run build:dev-customElements.
-2. Run yarn run start:dev-server
+with the convai-checker component. To see it, do the following:
+
+1. Build with the command `yarn run build:dev-customElements`.
+2. Run `yarn run start:dev-server`
 3. Open http://localhost:8080/index_with_elements.html.
 
 TODO(rachelrosen): Document and demo how to add convai-checker webcomponent outside of the angular-cli build using the imported compiled javascript.
@@ -174,4 +176,4 @@ and https://github.com/angular/angular-cli/pull/4691 for more info.
 
 ## Notes
 
-This is example code to help experimentation with the Perspective API; it is not an official Google product.
+This is example code to help experimentation with Perspective API; it is not an official Google product.
