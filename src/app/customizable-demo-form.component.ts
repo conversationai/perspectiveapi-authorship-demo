@@ -152,6 +152,8 @@ export class CustomizableDemoFormComponent implements OnInit {
   communityId = '';
   // The name of the model to use.
   modelName = '';
+  // Font family as used in a CSS font-family rule.
+  fontFamily = '';
 
   demoSettings: DemoSettings|null = null;
   demoSettingsJson = '';
@@ -219,6 +221,7 @@ export class CustomizableDemoFormComponent implements OnInit {
         this.showFeedbackForLowScores = decodedDemoSettings.showFeedbackForLowScores;
         this.showFeedbackForNeutralScores = decodedDemoSettings.showFeedbackForNeutralScores;
         this.selectedLoadingIconStyle = decodedDemoSettings.loadingIconStyle;
+        this.fontFamily = decodedDemoSettings.fontFamily;
       }
     });
     this.demoSettings = this.getDemoSettings();
@@ -293,7 +296,8 @@ export class CustomizableDemoFormComponent implements OnInit {
       loadingIconStyle: this.selectedLoadingIconStyle,
       communityId: this.communityId,
       usePluginEndpoint: this.usePluginEndpoint,
-      modelName: this.modelName
+      modelName: this.modelName,
+      fontFamily: this.fontFamily
     }));
   }
 
