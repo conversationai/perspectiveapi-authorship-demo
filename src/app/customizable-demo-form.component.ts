@@ -23,10 +23,7 @@ import {
   DEFAULT_FEEDBACK_TEXT
 } from './modules/convai-checker/perspective-status.component';
 import {ActivatedRoute, Params, Router} from '@angular/router';
-import emoji from 'node-emoji';
 import * as _ from 'lodash';
-
-const RAISED_EYEBROW_EMOJI = '🤨 ';
 
 /** Settings about the UI state that should be encoded in the URL. */
 export interface UISettings {
@@ -62,7 +59,6 @@ export interface FeedbackTextScheme {
 const TextFeedbackSchemes = {
   DEFAULT_FEEDBACK_TEXT: DEFAULT_FEEDBACK_TEXT,
   PLEASE_REVIEW_FEEDBACK_TEXT: 'Please review before posting.',
-  EMOJI: 'Emoji',
 };
 
 /**
@@ -79,12 +75,6 @@ const PLEASE_REVIEW_FEEDBACK_TEST_SET: [string, string, string] = [
   TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT,
   TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT,
   TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT
-];
-
-const EMOJIES: [string, string, string] = [
-  emoji.emojify(':blush: :smile: :smiley:'),
-  emoji.emojify(RAISED_EYEBROW_EMOJI + ' :neutral_face: :thinking_face:'),
-  emoji.emojify(':cry: :scream: :angry:'),
 ];
 
 function arraysEqual<T>(array1: T[], array2: T[]): boolean {
@@ -139,10 +129,6 @@ export class CustomizableDemoFormComponent implements OnInit {
     {
       name: TextFeedbackSchemes.PLEASE_REVIEW_FEEDBACK_TEXT,
       feedbackTextSet: PLEASE_REVIEW_FEEDBACK_TEST_SET,
-    },
-    {
-      name: TextFeedbackSchemes.EMOJI,
-      feedbackTextSet: EMOJIES
     }
   ];
   // FeedbackTextScheme selected from the dropdown menu.
@@ -157,12 +143,6 @@ export class CustomizableDemoFormComponent implements OnInit {
   usePluginEndpoint = false;
   // URL to use for the plugin endpoint (for debugging and local tests).
   pluginEndpointUrl = '';
-  // Whether to show the percentage next to the feedback text.
-  showPercentage = true;
-  // Whether to show a "more info" link next to the feedback text.
-  showMoreInfoLink = true;
-  // The text to use to prompt users to submit feedback.
-  userFeedbackPromptText = 'Seem wrong?';
   // Whether to show feedback for scores below the neutral threshold.
   showFeedbackForLowScores = true;
   // Whether to show feedback for scores above the neutral threshold and below
@@ -236,11 +216,8 @@ export class CustomizableDemoFormComponent implements OnInit {
           this.sliderValue = (1 - this.sliderScoreNeutralThreshold) * 100;
         }
 
-        this.showPercentage = decodedDemoSettings.showPercentage;
-        this.showMoreInfoLink = decodedDemoSettings.showMoreInfoLink;
         this.showFeedbackForLowScores = decodedDemoSettings.showFeedbackForLowScores;
         this.showFeedbackForNeutralScores = decodedDemoSettings.showFeedbackForNeutralScores;
-        this.userFeedbackPromptText = decodedDemoSettings.userFeedbackPromptText;
         this.selectedLoadingIconStyle = decodedDemoSettings.loadingIconStyle;
       }
     });
@@ -302,12 +279,9 @@ export class CustomizableDemoFormComponent implements OnInit {
    * default.
    */
   private getDemoSettings(): DemoSettings {
-    console.log('selected color scheme', this.selectedColorScheme);
     return JSON.parse(JSON.stringify({
       gradientColors: this.useCustomColorScheme ?
         this.customColorScheme : this.selectedColorScheme.colors,
-      showPercentage: this.showPercentage,
-      showMoreInfoLink: this.showMoreInfoLink,
       feedbackText: this.useCustomFeedbackText ?
         this.customFeedbackTextScheme : this.selectedFeedbackTextScheme.feedbackTextSet,
       neutralScoreThreshold: this.customizeScoreThresholds ?
@@ -316,7 +290,6 @@ export class CustomizableDemoFormComponent implements OnInit {
         this.toxicScoreThreshold : this.sliderScoreToxicThreshold,
       showFeedbackForLowScores: this.showFeedbackForLowScores,
       showFeedbackForNeutralScores: this.showFeedbackForNeutralScores,
-      userFeedbackPromptText: this.userFeedbackPromptText,
       loadingIconStyle: this.selectedLoadingIconStyle,
       communityId: this.communityId,
       usePluginEndpoint: this.usePluginEndpoint,

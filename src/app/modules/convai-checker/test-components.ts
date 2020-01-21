@@ -65,29 +65,6 @@ export class ConvaiCheckerMissingInputIdComponent {
   serverUrl = 'test-url';
 }
 
-@Component({
-  selector: 'test-comp-attribute-input',
-  template: `
-        <convai-checker
-           id="checker"
-           inputId="checkerTextarea"
-           [demoSettings]="demoSettings"
-           serverUrl="test-url">
-          Loading...
-        </convai-checker>
-        <textarea class="checkerInputBox"
-                  id="checkerTextarea"
-                  placeholder="type something here and see how the dot above reacts.">
-        </textarea>`,
-})
-export class ConvaiCheckerWithAttributeInputComponent {
-  @ViewChild(ConvaiCheckerComponent, {static: false}) checker: ConvaiCheckerComponent;
-  demoSettings = JSON.parse(JSON.stringify(DEFAULT_DEMO_SETTINGS));
-  constructor() {
-    this.demoSettings.communityId = 'testCommunityId';
-  }
-}
-
 /** Test component with customizable DemoSettings. */
 @Component({
   selector: 'checker-custom-demo-settings',
@@ -161,7 +138,6 @@ export class ConvaiCheckerJsonDemoSettingsComponent implements OnInit {
     ConvaiCheckerNoInputComponent,
     ConvaiCheckerNoDemoSettingsComponent,
     ConvaiCheckerMissingInputIdComponent,
-    ConvaiCheckerWithAttributeInputComponent,
     ConvaiCheckerCustomDemoSettingsComponent,
     ConvaiCheckerJsonDemoSettingsComponent
   ],
