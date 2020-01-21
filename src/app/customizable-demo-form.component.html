@@ -149,14 +149,6 @@
 
     <!-- Other settings -->
     <div class="setting">
-      <mat-slide-toggle [(ngModel)]="showPercentage" (change)="onSettingsChanged()">Show percentage</mat-slide-toggle>
-    </div>
-
-    <div class="setting">
-      <mat-slide-toggle [(ngModel)]="showMoreInfoLink" (change)="onSettingsChanged()">Show more info link</mat-slide-toggle>
-    </div>
-
-    <div class="setting">
       <mat-slide-toggle [(ngModel)]="showFeedbackForLowScores"
         (change)="onSettingsChanged()">Show feedback for low scores.
       </mat-slide-toggle>
@@ -178,16 +170,6 @@
                [(ngModel)]="pluginEndpointUrl"
                (input)="onSettingsChanged()"
                placeholder="Plugin server URL"/>
-      </mat-form-field>
-    </div>
-
-
-    <div class="setting">
-      <mat-form-field>
-        <input matInput
-               [(ngModel)]="userFeedbackPromptText"
-               (input)="onSettingsChanged()"
-               placeholder="Feedback prompt"/>
       </mat-form-field>
     </div>
 

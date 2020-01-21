@@ -32,7 +32,6 @@ import * as d3 from 'd3-interpolate';
 import * as toxicLibsJS from 'toxiclibsjs';
 import {Animation, Elastic, Power3, TimelineMax, TweenMax} from 'gsap';
 import { take } from 'rxjs/operators';
-import twemoji from 'twemoji';
 
 export enum Shape {
   CIRCLE,
@@ -67,7 +66,7 @@ export const LoadingIconStyle = {
   EMOJI: 'emoji',
 };
 
-export const DEFAULT_FEEDBACK_TEXT = 'likely to be perceived as "toxic."';
+export const DEFAULT_FEEDBACK_TEXT = 'x% likely to be perceived as "toxic."';
 
 const FADE_START_LABEL = 'fadeStart';
 const LOADING_START_ANIMATIONS_LABEL = 'loadingAnimationStart';
@@ -98,13 +97,10 @@ const EMOJI_COLOR = '#ffcc4d';
 export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewInit, AfterViewChecked {
   // TODO: Instead of all these inputs, we should merge the
   // convai-checker component with this one.
-  @Input() indicatorWidth = 13;
-  @Input() indicatorHeight = 13;
   @Input() configurationInput: string = ConfigurationInput.DEMO_SITE;
   // Since score is zero for both no score and legitimate scores of zero, keep
   // a flag to indicate whether we should show UI for showing score info.
   @Input() hasScore = false;
-  @Input() fontSize = 12;
   @Input() gradientColors: string[] = ['#ffffff', '#000000'];
   @Input() canAcceptFeedback = false;
   @Input() feedbackRequestInProgress = false;
@@ -118,10 +114,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   ];
   @Input() neutralScoreThreshold = ScoreThreshold.NEUTRAL;
   @Input() toxicScoreThreshold = ScoreThreshold.TOXIC;
-  @Input() showPercentage = true;
   @Input() showMoreInfoLink = true;
   @Input() analyzeErrorMessage: string|null = null;
-  @Input() userFeedbackPromptText: string;
   @Input() showFeedbackForLowScores: boolean;
   @Input() showFeedbackForNeutralScores: boolean;
   @Input() loadingIconStyle: string;
@@ -132,6 +126,11 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     new EventEmitter<CommentFeedback>();
 
   @Output() animationsDone: EventEmitter<void> = new EventEmitter<void>();
+
+  private indicatorWidth = 13;
+  private indicatorHeight = 13;
+  private fontSize = 12;
+  private userFeedbackPromptText = 'Disagree?';
 
   public configurationEnum = Configuration;
   public configuration = this.configurationEnum.DEMO_SITE;
@@ -643,32 +642,30 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   }
 
   shouldShowFeedback(score: number) {
-    console.log('***shouldShowFeedback for score ', score, this.showFeedbackForLowScores, this.showFeedbackForNeutralScores);
     if (score < this.neutralScoreThreshold) {
-      console.log(this.showFeedbackForLowScores);
       return this.showFeedbackForLowScores;
     } else if (score < this.toxicScoreThreshold) {
-      console.log(this.showFeedbackForNeutralScores);
       return this.showFeedbackForNeutralScores;
     }
-    console.log(true);
     return true;
   }
 
-  // Wrapper for twemoji.parse() to use in data binding. Parses text, replacing
-  // any emojis with <img> tags. All other text remains the same.
-  parseEmojis(text: string) {
-    return twemoji.parse(text);
+  // If the text contains the replacement string "x%", replace it with the
+  // actual percentage from the score.
+  formatFeedbackMessage(text: string) {
+    return text.replace('x%', `${(this.score * 100).toFixed(2)}%`);
   }
 
   getFeedbackTextForScore(score: number): string {
+    let feedbackText;
     if (score >= this.toxicScoreThreshold) {
-      return this.feedbackText[2];
+      feedbackText = this.feedbackText[2];
     } else if (score >= this.neutralScoreThreshold) {
-      return this.feedbackText[1];
+      feedbackText = this.feedbackText[1];
     } else {
-      return this.feedbackText[0];
+      feedbackText = this.feedbackText[0];
     }
+    return this.formatFeedbackMessage(feedbackText);
   }
 
   feedbackContainerClicked() {

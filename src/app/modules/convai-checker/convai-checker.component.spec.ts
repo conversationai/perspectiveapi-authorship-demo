@@ -203,7 +203,7 @@ async function verifyLayerTransitionsWorkForDemoSiteConfig(
 
   const layer1TextElements = [
     'perceived as toxic',
-    'SEEM WRONG?'
+    'DISAGREE?'
   ];
   const layer1VisibleElementIds = ['layer1', 'seemWrongButtonDemoConfig'];
   const layer1HiddenElementIds = ['layer2', 'layer3'];
@@ -462,17 +462,7 @@ describe('Convai checker test', () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = ORIGINAL_TIMEOUT;
   });
 
-  it('should recognize inputs from attributes', async(() => {
-    const fixture = TestBed.createComponent(
-      test_components.ConvaiCheckerWithAttributeInputComponent);
-    fixture.detectChanges();
-
-    const checker = fixture.componentInstance.checker;
-
-    expect(checker.serverUrl).toEqual('test-url');
-    expect(checker.inputId).toEqual('checkerTextarea');
-    expect(checker.demoSettings.communityId).toEqual('testCommunityId');
-  }));
+  // TODO: Is it possible to add a test for the Angular element use case?
 
   it('should recognize inputs from angular input bindings', async(() => {
     const fixture =
@@ -749,7 +739,7 @@ describe('Convai checker test', () => {
     // Checks that loading has stopped.
     expect(checker.statusWidget.isLoading).toBe(false);
 
-    // Click the 'Seem wrong?' button
+    // Click the 'Disagree?' button
     const seemWrongButton = document.getElementById('seemWrongButtonDemoConfig');
     sendClickEvent(seemWrongButton);
 
@@ -808,7 +798,7 @@ describe('Convai checker test', () => {
     expect(checker.statusWidget.isLoading).toBe(false);
 
     // Seem wrong button should be displayed.
-    expect(fixture.nativeElement.textContent).toContain('Seem wrong?');
+    expect(fixture.nativeElement.textContent).toContain('Disagree?');
 
     // 2) After the first check compconstes, send an event that the
     // textbox has been cleared.
@@ -819,7 +809,7 @@ describe('Convai checker test', () => {
     fixture.detectChanges();
 
     // Sanity check -- seems wrong button should not be displayed.
-    expect(fixture.nativeElement.textContent).not.toContain('Seem wrong?');
+    expect(fixture.nativeElement.textContent).not.toContain('Disagree?');
 
     // 3) Try to leave feedback for the empty string anyway, to make sure it
     // does not go through. This state should not be possible but we

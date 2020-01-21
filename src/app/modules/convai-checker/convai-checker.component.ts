@@ -54,12 +54,6 @@ export interface DemoSettings {
   // Whether to use the plugin endpoint.
   usePluginEndpoint: boolean;
 
-  // Whether to show the model score in the UI.
-  showPercentage: boolean;
-
-  // Determines whether “More info” link is visible.
-  showMoreInfoLink: boolean;
-
   // Three feedback messages to display to the user. These can contain emoji
   // unicode. This must be length 3.
   feedbackText: [string, string, string];
@@ -81,9 +75,6 @@ export interface DemoSettings {
   // The loading icon style. See perspective-status.LoadingIconStyle for
   // options.
   loadingIconStyle: string;
-
-  // The string to use to prompt users to submit feedback.
-  userFeedbackPromptText: string;
 
   // An id for the community using the checker.
   communityId?: string;
@@ -129,7 +120,6 @@ export class ConvaiCheckerComponent implements OnInit {
   statusWidget: PerspectiveStatusComponent;
   @Input() inputId: string;
   @Input() serverUrl: string;
-  @Input() fontSize = 12;
   @Input() demoSettings: DemoSettings = DEFAULT_DEMO_SETTINGS;
   // A JSON string representation of the DemoSettings. Expected to be static
   // over the course of the component's lifecycle, and should only be used from
@@ -157,18 +147,11 @@ export class ConvaiCheckerComponent implements OnInit {
   public canAcceptFeedback = false;
   public feedbackRequestInProgress = false;
   private sessionId: string|null = null;
-  private gradientColors: string[] = ['#25C1F9', '#7C4DFF', '#D400F9'];
 
   constructor(
       private elementRef: ElementRef,
       private analyzeApiService: PerspectiveApiService
   ) {
-    // Extracts attribute fields from the element declaration. This
-    // covers the case where this component is used as a root level
-    // component outside an angular component tree and we cannot get
-    // these values from data bindings.
-    this.inputId = this.elementRef.nativeElement.getAttribute('inputId');
-
     // Default to '' to use same server as whatever's serving the webapp.
     this.serverUrl =
       this.elementRef.nativeElement.getAttribute('serverUrl') || '';
@@ -327,9 +310,8 @@ export class ConvaiCheckerComponent implements OnInit {
     // Look at detailed API error messages for more meaningful error to return.
     try {
       for (const api_err of error.error.errors) {
-        // TODO(jetpack): a small hack to handle the language detection failure
-        // case. we should instead change the API to return documented, typeful
-        // errors.
+        // TODO: a small hack to handle the language detection failure case.
+        // Update this to use the API's new typeful errors.
         if (api_err.message.includes('does not support request languages')) {
           msg = 'We don\'t yet support that language, but we\'re working on it!';
           break;

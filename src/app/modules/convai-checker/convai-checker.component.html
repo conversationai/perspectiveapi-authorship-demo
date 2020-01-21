@@ -1,31 +1,24 @@
 <div id="checkerContainer">
   <!-- TODO(rachelrosen): merge perspective-status and convai-checker
-       and move a large portion of the convai-checker code to the perspective-api service. 
-
-       TODO: We're disabling the "learn more" link for the plugin while we decide what to
-       allow in terms of link customization. Re-enable if we decide we want to allow
-       users to customize the link destination target.
+       and move a large portion of the convai-checker code to the perspective-api service.
   -->
   <perspective-status
-    [fontSize]="fontSize"
-    [indicatorWidth]="13"
-    [indicatorHeight]="13"
     [gradientColors]="demoSettings.gradientColors"
     [neutralScoreThreshold]="demoSettings.neutralScoreThreshold"
     [toxicScoreThreshold]="demoSettings.toxicScoreThreshold"
     [feedbackText]="demoSettings.feedbackText"
-    [showPercentage]="demoSettings.showPercentage"
-    [showMoreInfoLink]="demoSettings.usePluginEndpoint ? false : demoSettings.showMoreInfoLink"
+    [showMoreInfoLink]="!demoSettings.usePluginEndpoint"
+    [showFeedbackForLowScores]="demoSettings.showFeedbackForLowScores"
+    [showFeedbackForNeutralScores]="demoSettings.showFeedbackForNeutralScores"
+    [loadingIconStyle]="demoSettings.loadingIconStyle"
+    [hasLocalAssets]="!demoSettings.usePluginEndpoint"
+
     [hasScore]="analyzeCommentResponse !== null"
     [canAcceptFeedback]="canAcceptFeedback"
     [feedbackRequestInProgress]="feedbackRequestInProgress"
     [initializeErrorMessage]="initializeErrorMessage"
     [analyzeErrorMessage]="analyzeErrorMessage"
-    [userFeedbackPromptText]="demoSettings.userFeedbackPromptText"
-    [showFeedbackForLowScores]="demoSettings.showFeedbackForLowScores"
-    [showFeedbackForNeutralScores]="demoSettings.showFeedbackForNeutralScores"
-    [loadingIconStyle]="demoSettings.loadingIconStyle"
-    [hasLocalAssets]="!demoSettings.usePluginEndpoint"
+
     (commentFeedbackSubmitted)="onCommentFeedbackReceived($event)"
     (scoreChangeAnimationCompleted)="handleScoreChangeAnimationCompleted()"
     (modelInfoLinkClicked)="handleModelInfoLinkClicked()">
