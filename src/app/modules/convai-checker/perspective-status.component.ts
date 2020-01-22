@@ -127,10 +127,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
   @Output() animationsDone: EventEmitter<void> = new EventEmitter<void>();
 
-  public indicatorWidth = 13;
-  public indicatorHeight = 13;
-  public fontSize = 12;
-  public userFeedbackPromptText = 'Disagree?';
+  indicatorWidth = 13;
+  indicatorHeight = 13;
+  fontSize = 12;
+  userFeedbackPromptText = 'Disagree?';
 
   public configurationEnum = Configuration;
   public configuration = this.configurationEnum.DEMO_SITE;
