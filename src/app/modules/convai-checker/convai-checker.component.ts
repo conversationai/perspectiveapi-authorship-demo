@@ -84,7 +84,7 @@ export interface DemoSettings {
 
   // The font style to use in the plugin. This should match what is used in a
   // 'font-family' CSS rule. Note that we have only tested the following fonts:
-  // Roboto (more font support TBD).
+  // Roboto, Open Sans, Merriweather, Playfair Display, and Courier New.
   fontFamily?: string;
 }
 

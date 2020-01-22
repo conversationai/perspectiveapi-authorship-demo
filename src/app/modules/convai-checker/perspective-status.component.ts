@@ -122,7 +122,6 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   @Input() hasLocalAssets = true;
   @Input() fontFamily = 'Roboto, sans-serif';
 
-
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() commentFeedbackSubmitted: EventEmitter<CommentFeedback> =
