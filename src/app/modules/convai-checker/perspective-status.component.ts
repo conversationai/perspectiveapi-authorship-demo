@@ -75,7 +75,7 @@ const FADE_DETAILS_TIME_SECONDS = 0.4;
 const FADE_ANIMATION_TIME_SECONDS = 0.3;
 const GRAYSCALE_ANIMATION_TIME_SECONDS = 0.2;
 const LAYER_TRANSITION_TIME_SECONDS = 0.5;
-const FADE_WIDGET_TIME_SECONDS = 0.4;
+export const FADE_WIDGET_TIME_SECONDS = 0.4;
 const WIDGET_PADDING_PX = 4;
 const WIDGET_RIGHT_MARGIN_PX = 10;
 const EMOJI_MAIN_LOADING_ANIMATION_LABEL = 'emojiMainLoadingAnimation';
@@ -114,7 +114,6 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   ];
   @Input() neutralScoreThreshold = ScoreThreshold.NEUTRAL;
   @Input() toxicScoreThreshold = ScoreThreshold.TOXIC;
-  @Input() showMoreInfoLink = true;
   @Input() analyzeErrorMessage: string|null = null;
   @Input() showFeedbackForLowScores: boolean;
   @Input() showFeedbackForNeutralScores: boolean;
@@ -500,15 +499,15 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     }
   }
 
-  private getShouldHideStatusWidget(loadStart: boolean): boolean {
+  private getShouldHideStatusWidget(): boolean {
     let shouldHide = false;
 
     if (!this.showFeedbackForLowScores) {
-      shouldHide = shouldHide || loadStart || this.score < this.neutralScoreThreshold;
+      shouldHide = shouldHide || this.score < this.neutralScoreThreshold;
     }
 
     if (!this.showFeedbackForNeutralScores) {
-      shouldHide = shouldHide || loadStart || (
+      shouldHide = shouldHide || (
         this.score >= this.neutralScoreThreshold
         && this.score < this.toxicScoreThreshold);
     }
@@ -516,8 +515,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     return shouldHide;
   }
 
-  private getUpdateStatusWidgetVisibilityAnimation(loadStart: boolean): TimelineMax {
-    const hide = this.getShouldHideStatusWidget(loadStart);
+  private getUpdateStatusWidgetVisibilityAnimation(): TimelineMax {
+    const hide = this.getShouldHideStatusWidget();
 
     let forceAnimation = false;
     if (this.isPlayingShowOrHideLoadingWidgetAnimation) {
@@ -856,13 +855,13 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
       console.debug('Update widget state for default style');
       updateScoreCompletedTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+        this.getUpdateStatusWidgetVisibilityAnimation());
       updateScoreCompletedTimeline.add(this.getUpdateShapeAnimation(this.score));
       return updateScoreCompletedTimeline;
     } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
       console.debug('Update widget state for emoji style');
       updateScoreCompletedTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+        this.getUpdateStatusWidgetVisibilityAnimation());
       updateScoreCompletedTimeline.add(this.getShowEmojiAnimation());
       return updateScoreCompletedTimeline;
     } else {
@@ -1003,7 +1002,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // disappeared due to certain settings, and in some of these cases it
     // needs to reappear before loading animation begins.
     loadingStartTimeline.add(
-      this.getUpdateStatusWidgetVisibilityAnimation(true));
+      this.getUpdateStatusWidgetVisibilityAnimation());
 
     loadingStartTimeline.add(
       this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
@@ -1060,18 +1059,18 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
     // If we're revealing the status widget, play the reveal animation
     // before the update emoji animation.
-    if (!this.getShouldHideStatusWidget(false)) {
+    if (!this.getShouldHideStatusWidget()) {
       loadingEndTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+        this.getUpdateStatusWidgetVisibilityAnimation());
     }
 
     loadingEndTimeline.add(scoreCompletedAnimations);
 
     // If we're hiding the status widget, play the hide widget
     // animation after the update emoji animation.
-    if (this.getShouldHideStatusWidget(false)) {
+    if (this.getShouldHideStatusWidget()) {
       loadingEndTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+        this.getUpdateStatusWidgetVisibilityAnimation());
     }
 
     if (this.pendingPostLoadingStateChangeAnimations) {
@@ -1101,7 +1100,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // disappeared due to certain settings, and in some of these cases it
     // needs to reappear before loading animation begins.
     startAnimationsGroup0.push(
-      this.getUpdateStatusWidgetVisibilityAnimation(true));
+      this.getUpdateStatusWidgetVisibilityAnimation());
 
     startAnimationsGroup2.push(
       this.getToGrayScaleAnimation(GRAYSCALE_ANIMATION_TIME_SECONDS));
@@ -1178,18 +1177,18 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
 
     // If we're revealing the status widget, play the reveal animation
     // before the update shape animation.
-    if (!this.getShouldHideStatusWidget(false)) {
+    if (!this.getShouldHideStatusWidget()) {
       updateScoreCompletedTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+        this.getUpdateStatusWidgetVisibilityAnimation());
     }
 
     updateScoreCompletedTimeline.add(scoreCompletedAnimations);
 
     // If we're hiding the status widget, play the hide widget
     // animation after the update shape animation.
-    if (this.getShouldHideStatusWidget(false)) {
+    if (this.getShouldHideStatusWidget()) {
       updateScoreCompletedTimeline.add(
-        this.getUpdateStatusWidgetVisibilityAnimation(false));
+        this.getUpdateStatusWidgetVisibilityAnimation());
     }
 
     if (this.pendingPostLoadingStateChangeAnimations) {
@@ -1259,7 +1258,6 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
               this.seekPosition(loadingTimeline, FADE_START_LABEL);
             } else {
               console.debug('Loading complete');
-              console.debug('hasScore:', this.hasScore);
               const updateScoreCompletedTimeline =
                 this.getEndAnimationsForCircleSquareDiamondWidgetLoading(
                   loadingTimeline);
