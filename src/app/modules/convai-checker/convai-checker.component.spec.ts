@@ -48,8 +48,7 @@ import {
 } from '@angular/common/http/testing';
 
 import * as test_components from './test-components';
-import { PerspectiveStatusComponent, CommentFeedback, Emoji, LoadingIconStyle, Shape,
-         FADE_WIDGET_TIME_SECONDS } from './perspective-status.component';
+import { PerspectiveStatusComponent, CommentFeedback, Emoji, LoadingIconStyle, Shape } from './perspective-status.component';
 import { ConvaiCheckerComponent, REQUEST_LIMIT_MS, DEFAULT_DEMO_SETTINGS, DemoSettings } from './convai-checker.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
 import { AnalyzeCommentResponse } from './perspectiveapi-types';
