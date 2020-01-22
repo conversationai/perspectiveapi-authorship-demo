@@ -185,6 +185,15 @@
     <div class="setting">
       <mat-form-field>
         <input matInput
+               [(ngModel)]="fontFamily"
+               (input)="onSettingsChanged()"
+               placeholder="Font family"/>
+      </mat-form-field>
+    </div>
+
+    <div class="setting">
+      <mat-form-field>
+        <input matInput
                [(ngModel)]="modelName"
                (input)="onSettingsChanged()"
                placeholder="Model name"/>

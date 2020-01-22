@@ -54,8 +54,7 @@ export interface DemoSettings {
   // Whether to use the plugin endpoint.
   usePluginEndpoint: boolean;
 
-  // Three feedback messages to display to the user. These can contain emoji
-  // unicode. This must be length 3.
+  // Three feedback messages to display to the user. This must be length 3.
   feedbackText: [string, string, string];
 
   // Threshold for neutral scores. Must be >= 0.
@@ -82,6 +81,11 @@ export interface DemoSettings {
   // The model to use for scoring. If not specified, uses TOXICITY as the
   // default model.
   modelName?: string;
+
+  // The font style to use in the plugin. This should match what is used in a
+  // 'font-family' CSS rule. Note that we have only tested the following fonts:
+  // Roboto, Open Sans, Merriweather, Playfair Display, and Courier New.
+  fontFamily?: string;
 }
 
 
@@ -98,6 +102,7 @@ export const DEFAULT_DEMO_SETTINGS = {
     'Unsure if this will be perceived as toxic',
     'Likely to be perceived as toxic'
   ] as [string, string, string],
+  fontFamily: '"Roboto", sans-serif',
   neutralScoreThreshold: 0.4,
   toxicScoreThreshold: 0.7,
   showFeedbackForLowScores: true,

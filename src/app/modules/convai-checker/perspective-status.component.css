@@ -91,7 +91,6 @@
 
 .seemWrongButton {
   font-size: 12px;
-  font-family: Roboto, sans-serif;
   line-height: 16px;
   letter-spacing: 0.05em;
   align-self: flex-start;
@@ -141,7 +140,6 @@
   border: 0px;
   cursor: pointer;
   padding-top: 0px;
-  font-family: Roboto, sans-serif;
 }
 
 .feedbackResponseButton {
@@ -163,7 +161,6 @@
 
 .yesNoButton {
   font-size: 12px;
-  font-family: Roboto, sans-serif;
   line-height: 16px;
   letter-spacing: 0.05em;
 }

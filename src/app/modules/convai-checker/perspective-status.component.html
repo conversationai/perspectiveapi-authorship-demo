@@ -1,4 +1,10 @@
-<div #widgetContainer id="widgetContainer" class="horizontal-container">
+<!-- Note on the ngStyle for font-family: Using !important doesn't work in data
+     binding (see https://github.com/angular/angular/issues/12009) and the
+     default button style will override whatever font we specify here, so we
+     have to repeat it on buttons used throughout the template. -->
+<div #widgetContainer id="widgetContainer"
+                      class="horizontal-container"
+                      [ngStyle]="{'font-family': (fontFamily || '\'Roboto\', sans-serif')}">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
         rel="stylesheet">
   <!-- For items that need to be animated, hidden is used instead of *ngIf.
@@ -92,7 +98,8 @@
                [style.fontSize]="fontSize"
                [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
                (click)="feedbackContainerClicked()"
-               tabindex=0>
+               tabindex=0
+               [ngStyle]="{'font-family': fontFamily || '\'Roboto\', sans-serif'}">
             {{userFeedbackPromptText}}
           </button>
         </div>
@@ -135,7 +142,8 @@
                 [style.fontSize]="fontSize"
                 [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
                 (click)="submitFeedback(true)"
-                tabindex=0>
+                tabindex=0
+                [ngStyle]="{'font-family': fontFamily || '\'Roboto\', sans-serif'}">
                 Yes
               </button>
             </div>
@@ -147,7 +155,8 @@
                 [style.fontSize]="fontSize"
                 [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
                 (click)="submitFeedback(false)"
-                tabindex=0>
+                tabindex=0
+                [ngStyle]="{'font-family': fontFamily || '\'Roboto\', sans-serif'}">
                 No
               </button>
             </div>
@@ -173,7 +182,8 @@
                 id="thanksForFeedbackButtonDemoConfig"
                 class="noBorderButton feedbackResponseButton widgetText"
                 role="button"
-                (click)="resetLayers()">
+                (click)="resetLayers()"
+                [ngStyle]="{'font-family': fontFamily || '\'Roboto\', sans-serif'}">
                 Thanks for your feedback!
               </button>
             </div>
@@ -183,7 +193,8 @@
                    role="button"
                    [style.fontSize]="fontSize"
                    (click)="resetLayers()"
-                   tabindex=0>
+                   tabindex=0
+                   [ngStyle]="{'font-family': fontFamily || '\'Roboto\', sans-serif'}">
                 Error submitting feedback. Click to try again.
               </button>
             </div>

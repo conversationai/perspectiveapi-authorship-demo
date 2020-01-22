@@ -120,11 +120,12 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   @Input() showFeedbackForNeutralScores: boolean;
   @Input() loadingIconStyle: string;
   @Input() hasLocalAssets = true;
+  @Input() fontFamily = 'Roboto, sans-serif';
+
   @Output() scoreChangeAnimationCompleted: EventEmitter<void> = new EventEmitter<void>();
   @Output() modelInfoLinkClicked: EventEmitter<void> = new EventEmitter<void>();
   @Output() commentFeedbackSubmitted: EventEmitter<CommentFeedback> =
     new EventEmitter<CommentFeedback>();
-
   @Output() animationsDone: EventEmitter<void> = new EventEmitter<void>();
 
   indicatorWidth = 13;
