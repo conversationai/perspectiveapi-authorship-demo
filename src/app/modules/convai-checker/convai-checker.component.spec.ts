@@ -349,18 +349,14 @@ async function verifyWidgetVisibilityForDemoSettings(
   const textArea = fixture.debugElement.query(
     By.css('#' + checker.inputId)).nativeElement;
 
-  // Set up the mock responses for the series of three requests that will be
+  // Set up the mock responses for the series of requests that will be
   // made in the test.
-  const queryTexts = [
-    'Your mother was a hamster',
-    'Your father smelled of elderberries',
-    'What is the air velocity of an unladen swallow?'
-  ];
-  const expectedFeedbackText = [
-    checker.statusWidget.getFeedbackTextForScore(mockResponseScores[0]),
-    checker.statusWidget.getFeedbackTextForScore(mockResponseScores[1]),
-    checker.statusWidget.getFeedbackTextForScore(mockResponseScores[2]),
-  ];
+  const queryTexts = [];
+  const expectedFeedbackText = [];
+  for (let i = 0; i < mockResponseScores.length; i++) {
+    queryTexts.push(`Text ${i}`);
+    expectedFeedbackText.push(checker.statusWidget.getFeedbackTextForScore(mockResponseScores[i]));
+  }
 
   // Wait for animation triggered in ngAfterViewInit.
   await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
@@ -1047,7 +1043,11 @@ describe('Convai checker test', () => {
 
       const mockReq = httpMock.expectOne('test-url/check');
       fixture.detectChanges();
-      expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
+
+      // Because we clear the textbox between loop iterations, this defaults the
+      // score back to 0, so the widget will be visible even after a neutral
+      // score.
+      expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(true);
       expect(checker.statusWidget.isLoading).toBe(true);
 
       mockReq.flush(mockResponses[callCount]);
@@ -1443,11 +1443,11 @@ describe('Convai checker test', () => {
     demoSettings.toxicScoreThreshold = 0.8;
     demoSettings.showFeedbackForLowScores = false;
     demoSettings.showFeedbackForNeutralScores = false;
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, true];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [false, false, true];
+    const mockResponseScores = [0.6, 0, 0.9, 0];
+    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false, true];
+    const expectedWidgetVisibilitiesWhileLoading = [false, false, false, true];
+    const expectedWidgetVisibilitiesAfterLoading = [false, false, true, false];
+    const expectedFeedbackTextVisibilitiesAfterLoading = [false, false, true, false];
     const widgetId = 'circleSquareDiamondWidget';
 
     await verifyWidgetVisibilityForDemoSettings(
@@ -1471,11 +1471,11 @@ describe('Convai checker test', () => {
     demoSettings.showFeedbackForLowScores = false;
     demoSettings.showFeedbackForNeutralScores = false;
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-    const mockResponseScores = [0.6, 0, 0.9];
-    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
-    const expectedWidgetVisibilitiesAfterLoading = [false, false, true];
-    const expectedFeedbackTextVisibilitiesAfterLoading = [false, false, true];
+    const mockResponseScores = [0.6, 0, 0.9, 0];
+    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false, true];
+    const expectedWidgetVisibilitiesWhileLoading = [false, false, false, true];
+    const expectedWidgetVisibilitiesAfterLoading = [false, false, true, false];
+    const expectedFeedbackTextVisibilitiesAfterLoading = [false, false, true, false];
     const widgetId = 'emojiStatusWidget';
 
     await verifyWidgetVisibilityForDemoSettings(
@@ -1507,10 +1507,7 @@ describe('Convai checker test', () => {
       true,
       false
     ];
-    // TODO: This reflects the current behavior (loading icon is invisible
-    // during loading when showFeedbackForLowScores = false, but is this
-    // really the correct behavior?
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [false, true, false];
     const expectedWidgetVisibilitiesAfterLoading = [true, false, true];
     const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
 
@@ -1544,10 +1541,7 @@ describe('Convai checker test', () => {
       true,
       false
     ];
-    // TODO: This reflects the current behavior (loading icon is invisible
-    // during loading when showFeedbackForLowScores = false, but is this
-    // really the correct behavior?
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [false, true, false];
     const expectedWidgetVisibilitiesAfterLoading = [true, false, true];
     const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
     const widgetId = 'emojiStatusWidget';
@@ -1581,10 +1575,7 @@ describe('Convai checker test', () => {
       false,
       true
     ];
-    // TODO: This reflects the current behavior (loading icon is invisible
-    // during loading when showFeedbackForNeutralScores = false, but is this
-    // really the correct behavior?
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [true, false, true];
     const expectedWidgetVisibilitiesAfterLoading = [false, true, true];
     const expectedFeedbackTextVisibilitiesAfterLoading = [false, true, true];
 
@@ -1618,10 +1609,7 @@ describe('Convai checker test', () => {
       false,
       true
     ];
-    // TODO: This reflects the current behavior (loading icon is invisible
-    // during loading when showFeedbackForNeutralScores = false, but is this
-    // really the correct behavior?
-    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [true, false, true];
     const expectedWidgetVisibilitiesAfterLoading = [false, true, true];
     const expectedFeedbackTextVisibilitiesAfterLoading = [false, true, true];
     const widgetId = 'emojiStatusWidget';
