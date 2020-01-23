@@ -86,6 +86,10 @@ const getIsElementWithIdVisible = function(id: string): boolean {
       && getElementOpacity(id) > 0;
 };
 
+const getElementExists = function(id: string): boolean {
+  return document.getElementById(id) !== null;
+};
+
 const getElementXTranslation = function(id: string): number|null {
   const element = document.getElementById(id);
   if (!element) {
@@ -150,9 +154,9 @@ function verifyCircleSquareDiamondWidgetVisible() {
   // Checks visibility of the loading icons. The circle/square/diamond
   // loading icon should be visible, and the emoji one should not.
   const circleSquareDiamondWidgetVisible =
-   getIsElementWithIdVisible('circleSquareDiamondWidget');
+    getIsElementWithIdVisible('circleSquareDiamondWidget');
   const emojiWidgetVisible =
-   getIsElementWithIdVisible('emojiStatusWidget');
+    getIsElementWithIdVisible('emojiStatusWidget');
   expect(circleSquareDiamondWidgetVisible).toBe(true);
   expect(emojiWidgetVisible).toBe(false);
 }
@@ -1779,4 +1783,59 @@ describe('Convai checker test', () => {
     expect(checker.demoSettings).toEqual(expectedDemoSettings);
     expect(checker.demoSettings).not.toEqual(getCopyOfDefaultDemoSettings());
   }));
+
+  it('Test correct visibility of loading icon after loadingIconStyle change', async() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+    fixture.detectChanges();
+    const checker = fixture.componentInstance.checker;
+
+    // Change back and forth without any visibility restrictions. Icons for the
+    // respective icon type should be visible.
+    verifyCircleSquareDiamondWidgetVisible();
+
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+    fixture.detectChanges();
+    verifyEmojiWidgetVisible();
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+    fixture.detectChanges();
+    verifyCircleSquareDiamondWidgetVisible();
+
+    // Change back and forth while hiding icon for low scores (default score is
+    // 0). Icons for the respective icon type should exist in the DOM, but
+    // should be hidden.
+    demoSettings.showFeedbackForLowScores = false;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+    fixture.detectChanges();
+    expect(getElementExists('circleSquareDiamondWidget')).toBe(true);
+    expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
+    expect(getElementExists('emojiStatusWidget')).toBe(false);
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+    fixture.detectChanges();
+    expect(getElementExists('emojiStatusWidget')).toBe(true);
+    expect(getIsElementWithIdVisible('emojiStatusWidget')).toBe(false);
+    expect(getElementExists('circleSquareDiamondWidget')).toBe(false);
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+    fixture.detectChanges();
+    expect(getElementExists('circleSquareDiamondWidget')).toBe(true);
+    expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
+    expect(getElementExists('emojiStatusWidget')).toBe(false);
+  });
 });

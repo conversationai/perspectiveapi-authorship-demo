@@ -365,10 +365,11 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
           this.updateWidgetElement();
           // If the previous loading icon was already hidden, we should update
           // the position of the new one to match, so transition animations
-          // work correctly.
+          // work correctly. We also update the opacity.
           if (this.shouldHideStatusWidget) {
             this.widgetElement.style.transform =
               'matrix(1,0,0,1,' + (-1 * (this.indicatorWidth + WIDGET_PADDING_PX + WIDGET_RIGHT_MARGIN_PX)) + ',0)';
+            this.widgetElement.style.opacity = '0';
           }
           console.debug('Setting loadingIconStyleChanged to false');
           this.loadingIconStyleChanged = false;
@@ -944,6 +945,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     } else {
       emojiType = Emoji.SMILE;
     }
+
     const emojiElementToShow = this.getEmojiElementFromEmojiType(emojiType);
     const showEmojiTimeline = new TimelineMax({
       onStart: () => {
@@ -968,6 +970,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       resetBackgroundColorAnimation,
       this.getToFullScaleBounceAnimation(EMOJI_BOUNCE_IN_TIME_SECONDS),
       this.getChangeOpacityAnimation(emojiElementToShow, FADE_EMOJI_TIME_SECONDS, 1)]);
+
     return showEmojiTimeline;
   }
 
