@@ -367,11 +367,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
           // the position of the new one to match, so transition animations
           // work correctly. We also update the opacity.
           if (this.shouldHideStatusWidget) {
-            if (this.widgetElement !== null) {
-              this.widgetElement.style.transform =
-                'matrix(1,0,0,1,' + (-1 * (this.indicatorWidth + WIDGET_PADDING_PX + WIDGET_RIGHT_MARGIN_PX)) + ',0)';
-              this.widgetElement.style.opacity = '0';
-            }
+            this.widgetElement.style.transform =
+              'matrix(1,0,0,1,' + (-1 * (this.indicatorWidth + WIDGET_PADDING_PX + WIDGET_RIGHT_MARGIN_PX)) + ',0)';
+            this.widgetElement.style.opacity = '0';
           }
           console.debug('Setting loadingIconStyleChanged to false');
           this.loadingIconStyleChanged = false;
@@ -917,6 +915,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
         }
         this.isLoading = loading;
         if (!this.isPlayingLoadingAnimation) {
+          // Treat the LoadingIconStyle.NONE case the same as the
+          // CIRCLE_SQUARE_DIAMOND case for the purposes of animation sequences;
+          // the difference will be that the widget will be hidden, but the
+          // widget state and logic are the same.
           if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND
               || this.loadingIconStyle === LoadingIconStyle.NONE) {
             this.setLoadingForDefaultWidget();
