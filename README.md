@@ -15,7 +15,8 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 ## Requirements & Setup
 
 To run code using your local machine (not via the Docker
-environment), you will need to install `nodejs` (e.g., by [installing NVM](https://github.com/creationix/nvm)). You'll also need some global packages, which you can install using the `npm` command:
+environment), you will need to install `nodejs` (e.g., by [installing NVM](https://github.com/creationix/nvm)).
+You'll also need some global packages, which you can install using the `npm` command:
 
 ```bash
 npm install -g yarn typings typescript ts-node mocha protractor angular-cli karma-cli
@@ -24,7 +25,10 @@ npm install -g yarn typings typescript ts-node mocha protractor angular-cli karm
 Next, you will need to create a
 [Google Cloud (GCS)](http://cloud.google.com) project, and it will need to have access to [Perspective API](https://www.perspectiveapi.com). Requests to the API will be authenticated using a [Cloud project API key](https://support.google.com/cloud/answer/6158862?hl=en).
 
-An example configuration file template is provided in `config/server_config.template.json`. If one is not present in `build/config`, then the config file will be copied there when you build or start a local server. The config file specifies your Google Cloud project API key, and some other details which you can learn more about in the [documentation for Simple Server for Perspective API](https://github.com/conversationai/perspectiveapi-simple-server/blob/master/README.md).
+An example configuration file template is provided in `config/server_config.template.json`. If one is not present
+in `build/config`, then the config file will be copied there when you build or start a local server. The config
+file specifies your Google Cloud project API key, and some other details which you can learn more about in the
+[documentation for perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server/blob/master/README.md).
 
 To setup and install the local packages, use [install yarn](https://yarnpkg.com/en/docs/install) and then run:
 
@@ -34,7 +38,7 @@ yarn install
 
 ### Adding reCAPTCHA v3 verification
 
-The [Simple Server for Perspective API](https://github.com/conversationai/perspectiveapi-simple-server) 
+The [perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server) 
 has an optional configuration for enabling reCAPTCHA verification. To enable it in this demo, add the 
 requisite `recaptchaConfig` values to `server_config.json`. Then, provide [ng-recaptcha](https://github.com/DethAriel/ng-recaptcha)'s  `RecaptchaV3Service` and `RECAPTCHA_V3_SITE_KEY` to the module importing this demo, like so:
 
@@ -51,7 +55,7 @@ Run `yarn run serve` for a dev server. Navigate to `http://localhost:4200/`.
 The app will automatically reload if you change any of the source files.
 API requests to the server (`http://localhost:4200/check` and
 `http://localhost:4200/suggest_score`) will be redirected to an underlying nodejs server,
-based on [Simple Server for Perspective API](https://github.com/conversationai/perspectiveapi-simple-server),
+based on [perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server),
 which is started at `http://localhost:8080/`.
 
 ## Development server that uses compiled sources
@@ -83,7 +87,8 @@ You can now run the simple server at `http://localhost:8080/` serving content fr
 yarn run start:dev-server
 ```
 
-When run using the Dockerfile, e.g. on [Google Cloud](https://cloud.google.com/sdk/gcloud/), the following command will be run:
+When run using the Dockerfile, e.g. on [Google Cloud](https://cloud.google.com/sdk/gcloud/), the following
+command will be run:
 
 ```bash
 yarn run start:prod-server
@@ -114,7 +119,8 @@ Run `ng generate component component-name` to generate a new component. You can 
 
 ## Build
 
-Run `yarn run build` to build the project. The build artifacts will be stored in the `build/` directory. Use the `-prod` flag for a production build.
+Run `yarn run build` to build the project. The build artifacts will be stored in the `build/` directory. Use the
+`-prod` flag for a production build.
 
 ## Running unit tests
 
