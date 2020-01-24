@@ -8,7 +8,7 @@ build environment with deployment tools based on [Docker](https://www.docker.com
 as well as other cloud computing providers.
 
 The app uses the [Perspective API](http://www.perspectiveapi.com/) to score text, via
-[Simple Server for Perspective API](https://github.com/conversationai/perspectiveapi-simple-server).
+[perspectiveapi-simple-server](https://github.com/conversationai/perspectiveapi-simple-server).
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.0.0.
 
