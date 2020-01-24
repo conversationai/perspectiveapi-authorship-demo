@@ -12,7 +12,8 @@
        cannot be found when the component is initializing if their display
        conditions are not met. -->
   <div id="animationContainer">
-    <div *ngIf="loadingIconStyle === loadingIconStyleConst.CIRCLE_SQUARE_DIAMOND"
+    <div *ngIf="loadingIconStyle === loadingIconStyleConst.CIRCLE_SQUARE_DIAMOND
+                || loadingIconStyle === loadingIconStyleConst.NONE"
          id="circleSquareDiamondLoadingIconContainer">
       <div
            #circleSquareDiamondWidget
@@ -20,8 +21,9 @@
            class="dot"
            [style.width]="indicatorWidth"
            [style.height]="indicatorHeight"
-           [hidden]="shouldHideStatusWidget"
-           [attr.aria-hidden]="shouldHideStatusWidget || isPlayingShowOrHideLoadingWidgetAnimation"
+           [hidden]="shouldHideStatusWidget || loadingIconStyle === loadingIconStyleConst.NONE"
+           [attr.aria-hidden]="shouldHideStatusWidget || isPlayingShowOrHideLoadingWidgetAnimation
+                               || loadingIconStyle === loadingIconStyleConst.NONE"
            [attr.aria-label]="getAnimationA11yLabel(loadingIconStyle, isPlayingLoadingAnimation)"
            tabindex=0>
       </div>
@@ -68,7 +70,7 @@
                [style.fontSize]="fontSize"
                tabindex=0
                role="status"
-               [attr.aria-hidden]="!showScore || isPlayingLoadingAnimation || isPlayingFadeDetailsAnimation">
+               [attr.aria-hidden]="isPlayingLoadingAnimation || isPlayingFadeDetailsAnimation">
             <span id="feedbackText">{{getFeedbackTextForScore(score)}}</span>
           </div>
 
@@ -89,7 +91,7 @@
                role="button"
                class="seemWrongButton purpleButton noBorderButton"
                [style.fontSize]="fontSize"
-               [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
+               [disabled]="isPlayingLoadingAnimation || layersAnimating"
                (click)="feedbackContainerClicked()"
                tabindex=0
                [ngStyle]="{'font-family': fontFamily || '\'Roboto\', sans-serif'}">
@@ -133,7 +135,7 @@
                 class="yesNoButton purpleButton noBorderButton"
                 role="button"
                 [style.fontSize]="fontSize"
-                [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
+                [disabled]="isPlayingLoadingAnimation || layersAnimating"
                 (click)="submitFeedback(true)"
                 tabindex=0
                 [ngStyle]="{'font-family': fontFamily || '\'Roboto\', sans-serif'}">
@@ -146,7 +148,7 @@
                 class="yesNoButton purpleButton noBorderButton"
                 role="button"
                 [style.fontSize]="fontSize"
-                [disabled]="!showScore || isPlayingLoadingAnimation || layersAnimating"
+                [disabled]="isPlayingLoadingAnimation || layersAnimating"
                 (click)="submitFeedback(false)"
                 tabindex=0
                 [ngStyle]="{'font-family': fontFamily || '\'Roboto\', sans-serif'}">

@@ -172,6 +172,23 @@ function verifyEmojiWidgetVisible() {
   expect(emojiWidgetVisible).toBe(true);
 }
 
+function verifyNoLoadingIconState() {
+  expect(getElementExists('circleSquareDiamondWidget')).toBe(true);
+  expect(getElementExists('emojiStatusWidget')).toBe(false);
+  expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
+}
+
+async function updateDemoSettingsAndWaitForAnimation(
+    fixture: ComponentFixture<test_components.ConvaiCheckerCustomDemoSettingsComponent>,
+    demoSettings: DemoSettings) {
+  fixture.componentInstance.setDemoSettings(demoSettings);
+  fixture.detectChanges();
+  // Wait for animations triggered by changing the settings.
+  const checker = fixture.componentInstance.checker;
+  await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+  fixture.detectChanges();
+}
+
 function getElementOpacity(id: string): number {
   const element = document.getElementById(id);
   return parseFloat(window.getComputedStyle(element).getPropertyValue('opacity'));
@@ -367,11 +384,7 @@ async function verifyWidgetVisibilityForDemoSettings(
 
   // Test steps:
   // 1. Update settings
-  fixture.componentInstance.setDemoSettings(demoSettings);
-
-  fixture.detectChanges();
-  // Wait for animations triggered by changing the settings.
-  await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+  await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
 
   for (let callCount = 0; callCount < mockResponseScores.length; callCount++) {
     fixture.detectChanges();
@@ -945,6 +958,22 @@ describe('Convai checker test', () => {
     await verifyLayerTransitionsWorkForDemoSiteConfig(fixture, httpMock);
   });
 
+  it('Should handle UI layer changes, demo config, no loading icon',
+     async() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+
+    // Configure settings.
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+
+    const checker = fixture.componentInstance.checker;
+    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+
+    await verifyLayerTransitionsWorkForDemoSiteConfig(fixture, httpMock);
+  });
+
   it('Test loading icon visibility with setting showFeedbackForLowScores = false',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
@@ -1282,18 +1311,14 @@ describe('Convai checker test', () => {
       // Change to the emoji style, and verify the loading icon visibility
       // change.
       demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-      fixture.componentInstance.setDemoSettings(demoSettings);
-      fixture.detectChanges();
-
-      await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+      await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
 
       verifyEmojiWidgetVisible();
       verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
 
       // Set demo settings back to circle/square/diamond.
       demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
-      fixture.componentInstance.setDemoSettings(demoSettings);
-      fixture.detectChanges();
+      await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
     }
   });
 
@@ -1351,7 +1376,7 @@ describe('Convai checker test', () => {
       expect(checker.statusWidget.isLoading).toBe(true);
       mockReq.flush(mockResponses[callCount]);
 
-      // Wait for async code to compconste.
+      // Wait for async code to complete.
       await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
       fixture.detectChanges();
       // Checks the UI state after the response has been received.
@@ -1366,19 +1391,110 @@ describe('Convai checker test', () => {
       // Change to the shape style, and verify the loading icon visibility
       // change.
       demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
-      fixture.componentInstance.setDemoSettings(demoSettings);
-      fixture.detectChanges();
-      await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+      await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
 
       verifyCircleSquareDiamondWidgetVisible();
       verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
 
       // Set loading icon back to EMOJI style.
       demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-      fixture.componentInstance.setDemoSettings(demoSettings);
-      fixture.detectChanges();
+      await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
     }
   });
+
+  it('Test loading icon style setting change: from visible LoadingIconStyles to NONE and back',
+     async() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+
+    // Configure settings.
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
+    demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+    fixture.componentInstance.setDemoSettings(demoSettings);
+
+    fixture.detectChanges();
+    const checker = fixture.componentInstance.checker;
+    const textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    const queryTexts = [
+      'Your mother was a hamster',
+      'Your father smelled of elderberries',
+      'What is the air velocity of an unladen swallow?'
+    ];
+
+    const mockResponses = [
+      getMockCheckerResponse(0.9, queryTexts[0]),
+      getMockCheckerResponse(0.7, queryTexts[1]),
+      getMockCheckerResponse(0.2, queryTexts[2])
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different emoji.
+    const expectedEmojis = [
+      Emoji.SAD, Emoji.NEUTRAL, Emoji.SMILE
+    ];
+    // For each of the mock responses, the thresholds should indicate a
+    // different loading icon shape.
+    const expectedShapes = [
+      Shape.DIAMOND, Shape.SQUARE, Shape.CIRCLE
+    ];
+
+    verifyCircleSquareDiamondWidgetVisible();
+
+    for (let callCount = 0; callCount < mockResponses.length; callCount++) {
+      // Send an input event to trigger the service call.
+      setTextAndFireInputEvent(queryTexts[callCount], textArea);
+
+      await waitForTimeout(REQUEST_LIMIT_MS);
+
+      const mockReq = httpMock.expectOne('test-url/check');
+
+      fixture.detectChanges();
+      // Check the UI state before returning the repsonse.
+      verifyCircleSquareDiamondWidgetVisible();
+      expect(checker.statusWidget.isLoading).toBe(true);
+      mockReq.flush(mockResponses[callCount]);
+
+      // Wait for async code to complete.
+      await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+      fixture.detectChanges();
+      // Checks the UI state after the response has been received.
+
+      // Checks that loading has stopped.
+      expect(checker.statusWidget.isLoading).toBe(false);
+      expect(checker.statusWidget.isPlayingLoadingAnimation).toBe(false);
+
+      verifyCircleSquareDiamondWidgetVisible();
+      verifyLoadingWidgetHasShape(checker, expectedShapes[callCount]);
+
+      // Change to the NONE style, and verify the loading icon visibility
+      // change.
+      demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+      await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+
+      verifyNoLoadingIconState();
+
+      // Change to the EMOJI style.
+      demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+      await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+
+      verifyEmojiWidgetVisible();
+      verifyLoadingWidgetHasEmoji(checker, expectedEmojis[callCount]);
+
+      // Change back to the NONE style, and verify the loading icon visibility
+      // change.
+      demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+      await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+
+      verifyNoLoadingIconState();
+
+      // Change back to the CIRCLE_SQUARE_DIAMOND style.
+      demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+      await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    }
+  });
+
 
   it('Test loading icon visibility, shows feedback for low and neutral scores ',
      async() => {
@@ -1438,6 +1554,34 @@ describe('Convai checker test', () => {
       widgetId);
   });
 
+  it('Test loading icon visibility, shows feedback for low and neutral scores, no loading icon',
+     async() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+    fixture.detectChanges();
+    // Always show feedback, (the loading icon should always display).
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
+    demoSettings.showFeedbackForLowScores = true;
+    demoSettings.showFeedbackForNeutralScores = true;
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+    const mockResponseScores = [0.6, 0, 0.9];
+    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
+    const expectedFeedbackTextVisibilitiesAfterLoading = [true, true, true];
+
+    await verifyWidgetVisibilityForDemoSettings(
+      fixture,
+      httpMock,
+      demoSettings,
+      mockResponseScores,
+      expectedWidgetVisibilitiesBeforeLoading,
+      expectedWidgetVisibilitiesWhileLoading,
+      expectedWidgetVisibilitiesAfterLoading,
+      expectedFeedbackTextVisibilitiesAfterLoading);
+  });
+
   it('Test loading icon visibility, hides feedback for low and neutral scores ',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
@@ -1492,6 +1636,33 @@ describe('Convai checker test', () => {
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
+  });
+
+  it('Test loading icon visibility, hides feedback for low and neutral scores, no loading icon',
+     async() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+    fixture.detectChanges();
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
+    demoSettings.showFeedbackForLowScores = false;
+    demoSettings.showFeedbackForNeutralScores = false;
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+    const mockResponseScores = [0.6, 0, 0.9, 0];
+    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [false, false, false, false];
+    const expectedWidgetVisibilitiesAfterLoading = [false, false, false, false];
+    const expectedFeedbackTextVisibilitiesAfterLoading = [false, false, true, false];
+
+    await verifyWidgetVisibilityForDemoSettings(
+      fixture,
+      httpMock,
+      demoSettings,
+      mockResponseScores,
+      expectedWidgetVisibilitiesBeforeLoading,
+      expectedWidgetVisibilitiesWhileLoading,
+      expectedWidgetVisibilitiesAfterLoading,
+      expectedFeedbackTextVisibilitiesAfterLoading);
   });
 
   it('Test loading icon visibility, showFeedbackForLowScores = false, ',
@@ -1562,6 +1733,36 @@ describe('Convai checker test', () => {
       widgetId);
   });
 
+  it('Test loading icon visibility, showFeedbackForLowScores = false, no loading icon',
+     async() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+    fixture.detectChanges();
+    // Show feedback above a minimum threshold, and only show loading
+    // icon above the min threshold.
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
+    demoSettings.showFeedbackForLowScores = false;
+    demoSettings.showFeedbackForNeutralScores = true;
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+
+    const mockResponseScores = [0.6, 0, 0.9];
+    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
+    const expectedFeedbackTextVisibilitiesAfterLoading = [true, false, true];
+
+    await verifyWidgetVisibilityForDemoSettings(
+      fixture,
+      httpMock,
+      demoSettings,
+      mockResponseScores,
+      expectedWidgetVisibilitiesBeforeLoading,
+      expectedWidgetVisibilitiesWhileLoading,
+      expectedWidgetVisibilitiesAfterLoading,
+      expectedFeedbackTextVisibilitiesAfterLoading);
+  });
+
   it('Test loading icon visibility, showFeedbackForNeutralScores = false, ',
      async() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
@@ -1628,6 +1829,36 @@ describe('Convai checker test', () => {
       expectedWidgetVisibilitiesAfterLoading,
       expectedFeedbackTextVisibilitiesAfterLoading,
       widgetId);
+  });
+
+  it('Test loading icon visibility, showFeedbackForNeutralScores = false, no loading icon',
+     async() => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+    fixture.detectChanges();
+    // Show feedback above a minimum threshold, and only show loading
+    // icon above the min threshold.
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.neutralScoreThreshold = 0.6;
+    demoSettings.toxicScoreThreshold = 0.8;
+    demoSettings.showFeedbackForLowScores = true;
+    demoSettings.showFeedbackForNeutralScores = false;
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+
+    const mockResponseScores = [0.6, 0, 0.9];
+    const expectedWidgetVisibilitiesBeforeLoading = [false, false, false];
+    const expectedWidgetVisibilitiesWhileLoading = [false, false, false];
+    const expectedWidgetVisibilitiesAfterLoading = [false, false, false];
+    const expectedFeedbackTextVisibilitiesAfterLoading = [false, true, true];
+
+    await verifyWidgetVisibilityForDemoSettings(
+      fixture,
+      httpMock,
+      demoSettings,
+      mockResponseScores,
+      expectedWidgetVisibilitiesBeforeLoading,
+      expectedWidgetVisibilitiesWhileLoading,
+      expectedWidgetVisibilitiesAfterLoading,
+      expectedFeedbackTextVisibilitiesAfterLoading);
   });
 
   it('Test gradient colors', async(() => {
@@ -1789,53 +2020,84 @@ describe('Convai checker test', () => {
     fixture.detectChanges();
     const checker = fixture.componentInstance.checker;
 
-    // Change back and forth without any visibility restrictions. Icons for the
-    // respective icon type should be visible.
+    // Change back and forth between different LoadingIconStyles without any
+    // visibility restrictions. Icons for the respective icon type should be
+    // visible (or hidden for LoadingIconStyle.NONE).
     verifyCircleSquareDiamondWidgetVisible();
 
     const demoSettings = getCopyOfDefaultDemoSettings();
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-    fixture.componentInstance.setDemoSettings(demoSettings);
-    fixture.detectChanges();
-    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
-    fixture.detectChanges();
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
     verifyEmojiWidgetVisible();
 
     demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
-    fixture.componentInstance.setDemoSettings(demoSettings);
-    fixture.detectChanges();
-    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
-    fixture.detectChanges();
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
     verifyCircleSquareDiamondWidgetVisible();
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    verifyNoLoadingIconState();
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    verifyCircleSquareDiamondWidgetVisible();
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    verifyNoLoadingIconState();
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    verifyEmojiWidgetVisible();
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    verifyNoLoadingIconState();
 
     // Change back and forth while hiding icon for low scores (default score is
     // 0). Icons for the respective icon type should exist in the DOM, but
     // should be hidden.
+    demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
     demoSettings.showFeedbackForLowScores = false;
-    fixture.componentInstance.setDemoSettings(demoSettings);
-    fixture.detectChanges();
-    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
-    fixture.detectChanges();
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
     expect(getElementExists('circleSquareDiamondWidget')).toBe(true);
     expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
     expect(getElementExists('emojiStatusWidget')).toBe(false);
 
     demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
-    fixture.componentInstance.setDemoSettings(demoSettings);
-    fixture.detectChanges();
-    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
-    fixture.detectChanges();
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
     expect(getElementExists('emojiStatusWidget')).toBe(true);
     expect(getIsElementWithIdVisible('emojiStatusWidget')).toBe(false);
     expect(getElementExists('circleSquareDiamondWidget')).toBe(false);
 
     demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
-    fixture.componentInstance.setDemoSettings(demoSettings);
-    fixture.detectChanges();
-    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
-    fixture.detectChanges();
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
     expect(getElementExists('circleSquareDiamondWidget')).toBe(true);
     expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
     expect(getElementExists('emojiStatusWidget')).toBe(false);
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    verifyNoLoadingIconState();
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    expect(getElementExists('circleSquareDiamondWidget')).toBe(true);
+    expect(getIsElementWithIdVisible('circleSquareDiamondWidget')).toBe(false);
+    expect(getElementExists('emojiStatusWidget')).toBe(false);
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    verifyNoLoadingIconState();
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.EMOJI;
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    expect(getElementExists('emojiStatusWidget')).toBe(true);
+    expect(getIsElementWithIdVisible('emojiStatusWidget')).toBe(false);
+    expect(getElementExists('circleSquareDiamondWidget')).toBe(false);
+
+    demoSettings.loadingIconStyle = LoadingIconStyle.NONE;
+    await updateDemoSettingsAndWaitForAnimation(fixture, demoSettings);
+    verifyNoLoadingIconState();
   });
 });
