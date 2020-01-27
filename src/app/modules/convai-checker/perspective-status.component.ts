@@ -64,6 +64,7 @@ export const ScoreThreshold = {
 export const LoadingIconStyle = {
   CIRCLE_SQUARE_DIAMOND: 'circle_square_diamond',
   EMOJI: 'emoji',
+  NONE: 'none' // No loading icon
 };
 
 export const DEFAULT_FEEDBACK_TEXT = 'x% likely to be perceived as "toxic."';
@@ -148,7 +149,6 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   public isPlayingFadeDetailsAnimation = false;
   public isPlayingShowOrHideLoadingWidgetAnimation = false;
   public shouldHideStatusWidget = false;
-  public showScore = true;
   public currentShape: Shape = Shape.CIRCLE;
   public currentEmoji: Emoji = Emoji.SMILE;
   private showingMoreInfo = false;
@@ -501,7 +501,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   }
 
   private getShouldHideStatusWidget(): boolean {
-    let shouldHide = false;
+    let shouldHide = this.loadingIconStyle === LoadingIconStyle.NONE;
 
     if (!this.showFeedbackForLowScores) {
       shouldHide = shouldHide || this.score < this.neutralScoreThreshold;
@@ -670,6 +670,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   }
 
   feedbackContainerClicked() {
+    console.log('feedbackContainerClicked');
     if (this.configuration === Configuration.DEMO_SITE) {
       this.playAnimation(
         this.getTransitionToLayerAnimation(1, LAYER_TRANSITION_TIME_SECONDS));
@@ -830,8 +831,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       return 'Computing score animation';
     } else if (loadingIconStyle === LoadingIconStyle.EMOJI) {
       return this.getAccessibilityDescriptionForEmoji(this.currentEmoji);
-    } else {
+    } else if (loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
       return this.getAccessibilityDescriptionForShape(this.currentShape);
+    } else {
+      return ''; // There is no animation if the LoadingIconStyle is NONE.
     }
   }
 
@@ -853,7 +856,8 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
         });
       }
     });
-    if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
+    if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND
+        || this.loadingIconStyle === LoadingIconStyle.NONE) {
       console.debug('Update widget state for default style');
       updateScoreCompletedTimeline.add(
         this.getUpdateStatusWidgetVisibilityAnimation());
@@ -910,13 +914,20 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
           return;
         }
         this.isLoading = loading;
-        if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
-          this.setLoadingForDefaultWidget(loading);
-        } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
-          this.setLoadingForEmojiWidget(loading);
-        } else {
-          console.error(
-            'Calling setLoading for unknown loadingIconStyle: ' + this.loadingIconStyle);
+        if (!this.isPlayingLoadingAnimation) {
+          // Treat the LoadingIconStyle.NONE case the same as the
+          // CIRCLE_SQUARE_DIAMOND case for the purposes of animation sequences;
+          // the difference will be that the widget will be hidden, but the
+          // widget state and logic are the same.
+          if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND
+              || this.loadingIconStyle === LoadingIconStyle.NONE) {
+            this.setLoadingForDefaultWidget();
+          } else if (this.loadingIconStyle === LoadingIconStyle.EMOJI) {
+            this.setLoadingForEmojiWidget();
+          } else {
+            console.error(
+              'Calling setLoading for unknown loadingIconStyle: ' + this.loadingIconStyle);
+          }
         }
         this.animationsDone.pipe(take(1)).subscribe(() => { resolve(); });
       });
@@ -1106,16 +1117,14 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       this.getUpdateStatusWidgetVisibilityAnimation());
 
     startAnimationsGroup2.push(
-      this.getToGrayScaleAnimation(GRAYSCALE_ANIMATION_TIME_SECONDS));
-    if (this.showScore) {
-      if (this.currentLayerIndex !== 0) {
-        startAnimationsGroup1.push(
-          this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
-      }
-
-      startAnimationsGroup2.push(
-        this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
+    this.getToGrayScaleAnimation(GRAYSCALE_ANIMATION_TIME_SECONDS));
+    if (this.currentLayerIndex !== 0) {
+      startAnimationsGroup1.push(
+        this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
     }
+
+    startAnimationsGroup2.push(
+      this.getFadeDetailsAnimation(FADE_DETAILS_TIME_SECONDS, true, 0));
     startAnimationsTimeline.add(startAnimationsGroup0);
     startAnimationsTimeline.add(startAnimationsGroup1);
     startAnimationsTimeline.add(startAnimationsGroup2);
@@ -1172,11 +1181,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     scoreCompletedAnimations.push(
       this.getUpdateShapeAnimation(this.score));
 
-    if (this.showScore) {
-      scoreCompletedAnimations.push(
-        this.getFadeDetailsAnimation(
-          FADE_DETAILS_TIME_SECONDS, false, 0));
-    }
+    scoreCompletedAnimations.push(
+      this.getFadeDetailsAnimation(
+        FADE_DETAILS_TIME_SECONDS, false, 0));
 
     // If we're revealing the status widget, play the reveal animation
     // before the update shape animation.
@@ -1202,81 +1209,77 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     return updateScoreCompletedTimeline;
   }
 
-  setLoadingForEmojiWidget(loading: boolean): void {
-    if (loading && !this.isPlayingLoadingAnimation) {
-      this.isPlayingLoadingAnimation = true;
-      const loadingTimeline = new TimelineMax({
-        ease: Power3.easeInOut,
-        onStart: () => {
-          this.ngZone.run(() => {
-            console.debug('Starting timeline (emoji)');
-          });
-        },
-        onComplete: () => {
-          this.ngZone.run(() => {
-            console.debug('Completing timeline (emoji)');
-            if (this.isLoading) {
-              console.debug('Restarting main emoji loading animation');
-              this.seekPosition(loadingTimeline, EMOJI_MAIN_LOADING_ANIMATION_LABEL);
-            } else {
-              this.playAnimation(
-                this.getEndAnimationsForEmojiWidgetLoading(loadingTimeline));
-            }
-          });
-        }
-      });
+  setLoadingForEmojiWidget(): void {
+    this.isPlayingLoadingAnimation = true;
+    const loadingTimeline = new TimelineMax({
+      ease: Power3.easeInOut,
+      onStart: () => {
+        this.ngZone.run(() => {
+          console.debug('Starting timeline (emoji)');
+        });
+      },
+      onComplete: () => {
+        this.ngZone.run(() => {
+          console.debug('Completing timeline (emoji)');
+          if (this.isLoading) {
+            console.debug('Restarting main emoji loading animation');
+            this.seekPosition(loadingTimeline, EMOJI_MAIN_LOADING_ANIMATION_LABEL);
+          } else {
+            this.playAnimation(
+              this.getEndAnimationsForEmojiWidgetLoading(loadingTimeline));
+          }
+        });
+      }
+    });
 
-      loadingTimeline.add(this.getStartAnimationsForEmojiWidgetLoading());
-      loadingTimeline.add(this.getLoopAnimationForEmojiWidgetLoading(),
-                          EMOJI_MAIN_LOADING_ANIMATION_LABEL);
-      this.playAnimation(loadingTimeline);
-    }
+    loadingTimeline.add(this.getStartAnimationsForEmojiWidgetLoading());
+    loadingTimeline.add(this.getLoopAnimationForEmojiWidgetLoading(),
+                        EMOJI_MAIN_LOADING_ANIMATION_LABEL);
+    this.playAnimation(loadingTimeline);
   }
 
-  setLoadingForDefaultWidget(loading: boolean): void {
-    if (loading && !this.isPlayingLoadingAnimation) {
-      console.debug('About to create loadingTimeline');
-      // Set isPlayingLoadingAnimation = true here instead of in the onStart()
-      // of the animation, so that the animation does not start twice if this
-      // function gets called twice in rapid succession.
-      this.isPlayingLoadingAnimation = true;
+  setLoadingForDefaultWidget(): void {
+    console.debug('About to create loadingTimeline');
+    // Set isPlayingLoadingAnimation = true here instead of in the onStart()
+    // of the animation, so that the animation does not start twice if this
+    // function gets called twice in rapid succession.
+    this.isPlayingLoadingAnimation = true;
 
-      const loadingTimeline = new TimelineMax({
-        ease: Power3.easeInOut,
-        onStart: () => {
-          this.ngZone.run(() => {
-            console.debug('Starting timeline');
-          });
-        },
-        onComplete: () => {
-          this.ngZone.run(() => {
-            console.debug('Completing timeline');
-            console.debug('Updating shape from animation complete');
-            if (this.isLoading) {
-              // TODO: Consider the edge case where
-              // isPlayingShowOrHideLoadingWidgetAnimation is true here. It's
-              // not ever getting triggered in the existing logs and might not
-              // be possible to hit now, but could become an issue later.
-              console.debug('Restarting loading to fade animation.');
-              this.seekPosition(loadingTimeline, FADE_START_LABEL);
-            } else {
-              console.debug('Loading complete');
-              const updateScoreCompletedTimeline =
-                this.getEndAnimationsForCircleSquareDiamondWidgetLoading(
-                  loadingTimeline);
-              this.playAnimation(updateScoreCompletedTimeline);
-            }
-          });
-        },
-      });
-      const startAnimationsTimeline =
-        this.getStartAnimationsForCircleSquareDiamondWidgetLoading();
-      loadingTimeline.add(startAnimationsTimeline, LOADING_START_ANIMATIONS_LABEL);
+    const loadingTimeline = new TimelineMax({
+      ease: Power3.easeInOut,
+      onStart: () => {
+        this.ngZone.run(() => {
+          console.debug('Starting timeline');
+        });
+      },
+      onComplete: () => {
+        this.ngZone.run(() => {
+          console.debug('Completing timeline');
+          console.debug('Updating shape from animation complete');
+          if (this.isLoading) {
+            // TODO: Consider the edge case where
+            // isPlayingShowOrHideLoadingWidgetAnimation is true here. It's
+            // not ever getting triggered in the existing logs and might not
+            // be possible to hit now, but could become an issue later.
+            console.debug('Restarting loading to fade animation.');
+            this.seekPosition(loadingTimeline, FADE_START_LABEL);
+          } else {
+            console.debug('Loading complete');
+            const updateScoreCompletedTimeline =
+              this.getEndAnimationsForCircleSquareDiamondWidgetLoading(
+                loadingTimeline);
+            this.playAnimation(updateScoreCompletedTimeline);
+          }
+        });
+      },
+    });
+    const startAnimationsTimeline =
+      this.getStartAnimationsForCircleSquareDiamondWidgetLoading();
+    loadingTimeline.add(startAnimationsTimeline, LOADING_START_ANIMATIONS_LABEL);
 
-      loadingTimeline.add(
-        this.getLoopAnimationsForCircleSquareDiamondWidgetLoading(), FADE_START_LABEL);
-      this.playAnimation(loadingTimeline);
-    }
+    loadingTimeline.add(
+      this.getLoopAnimationsForCircleSquareDiamondWidgetLoading(), FADE_START_LABEL);
+    this.playAnimation(loadingTimeline);
   }
 
   private getNameFromShape(shape: Shape): string {

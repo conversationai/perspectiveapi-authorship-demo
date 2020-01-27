@@ -116,8 +116,11 @@ export class CustomizableDemoFormComponent implements OnInit {
   customizeScoreThresholds = false;
 
   /** Loading icon style options. */
-  loadingIconStyles =
-    [LoadingIconStyle.CIRCLE_SQUARE_DIAMOND, LoadingIconStyle.EMOJI];
+  loadingIconStyles = [
+    LoadingIconStyle.CIRCLE_SQUARE_DIAMOND,
+    LoadingIconStyle.EMOJI,
+    LoadingIconStyle.NONE
+  ];
   selectedLoadingIconStyle = LoadingIconStyle.CIRCLE_SQUARE_DIAMOND;
 
   /** Feedback text options. */
