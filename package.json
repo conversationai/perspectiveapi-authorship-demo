@@ -12,7 +12,7 @@
     "build:dev": "npm run setup && ng build --project perspectiveapi-authorship-demo",
     "build:dev-customElements": "npm run setup && ng build --project customCheckerElements",
     "build:prod": "npm run setup && ng build --project perspectiveapi-authorship-demo --prod --extract-css=false --build-optimizer=false",
-    "build:prod-customElements": "npm run setup && ng build --project customCheckerElements --prod --extract-css=false --build-optimizer=false",
+    "build:prod-customElements": "npm run setup && ng build --project customCheckerElements --prod --extract-css=false",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
