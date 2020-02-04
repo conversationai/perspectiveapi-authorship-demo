@@ -111,6 +111,13 @@ export const DEFAULT_DEMO_SETTINGS = {
   userFeedbackPromptText: 'Seem wrong?'
 };
 
+const MODEL_DESCRIPTIONS = {
+  TOXICITY: 'toxic',
+  OBSCENE: 'obscene',
+  INSULT: 'insulting',
+  THREAT: 'threatening',
+};
+
 const GITHUB_PAGE_LINK =
   'https://github.com/conversationai/perspectiveapi/blob/master/api_reference.md#alpha';
 
@@ -120,7 +127,7 @@ const GITHUB_PAGE_LINK =
   styleUrls: ['./convai-checker.component.css'],
   providers: [PerspectiveApiService],
 })
-export class ConvaiCheckerComponent implements OnInit {
+export class ConvaiCheckerComponent implements OnInit, OnChanges {
   @ViewChild(PerspectiveStatusComponent, {static: false})
   statusWidget: PerspectiveStatusComponent;
   @Input() inputId: string;
@@ -152,6 +159,7 @@ export class ConvaiCheckerComponent implements OnInit {
   public canAcceptFeedback = false;
   public feedbackRequestInProgress = false;
   private sessionId: string|null = null;
+  modelDescription = MODEL_DESCRIPTIONS.TOXICITY;
 
   constructor(
       private elementRef: ElementRef,
@@ -180,6 +188,19 @@ export class ConvaiCheckerComponent implements OnInit {
     }
   }
 
+  ngOnChanges(changes) {
+    const settingsChanges = changes['demoSettings'];
+    if (settingsChanges) {
+      // If the model changed, check the text again.
+      if (settingsChanges.previousValue
+          && (settingsChanges.previousValue.modelName
+              !== settingsChanges.currentValue.modelName)) {
+        this._handlePendingCheckRequest(this.lastRequestedText, true);
+      }
+      this.modelDescription = MODEL_DESCRIPTIONS[this.demoSettings.modelName || 'TOXICITY'];
+    }
+  }
+
   // Public interface for manually checking text and updating the UI. Note that
   // this does NOT change the contents of the text box. This is intended to be
   // used for handling programmatic changes to the input box not caused by a
@@ -200,10 +221,11 @@ export class ConvaiCheckerComponent implements OnInit {
     }
   }
 
-  private _handlePendingCheckRequest(text: string) {
+  private _handlePendingCheckRequest(text: string, forceCheck = false) {
     // Don't make duplicate requests.
-    if (text === this.lastRequestedText ||
-        text === this.lastPendingRequestedText) {
+    if (!forceCheck &&
+        (text === this.lastRequestedText
+         || text === this.lastPendingRequestedText)) {
       console.debug('Duplicate request text ' + text + '; returning');
       return;
     }

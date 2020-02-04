@@ -55,7 +55,7 @@ import { AnalyzeCommentResponse } from './perspectiveapi-types';
 import { take } from 'rxjs/operators';
 import * as d3 from 'd3-color';
 
-const getMockCheckerResponse = function(toxicityScore: number,
+const getMockCheckerResponse = function(toxicityScore: number|null,
                                         token: string,
                                         otherAttributeScore?: number):
   AnalyzeCommentResponse {
@@ -651,6 +651,107 @@ describe('Convai checker test', () => {
     // Checks that loading has stopped.
     expect(checker.statusWidget.isLoading).toBe(false);
   });
+
+  it('Should check score again on model change', async () => {
+    const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);
+    fixture.detectChanges();
+    const checker = fixture.componentInstance.checker;
+    const queryText = 'Your mother was a hamster';
+
+    let lastEmittedResponse: AnalyzeCommentResponse|null = null;
+    let lastEmittedScore = -1;
+    let emittedResponseCount = 0;
+    let emittedScoreCount = 0;
+
+    // Records when the response is emitted.
+    checker.analyzeCommentResponseChanged.subscribe(
+      (emittedItem: AnalyzeCommentResponse|null) => {
+        lastEmittedResponse = emittedItem;
+        emittedResponseCount++;
+    });
+
+    // Records when the score is emitted.
+    checker.scoreChanged.subscribe((emittedScore: number) => {
+      lastEmittedScore = emittedScore;
+      emittedScoreCount++;
+    });
+
+    const textArea = fixture.debugElement.query(
+      By.css('#' + checker.inputId)).nativeElement;
+
+    // Send an input event to trigger the service call.
+    setTextAndFireInputEvent(queryText, textArea);
+
+    await waitForTimeout(REQUEST_LIMIT_MS);
+
+    // Expect a request to have been sent.
+    const mockReq = httpMock.expectOne('test-url/check');
+
+    // Once a request is in flight, loading is set to true.
+    expect(checker.analyzeCommentResponse).toBe(null);
+    expect(checker.statusWidget.isLoading).toBe(true);
+
+    // Now we have checked the expectations before the response is sent, we
+    // send back the response.
+    const mockResponse: AnalyzeCommentResponse =
+      getMockCheckerResponse(0.3, queryText);
+    mockReq.flush(mockResponse);
+
+    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+
+    // Checks that the response is received and stored.
+    expect(checker.analyzeCommentResponse).not.toBe(null);
+    expect(checker.analyzeCommentResponse).toEqual(mockResponse);
+
+    // Checks that the response was emitted.
+    expect(lastEmittedResponse).toEqual(mockResponse);
+    expect(emittedResponseCount).toEqual(1);
+
+    // Checks that the score was emitted.
+    expect(lastEmittedScore).toEqual(0.3);
+    expect(emittedScoreCount).toEqual(1);
+
+    // Checks that loading has stopped.
+    expect(checker.statusWidget.isLoading).toBe(false);
+
+    // Change the model.
+    const demoSettings = getCopyOfDefaultDemoSettings();
+    demoSettings.modelName = 'OTHER_ATTRIBUTE';
+    fixture.componentInstance.setDemoSettings(demoSettings);
+    fixture.detectChanges();
+
+    await waitForTimeout(REQUEST_LIMIT_MS);
+
+    // Expect a request to have been sent.
+    const mockReq2 = httpMock.expectOne('test-url/check');
+
+    // Once a request is in flight, loading is set to true.
+    expect(checker.analyzeCommentResponse).toBe(mockResponse); // Previous response
+    expect(checker.statusWidget.isLoading).toBe(true);
+
+    const mockResponse2 = getMockCheckerResponse(null, queryText, 0.5);
+    // Now we have checked the expectations before the response is sent, we
+    // send back the response.
+    mockReq2.flush(mockResponse2);
+
+    await checker.statusWidget.animationsDone.pipe(take(1)).toPromise();
+
+    // Checks that the response is received and stored.
+    expect(checker.analyzeCommentResponse).not.toBe(null);
+    expect(checker.analyzeCommentResponse).toEqual(mockResponse2);
+
+    // Checks that the response was emitted.
+    expect(lastEmittedResponse).toEqual(mockResponse2);
+    expect(emittedResponseCount).toEqual(2);
+
+    // Checks that the score was emitted.
+    expect(lastEmittedScore).toEqual(0.5);
+    expect(emittedScoreCount).toEqual(2);
+
+    // Checks that loading has stopped.
+    expect(checker.statusWidget.isLoading).toBe(false);
+  });
+
 
   it('Should handle analyze comment error, demo config', fakeAsync(() => {
     const fixture = TestBed.createComponent(test_components.ConvaiCheckerCustomDemoSettingsComponent);

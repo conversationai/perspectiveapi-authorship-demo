@@ -108,6 +108,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
   @Input() feedbackRequestSubmitted = false;
   @Input() feedbackRequestError = false;
   @Input() initializeErrorMessage: string;
+  @Input() modelDescription = '';
   @Input() feedbackText: [string, string, string] = [
      DEFAULT_FEEDBACK_TEXT,
      DEFAULT_FEEDBACK_TEXT,
@@ -307,29 +308,31 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
         }
       });
 
-      if (this.isLoading) {
-        // Animations to run after any pending loading finishes.
-        this.pendingPostLoadingStateChangeAnimations = new TimelineMax({
-          onStart: () => {
-            this.ngZone.run(() => {
-              this.isPlayingPostLoadingStateChangeAnimations = true;
-              console.debug('Started postLoadingStateChangeAnimations');
-            });
-          },
-          onComplete: () => {
-            this.ngZone.run(() => {
-              this.isPlayingPostLoadingStateChangeAnimations = false;
-              console.debug('Completing postLoadingStateChangeAnimations');
-            });
-          }
-        });
-      } else {
-        this.pendingPostLoadingStateChangeAnimations = null;
-      }
-
       // Run in a Promise resolve statement so we don't get an
       // ExpressionChangedAfterItHasBeenCheckedError.
       Promise.resolve().then(() => {
+        // Between the previous block of code and the Promise.resolve(), the
+        // state of isLoading can change. Define the animations here to avoid
+        // assinging to the wrong animation if that happens.
+        if (this.isLoading) {
+          // Animations to run after any pending loading finishes.
+          this.pendingPostLoadingStateChangeAnimations = new TimelineMax({
+            onStart: () => {
+              this.ngZone.run(() => {
+                this.isPlayingPostLoadingStateChangeAnimations = true;
+                console.debug('Started postLoadingStateChangeAnimations');
+              });
+            },
+            onComplete: () => {
+              this.ngZone.run(() => {
+                this.isPlayingPostLoadingStateChangeAnimations = false;
+                console.debug('Completing postLoadingStateChangeAnimations');
+              });
+            }
+          });
+        } else {
+          this.pendingPostLoadingStateChangeAnimations = null;
+        }
         if (this.gradientColorsChanged) {
           this.gradientColorsChanged = false;
           if (this.loadingIconStyle === LoadingIconStyle.CIRCLE_SQUARE_DIAMOND) {
