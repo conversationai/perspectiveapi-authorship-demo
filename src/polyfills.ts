@@ -41,8 +41,8 @@
 
 
 /** Evergreen browsers require these. **/
-import 'core-js/es/reflect';
-import 'core-js/es/reflect';
+//import 'core-js/es/reflect';
+//import 'core-js/es/reflect';
 
 
 /** ALL Firefox browsers require the following to support `@angular/animation`. **/
@@ -54,13 +54,7 @@ import 'core-js/es/reflect';
  * Zone JS is required by Angular itself.
  */
 
-(window as any).__zone_symbol__forceDuplicateZoneCheck = false;
-
-//declare var System;
-//if (!window['Zone']) { // Only import if zone.js isn't already loaded.
-//  System.import('zone.js/dist/zone');  // Included with Angular CLI.
-//}
-//import 'zone.js/dist/zone';  // Included with Angular CLI.
+import 'zone.js/dist/zone';  // Included with Angular CLI.
 
 /** Hammerjs is required for Angular material components. */
 import 'hammerjs/hammer';
