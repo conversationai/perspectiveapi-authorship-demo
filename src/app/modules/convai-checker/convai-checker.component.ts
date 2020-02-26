@@ -119,7 +119,7 @@ const MODEL_DESCRIPTIONS = {
 };
 
 const GITHUB_PAGE_LINK =
-  'https://github.com/conversationai/perspectiveapi/blob/master/api_reference.md#alpha';
+  'https://github.com/conversationai/perspectiveapi/blob/master/2-api/models.md#all-attribute-types';
 
 @Component({
   selector: 'convai-checker',
@@ -186,6 +186,7 @@ export class ConvaiCheckerComponent implements OnInit, OnChanges {
       this.sessionId = Math.round(Date.now() * Math.random()).toString();
       window.localStorage.setItem(LOCAL_STORAGE_SESSION_ID_KEY, this.sessionId);
     }
+    this.modelDescription = MODEL_DESCRIPTIONS[this.demoSettings.modelName || 'TOXICITY'];
   }
 
   ngOnChanges(changes) {
