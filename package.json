@@ -1,6 +1,6 @@
 {
   "name": "@conversationai/perspectiveapi-authorship-demo",
-  "version": "0.8.9",
+  "version": "0.8.10",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",

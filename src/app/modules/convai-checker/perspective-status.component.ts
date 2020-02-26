@@ -220,7 +220,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     // ExpressionChangedAfterItHasBeenCheck errors.
     this.widgetReady = Promise.resolve().then(() => {
       this.updateWidgetElement();
-      this.playAnimation(this.getUpdateWidgetStateAnimation());
+      this.playAnimation(this.getUpdateWidgetStateAnimation(false));
     });
   }
 
@@ -356,10 +356,10 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
             // position of all elements.
             if (this.isLoading) {
               this.pendingPostLoadingStateChangeAnimations.add(
-                this.getUpdateWidgetStateAnimation());
+                this.getUpdateWidgetStateAnimation(false));
             } else {
               afterChangesTimeline.add(
-                this.getUpdateWidgetStateAnimation());
+                this.getUpdateWidgetStateAnimation(false));
             }
           }
         }
@@ -379,7 +379,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
           const loadingIconStyleChangedTimeline = new TimelineMax({});
           // TODO: Determine whether this covers all cases regarding the correct
           // x position of elements, or if more animations are needed here.
-          loadingIconStyleChangedTimeline.add(this.getUpdateWidgetStateAnimation());
+          loadingIconStyleChangedTimeline.add(this.getUpdateWidgetStateAnimation(false));
           if (this.isLoading) {
             this.pendingPostLoadingStateChangeAnimations.add(
               loadingIconStyleChangedTimeline);
@@ -389,7 +389,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
         } else if (this.scoreThresholdsChanged) {
           console.debug('Setting scoreThresholdsChanged to false');
           this.scoreThresholdsChanged = false;
-          this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation();
+          this.updateDemoSettingsAnimation = this.getUpdateWidgetStateAnimation(false);
           if (this.isLoading) {
             this.pendingPostLoadingStateChangeAnimations.add(
               this.updateDemoSettingsAnimation);
@@ -713,7 +713,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     this.resetFeedback();
     const resetAnimationTimeline = new TimelineMax({});
     resetAnimationTimeline.add(this.getTransitionToLayerAnimation(0, LAYER_TRANSITION_TIME_SECONDS));
-    resetAnimationTimeline.add(this.getUpdateWidgetStateAnimation());
+    resetAnimationTimeline.add(this.getUpdateWidgetStateAnimation(false));
     this.playAnimation(resetAnimationTimeline);
   }
 
@@ -845,7 +845,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
     this.modelInfoLinkClicked.emit();
   }
 
-  getUpdateWidgetStateAnimation(): TimelineMax {
+  getUpdateWidgetStateAnimation(notifyScoreChangeWhenDone: boolean): TimelineMax {
     const updateScoreCompletedTimeline = new TimelineMax({
       onStart: () => {
         this.ngZone.run(() => {
@@ -855,7 +855,9 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       onComplete: () => {
         this.ngZone.run(() => {
           console.debug('Completing animation for getUpdateWidgetStateAnimation');
-          this.scoreChangeAnimationCompleted.emit();
+          if (notifyScoreChangeWhenDone) {
+            this.scoreChangeAnimationCompleted.emit();
+          }
         });
       }
     });
@@ -896,7 +898,7 @@ export class PerspectiveStatusComponent implements OnChanges, OnInit, AfterViewI
       // This indicates that the score was reset without being the result of a
       // load completing, such as the text being cleared.
       console.debug('Updating shape from notifyScoreChange');
-      this.playAnimation(this.getUpdateWidgetStateAnimation());
+      this.playAnimation(this.getUpdateWidgetStateAnimation(true));
     }
     return new Promise<void>((resolve, reject) => {
       this.animationsDone.pipe(take(1)).subscribe(() => { resolve(); });
