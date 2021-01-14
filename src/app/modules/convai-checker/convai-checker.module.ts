@@ -11,6 +11,7 @@ import {
 } from '@angular/material';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { ReCaptchaV3Service, RECAPTCHA_V3_SITE_KEY } from 'ng-recaptcha';
 
 import { PerspectiveStatusComponent } from './perspective-status.component';
 import { PerspectiveApiService } from './perspectiveapi.service';
@@ -35,7 +36,14 @@ import { ConvaiCheckerComponent } from './convai-checker.component';
     MatInputModule,
     MatSelectModule,
   ],
-  providers: [PerspectiveApiService, {provide: APP_BASE_HREF, useValue: '/'}],
+  providers: [
+    PerspectiveApiService, {provide: APP_BASE_HREF, useValue: '/'},
+    // If using the convai-checker component in this module alongside a
+    // perspectiveapi-simple-server backend with reCAPTCHA enabled, uncomment
+    // these providers and add your site key under 'useValue'.
+    // ReCaptchaV3Service,
+    // {provide: RECAPTCHA_V3_SITE_KEY, useValue: '<your_site_key_here>' }
+  ],
   entryComponents: [ConvaiCheckerComponent]
 })
 export class ConvaiCheckerModule {
