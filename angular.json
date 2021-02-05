@@ -188,6 +188,7 @@
   },
   "defaultProject": "perspectiveapi-authorship-demo",
   "cli": {
+    "analytics": "7a1669da-eccf-42b3-a996-59bddbd3bf0a",
     "packageManager": "yarn"
   },
   "schematics": {

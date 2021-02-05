@@ -16,7 +16,8 @@ import {
 
 @Component({
   selector: 'wrapper-app',
-  template: '<router-outlet></router-outlet>',
+  template: `<router-outlet></router-outlet>
+  <customizable-demo-form></customizable-demo-form>`,
 })
 export class WrapperAppComponent {
 }

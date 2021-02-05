@@ -45,9 +45,13 @@
 /***************************************************************************************************
  * APPLICATION IMPORTS
  */
+/***************************************************************************************************
+ * Zone JS is required by Angular itself.
+ */
+import 'zone.js/dist/zone';  // Included with Angular CLI.
 /** Hammerjs is required for Angular material components. */
 // Note: This must be commented out when building the plugin!
-import 'hammerjs/hammer';
+//import 'hammerjs/hammer';
 
 /**
  * Date, currency, decimal and percent pipes.
@@ -59,7 +63,3 @@ import 'hammerjs/hammer';
 // (E.g.: Chrome, Opera)
 import '@webcomponents/custom-elements/src/native-shim';
 
-/***************************************************************************************************
- * Zone JS is required by Angular itself.
- */
-import 'zone.js/dist/zone';  // Included with Angular CLI.
