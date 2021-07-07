@@ -43,17 +43,15 @@
 // import 'web-animations-js';  // Run `npm install --save web-animations-js`.
 
 /***************************************************************************************************
- * Zone JS is required by Angular itself.
- */
-
-import 'zone.js/dist/zone';  // Included with Angular CLI.
-
-/** Hammerjs is required for Angular material components. */
-import 'hammerjs/hammer';
-
-/***************************************************************************************************
  * APPLICATION IMPORTS
  */
+/***************************************************************************************************
+ * Zone JS is required by Angular itself.
+ */
+import 'zone.js/dist/zone';  // Included with Angular CLI.
+/** Hammerjs is required for Angular material components. */
+// Note: This must be commented out when building the plugin!
+//import 'hammerjs/hammer';
 
 /**
  * Date, currency, decimal and percent pipes.
@@ -65,7 +63,3 @@ import 'hammerjs/hammer';
 // (E.g.: Chrome, Opera)
 import '@webcomponents/custom-elements/src/native-shim';
 
-// Add global to window, assigning the value of window itself.
-// See https://github.com/angular/angular-cli/issues/9827#issuecomment-386154063
-// Needed for the twemoji library.
-(window as any).global = window;

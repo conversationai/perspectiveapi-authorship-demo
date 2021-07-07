@@ -14,7 +14,8 @@ import {
   Component,
   OnInit,
 } from '@angular/core';
-import {MatSlideToggleChange, MatSliderChange} from '@angular/material';
+import {MatSlideToggleChange} from '@angular/material/slide-toggle';
+import {MatSliderChange} from '@angular/material/slider';
 import {DemoSettings} from './modules/convai-checker/convai-checker.component';
 import {
   ConfigurationInput,

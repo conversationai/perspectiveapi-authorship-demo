@@ -4,13 +4,11 @@ import { APP_BASE_HREF } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import {
-  MatButtonModule,
-  MatCheckboxModule,
-  MatInputModule,
-  MatSlideToggleModule,
-  MatSliderModule,
-} from '@angular/material';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import {MatSliderModule} from '@angular/material/slider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSelectModule } from '@angular/material/select';
@@ -23,17 +21,17 @@ import { ConvaiCheckerModule } from './modules/convai-checker/convai-checker.mod
 
 const appRoutes: Routes = [
   {
+    path: '',
+    redirectTo: '/customize',
+    pathMatch: 'full'
+  },
+  {
     path: 'customize',
     component: CustomizableDemoFormComponent
   },
   {
     path: 'customize/:uiSettings/:encodedDemoSettings',
     component: CustomizableDemoFormComponent
-  },
-  {
-    path: '',
-    redirectTo: '/customize',
-    pathMatch: 'full'
   },
 ];
 
@@ -66,6 +64,7 @@ const appRoutes: Routes = [
     // ReCaptchaV3Service,
     // {provide: RECAPTCHA_V3_SITE_KEY, useValue: ''},
   ],
+  exports: [WrapperAppComponent],
   bootstrap: [WrapperAppComponent],
 })
 export class DemoModule { }
