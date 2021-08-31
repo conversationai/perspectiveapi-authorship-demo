@@ -33,4 +33,4 @@ jobs:
     - run: grep gsap yarn.lock
     - run: yarn run lint
     - run: sudo apt-get install xvfb
-    - run: xvfb-run yarn run test --watch false
+    - run: xvfb-run ng test --watch false
