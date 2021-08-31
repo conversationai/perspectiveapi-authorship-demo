@@ -48,4 +48,5 @@ jobs:
     - run: npm run setup
     - run: yarn install
     - run: yarn run lint
+    - run: tsc -v
     - run: yarn run test --watch false
