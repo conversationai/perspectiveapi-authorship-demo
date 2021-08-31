@@ -44,7 +44,7 @@ jobs:
         export DISPLAY=:99
         chromedriver --url-base=/wd/hub &
         sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & # optional
-    - run: npm install -g yarn typings typescript ts-node mocha protractor angular-cli karma-cli
+    - run: npm install -g yarn typings typescript@3.5.3 ts-node mocha protractor angular-cli karma-cli
     - run: npm run setup
     - run: yarn install
     - run: yarn run lint
