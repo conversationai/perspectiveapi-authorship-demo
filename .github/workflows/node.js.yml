@@ -25,18 +25,9 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
-    - uses: actions/checkout@v2
-    - uses: nanasess/setup-chromedriver@master
-      with:
-        # Optional: do not specify to match Chrome's version
-        chromedriver-version: '88.0.4324.96'
-    - run: |
-        export DISPLAY=:99
-        chromedriver --url-base=/wd/hub &
-        sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & # optional
     - run: npm install -g yarn typings typescript@3.7.2 ts-node mocha protractor angular-cli karma-cli
     - run: npm run setup
     - run: yarn install
     - run: yarn run lint
-    - run: tsc -v
-    - run: yarn run test --watch false
+    - run: sudo apt-get install xvfb
+    - run: xvfb-run yarn run test --watch false
