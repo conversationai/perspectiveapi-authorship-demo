@@ -35,6 +35,15 @@ jobs:
         key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
         restore-keys: |
           ${{ runner.os }}-yarn-
+    - uses: actions/checkout@v2
+    - uses: nanasess/setup-chromedriver@master
+      with:
+        # Optional: do not specify to match Chrome's version
+        chromedriver-version: '88.0.4324.96'
+    - run: |
+        export DISPLAY=:99
+        chromedriver --url-base=/wd/hub &
+        sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & # optional
     - run: npm install -g yarn typings typescript ts-node mocha protractor angular-cli karma-cli
     - run: npm run setup
     - run: yarn install
