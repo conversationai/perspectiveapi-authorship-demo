@@ -1,4 +1,4 @@
-[![Travis CI](https://travis-ci.org/conversationai/perspectiveapi-authorship-demo.svg?branch=master)](https://travis-ci.org/conversationai/perspectiveapi-authorship-demo) [![npm version](https://badge.fury.io/js/%40conversationai%2Fperspectiveapi-authorship-demo.svg)](https://badge.fury.io/js/%40conversationai%2Fperspectiveapi-authorship-demo)
+[![npm version](https://badge.fury.io/js/%40conversationai%2Fperspectiveapi-authorship-demo.svg)](https://badge.fury.io/js/%40conversationai%2Fperspectiveapi-authorship-demo)
 
 # An authorship experience demo for Perspective API
 
